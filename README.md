@@ -21,11 +21,13 @@ A comprehensive platform for connecting volunteers with Corporate Social Respons
 - **Axios** for API calls
 
 ### Backend
-- **Node.js** with Express
+- **Node.js** with **TypeScript** ✅
+- **Express.js** framework
 - **MongoDB** with Mongoose
 - **JWT** for authentication
 - **Bcrypt** for password hashing
 - **Multer** for file uploads
+- **Clean Architecture** (BCE pattern)
 
 ### Development Tools
 - **ESLint** & **Prettier** for code quality
@@ -84,12 +86,20 @@ CSR-Volunteer-Matching-System/
 │   │   ├── utils/         # Utility functions
 │   │   └── types/         # TypeScript type definitions
 │   └── package.json
-├── server/                # Node.js backend application
-│   ├── controllers/       # Route controllers
-│   ├── models/           # Database models
-│   ├── routes/           # API routes
-│   ├── middleware/       # Custom middleware
-│   ├── utils/            # Utility functions
+├── server/                # Node.js + TypeScript backend
+│   ├── src/              # TypeScript source code
+│   │   ├── controllers/  # Boundary - HTTP handlers
+│   │   ├── services/     # Control - Business logic ✅
+│   │   ├── entities/     # Entity - Data models ✅
+│   │   ├── repositories/ # Data access layer
+│   │   ├── dto/          # Data Transfer Objects ✅
+│   │   ├── middleware/   # Express middleware
+│   │   ├── utils/        # Utility functions
+│   │   ├── config/       # Configuration
+│   │   ├── routes/       # API routes ✅
+│   │   └── index.ts      # Main server file ✅
+│   ├── dist/             # Compiled JavaScript
+│   ├── tsconfig.json     # TypeScript configuration ✅
 │   └── package.json
 ├── docs/                 # Documentation
 └── package.json          # Root package.json
@@ -97,6 +107,7 @@ CSR-Volunteer-Matching-System/
 
 ## 🔧 Available Scripts
 
+### Root Level
 - `npm run dev` - Start both frontend and backend in development mode
 - `npm run server` - Start only the backend server
 - `npm run client` - Start only the frontend development server
@@ -104,6 +115,14 @@ CSR-Volunteer-Matching-System/
 - `npm run test` - Run frontend tests
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code with Prettier
+
+### Backend (TypeScript)
+- `npm run dev` - Start TypeScript development server with hot reload
+- `npm run build` - Compile TypeScript to JavaScript
+- `npm start` - Start production server
+- `npm run type-check` - Type checking only
+- `npm run lint` - Lint TypeScript code
+- `npm run lint:fix` - Fix linting issues
 
 ## 🌐 API Endpoints
 
