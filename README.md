@@ -67,7 +67,7 @@ A comprehensive platform for connecting volunteers with Corporate Social Respons
    ```
 
    This will start:
-   - Backend server on `http://localhost:5000`
+   - Backend server on `http://localhost:5001`
    - Frontend development server on `http://localhost:3000`
 
 ## 📁 Project Structure

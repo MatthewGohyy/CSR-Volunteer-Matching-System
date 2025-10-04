@@ -68,7 +68,7 @@ CSR-Volunteer-Matching-System/
 
 ## 🌐 API Endpoints
 
-### Base URL: `http://localhost:5000/api`
+### Base URL: `http://localhost:5001/api`
 
 #### Authentication
 - `POST /auth/register` - Register new user
@@ -159,7 +159,7 @@ secondary: {
 Copy `server/.env.example` to `server/.env` and update:
 ```env
 NODE_ENV=development
-PORT=5000
+PORT=5001
 MONGODB_URI=mongodb://localhost:27017/csr-volunteer-matching
 JWT_SECRET=your-super-secret-jwt-key
 CLIENT_URL=http://localhost:3000
@@ -214,8 +214,8 @@ npm test
    # Kill process on port 3000
    lsof -ti:3000 | xargs kill -9
    
-   # Kill process on port 5000
-   lsof -ti:5000 | xargs kill -9
+   # Kill process on port 5001
+   lsof -ti:5001 | xargs kill -9
    ```
 
 2. **MongoDB connection issues**
