@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  PIN
+  CSR_REP
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum RequestStatus {
+  ACTIVE
+  MATCHED
+  COMPLETED
+  CANCELLED
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum MatchStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum NotificationType {
+  VOLUNTEER_OFFER
+  OFFER_ACCEPTED
+  OFFER_DECLINED
+  MATCH_CONFIRMED
+  MATCH_CANCELLED
+  REQUEST_UPDATED
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  userType      UserType
+  status        UserStatus     @default(ACTIVE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  pin           PIN?
+  csrRep        CSRRep?
+  notifications Notification[]
+  @@map("users")
+}
+
+model PIN {
+  id                 String    @id @default(uuid())
+  userId             String    @unique
+  name               String
+  age                Int?
+  location           String?
+  phoneNumber        String?
+  accessibilityNeeds String?
+  profilePhoto       String?
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requests           Request[]
+  matches            Match[]
+  @@map("pins")
+}
+
+model CSRRep {
+  id                        String           @id @default(uuid())
+  userId                    String           @unique
+  companyName               String
+  companyRegistrationNumber String           @unique
+  industry                  String?
+  contactPerson             String
+  phoneNumber               String
+  companyAddress            String?
+  companyLogo               String?
+  approvalStatus            UserStatus       @default(PENDING)
+  approvedAt                DateTime?
+  user                      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shortlists                Shortlist[]
+  volunteerOffers           VolunteerOffer[]
+  matches                   Match[]
+  @@map("csr_reps")
+}
+
+model ServiceCategory {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  iconUrl     String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  requests    Request[]
+  @@map("service_categories")
+}
+
+model Request {
+  id              String           @id @default(uuid())
+  pinId           String
+  categoryId      String
+  title           String
+  description     String
+  urgency         UrgencyLevel     @default(MEDIUM)
+  dateNeeded      DateTime?
+  location        String?
+  status          RequestStatus    @default(ACTIVE)
+  viewCount       Int              @default(0)
+  shortlistCount  Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  pin             PIN              @relation(fields: [pinId], references: [id], onDelete: Cascade)
+  category        ServiceCategory  @relation(fields: [categoryId], references: [id])
+  shortlists      Shortlist[]
+  volunteerOffers VolunteerOffer[]
+  match           Match?
+  @@map("requests")
+}
+
+model Shortlist {
+  id        String   @id @default(uuid())
+  csrRepId  String
+  requestId String
+  createdAt DateTime @default(now())
+  csrRep    CSRRep   @relation(fields: [csrRepId], references: [id], onDelete: Cascade)
+  request   Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  @@unique([csrRepId, requestId])
+  @@map("shortlists")
+}
+
+model VolunteerOffer {
+  id        String      @id @default(uuid())
+  csrRepId  String
+  requestId String
+  message   String?
+  status    OfferStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  csrRep    CSRRep      @relation(fields: [csrRepId], references: [id], onDelete: Cascade)
+  request   Request     @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  @@map("volunteer_offers")
+}
+
+model Match {
+  id                 String      @id @default(uuid())
+  requestId          String      @unique
+  csrRepId           String
+  pinId              String
+  status             MatchStatus @default(ACTIVE)
+  matchedAt          DateTime    @default(now())
+  completedAt        DateTime?
+  cancellationReason String?
+  updatedAt          DateTime    @updatedAt
+  request            Request     @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  csrRep             CSRRep      @relation(fields: [csrRepId], references: [id], onDelete: Cascade)
+  pin                PIN         @relation(fields: [pinId], references: [id], onDelete: Cascade)
+  @@map("matches")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  message   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("notifications")
+}
+

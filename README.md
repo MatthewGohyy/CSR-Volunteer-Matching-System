@@ -23,7 +23,8 @@ A comprehensive platform for connecting volunteers with Corporate Social Respons
 ### Backend
 - **Node.js** with **TypeScript** ✅
 - **Express.js** framework
-- **MongoDB** with Mongoose
+- **PostgreSQL** database ✅
+- **Prisma ORM** for type-safe database access ✅
 - **JWT** for authentication
 - **Bcrypt** for password hashing
 - **Multer** for file uploads
@@ -37,11 +38,27 @@ A comprehensive platform for connecting volunteers with Corporate Social Respons
 
 ## 📋 Prerequisites
 
-- Node.js (v18 or higher)
-- npm (v8 or higher)
-- MongoDB (local or cloud instance)
+- **Node.js** (v18 or higher)
+- **npm** (v8 or higher)
+- **Docker Desktop** (for PostgreSQL database)
+- **Git** (for version control)
 
 ## 🚀 Quick Start
+
+### Option 1: Automated Setup (Recommended)
+
+```bash
+# Make setup script executable (first time only)
+chmod +x setup-db.sh
+
+# Run the automated setup
+./setup-db.sh
+
+# Start development server
+cd server && npm run dev
+```
+
+### Option 2: Manual Setup
 
 1. **Clone the repository**
    ```bash
@@ -49,28 +66,46 @@ A comprehensive platform for connecting volunteers with Corporate Social Respons
    cd CSR-Volunteer-Matching-System
    ```
 
-2. **Install dependencies**
+2. **Start PostgreSQL with Docker**
    ```bash
-   npm run install-all
+   docker-compose up -d
    ```
 
-3. **Set up environment variables**
+3. **Setup Backend**
    ```bash
-   # Copy the example environment file
-   cp server/.env.example server/.env
-   cp client/.env.example client/.env
+   cd server
+   npm install
    
-   # Edit the files with your configuration
+   # Copy environment file
+   cp .env.example .env
+   
+   # Generate Prisma Client
+   npx prisma generate
+   
+   # Run database migrations
+   npx prisma migrate dev --name init
+   
+   # Seed the database
+   npm run seed
    ```
 
-4. **Start the development servers**
+4. **Start the development server**
    ```bash
    npm run dev
    ```
 
-   This will start:
-   - Backend server on `http://localhost:5001`
-   - Frontend development server on `http://localhost:3000`
+### Access Points
+
+- 🌐 **Backend API**: http://localhost:3000
+- 🏥 **Health Check**: http://localhost:3000/health
+- 🗄️ **Database Test**: http://localhost:3000/api/test-db
+- 🛠️ **pgAdmin**: http://localhost:5050
+- 📊 **Prisma Studio**: Run `npx prisma studio` in server/
+
+### Test Credentials
+
+- **Admin**: admin@csr.com / admin123
+- **pgAdmin**: admin@csr.com / admin123
 
 ## 📁 Project Structure
 
@@ -88,6 +123,7 @@ CSR-Volunteer-Matching-System/
 │   └── package.json
 ├── server/                # Node.js + TypeScript backend
 │   ├── src/              # TypeScript source code
+│   │   ├── config/       # Configuration (database, etc.) ✅
 │   │   ├── controllers/  # Boundary - HTTP handlers
 │   │   ├── services/     # Control - Business logic ✅
 │   │   ├── entities/     # Entity - Data models ✅
@@ -95,14 +131,20 @@ CSR-Volunteer-Matching-System/
 │   │   ├── dto/          # Data Transfer Objects ✅
 │   │   ├── middleware/   # Express middleware
 │   │   ├── utils/        # Utility functions
-│   │   ├── config/       # Configuration
 │   │   ├── routes/       # API routes ✅
-│   │   └── index.ts      # Main server file ✅
+│   │   └── server.ts     # Main server file ✅
+│   ├── prisma/           # Prisma ORM files ✅
+│   │   ├── schema.prisma # Database schema ✅
+│   │   ├── seed.ts       # Database seeder ✅
+│   │   └── migrations/   # Database migrations
 │   ├── dist/             # Compiled JavaScript
 │   ├── tsconfig.json     # TypeScript configuration ✅
 │   └── package.json
-├── docs/                 # Documentation
-└── package.json          # Root package.json
+├── docker-compose.yml    # Docker services (PostgreSQL, pgAdmin) ✅
+├── setup-db.sh          # Automated setup script ✅
+├── DATABASE.md          # Database documentation ✅
+├── SETUP.md             # Setup guide ✅
+└── package.json         # Root package.json
 ```
 
 ## 🔧 Available Scripts
@@ -116,37 +158,61 @@ CSR-Volunteer-Matching-System/
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code with Prettier
 
-### Backend (TypeScript)
+### Backend (TypeScript + Prisma)
 - `npm run dev` - Start TypeScript development server with hot reload
 - `npm run build` - Compile TypeScript to JavaScript
 - `npm start` - Start production server
+- `npm run seed` - Seed the database with initial data
 - `npm run type-check` - Type checking only
 - `npm run lint` - Lint TypeScript code
 - `npm run lint:fix` - Fix linting issues
 
+### Database (Prisma + PostgreSQL)
+- `npx prisma studio` - Open Prisma Studio (Database GUI)
+- `npx prisma generate` - Generate Prisma Client
+- `npx prisma migrate dev` - Create and apply new migration
+- `npx prisma migrate reset` - Reset database (dev only)
+- `docker-compose up -d` - Start database containers
+- `docker-compose down` - Stop database containers
+- `docker-compose down -v` - Stop and delete all data
+
 ## 🌐 API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Register new user
+- `POST /api/auth/register/pin` - Register Person In Need
+- `POST /api/auth/register/csr-rep` - Register CSR Representative
 - `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user
+- `GET /api/auth/profile` - Get current user profile
+- `PUT /api/auth/password` - Update password
 
-### Volunteers
-- `GET /api/volunteers` - Get all volunteers
-- `GET /api/volunteers/:id` - Get volunteer by ID
-- `PUT /api/volunteers/:id` - Update volunteer profile
-- `DELETE /api/volunteers/:id` - Delete volunteer
+### Opportunities/Requests
+- `GET /api/opportunities` - Get all requests (with filters)
+- `GET /api/opportunities/categories` - Get service categories
+- `GET /api/opportunities/:id` - Get request details
+- `POST /api/opportunities` - Create request (PIN only)
+- `PUT /api/opportunities/:id` - Update request (PIN only)
+- `DELETE /api/opportunities/:id` - Delete request (PIN only)
 
-### Opportunities
-- `GET /api/opportunities` - Get all opportunities
-- `POST /api/opportunities` - Create new opportunity
-- `PUT /api/opportunities/:id` - Update opportunity
-- `DELETE /api/opportunities/:id` - Delete opportunity
+### PIN (Volunteers)
+- `GET /api/volunteers/profile` - Get PIN profile
+- `PUT /api/volunteers/profile` - Update PIN profile
+- `GET /api/volunteers/matches` - Get my matches
+- `GET /api/volunteers/notifications` - Get notifications
 
-### Matching
-- `GET /api/matches/:volunteerId` - Get matches for volunteer
-- `POST /api/matches` - Create new match
-- `PUT /api/matches/:id` - Update match status
+### Organizations (CSR Reps)
+- `POST /api/organizations/shortlist` - Shortlist a request
+- `GET /api/organizations/shortlists` - Get shortlisted requests
+- `POST /api/organizations/offers` - Submit volunteer offer
+- `GET /api/organizations/offers` - Get my offers
+- `GET /api/organizations/matches` - Get my matches
+
+### Matches
+- `POST /api/matches/offers/:id/accept` - Accept offer (PIN)
+- `POST /api/matches/offers/:id/decline` - Decline offer (PIN)
+- `PUT /api/matches/:id/complete` - Complete match
+- `PUT /api/matches/:id/cancel` - Cancel match
+
+**📖 See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for complete API reference**
 
 ## 🤝 Contributing
 
@@ -167,12 +233,48 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Frontend Developer**: [Team Member]
 - **UI/UX Designer**: [Team Member]
 
+## 📚 Documentation
+
+- **[SETUP.md](SETUP.md)** - Detailed setup and installation guide
+- **[DATABASE.md](DATABASE.md)** - Database schema and Prisma documentation
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Development guidelines and best practices
+- **[OOP_ANALYSIS.md](OOP_ANALYSIS.md)** - Object-oriented design analysis
+
+## 🐛 Troubleshooting
+
+### Database Connection Issues
+```bash
+# Check if Docker is running
+docker ps
+
+# Restart containers
+docker-compose restart
+
+# Check logs
+docker-compose logs postgres
+```
+
+### Prisma Issues
+```bash
+# Regenerate Prisma Client
+npx prisma generate
+
+# Reset database (development only)
+npx prisma migrate reset
+```
+
+### Port Conflicts
+If ports 3000, 5432, or 5050 are already in use:
+- Change ports in `docker-compose.yml`
+- Update `DATABASE_URL` in `.env`
+
 ## 📞 Support
 
 If you have any questions or need help, please:
 - Open an issue on GitHub
 - Contact the development team
-- Check the documentation in the `/docs` folder
+- Check the documentation files
+- Run `./setup-db.sh` for automated setup
 
 ---
 
