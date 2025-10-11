@@ -35,6 +35,12 @@
 - Container management
 - Common commands
 
+### **[START_STOP_GUIDE.md](START_STOP_GUIDE.md)** 🎮 START & STOP SERVICES
+- Start backend, frontend, database
+- Stop all services
+- Restart commands
+- Troubleshooting running processes
+
 ---
 
 ## 📖 Technical Documentation
@@ -77,9 +83,10 @@
 3. Architecture: [BCE_ARCHITECTURE.md](BCE_ARCHITECTURE.md)
 
 ### **"I need quick info"**
-1. Endpoints: [API_QUICK_REFERENCE.md](API_QUICK_REFERENCE.md)
-2. Setup: [README.md](README.md) Quick Start section
-3. Git: [GITHUB_WORKFLOW.md](GITHUB_WORKFLOW.md) Quick Reference section
+1. Start/Stop: [START_STOP_GUIDE.md](START_STOP_GUIDE.md)
+2. Endpoints: [API_QUICK_REFERENCE.md](API_QUICK_REFERENCE.md)
+3. Setup: [README.md](README.md) Quick Start section
+4. Git: [GITHUB_WORKFLOW.md](GITHUB_WORKFLOW.md) Quick Reference section
 
 ### **"I have a problem"**
 1. Setup issues: [TEAMMATE_SETUP.md](TEAMMATE_SETUP.md) Troubleshooting
@@ -94,6 +101,7 @@
 |------|------|---------|--------------|
 | README.md | 9KB | Project overview | First time, overview |
 | TEAMMATE_SETUP.md | 13KB | Complete setup | Setting up environment |
+| START_STOP_GUIDE.md | 5KB | Start/stop services | Daily development |
 | API_DOCUMENTATION.md | 9KB | Full API reference | Building features |
 | API_QUICK_REFERENCE.md | 3KB | Quick API lookup | Quick endpoint check |
 | DATABASE.md | 12KB | Database guide | Working with data |
@@ -101,7 +109,7 @@
 | GITHUB_WORKFLOW.md | 13KB | Git workflow | Team collaboration |
 | DOCKER_GUIDE.md | 9KB | Docker guide | Container issues |
 
-**Total: 8 essential documents | ~81KB of documentation**
+**Total: 9 essential documents | ~86KB of documentation**
 
 ---
 
