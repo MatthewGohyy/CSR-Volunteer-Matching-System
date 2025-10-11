@@ -18,6 +18,12 @@
 - All prerequisites
 - Troubleshooting tips
 
+### **[TEAM_WORK_DIVISION.md](TEAM_WORK_DIVISION.md)** 🤝 FOR 2-PERSON TEAMS
+- Backend vs Frontend work division
+- What's currently implemented
+- Task breakdown and priorities
+- Daily workflow guide
+
 ---
 
 ## 🔧 Development Guides
