@@ -310,10 +310,29 @@ merge_to_main() {
     if [ "$current_branch" = "main" ]; then
         echo "⚠️  You're already on main branch!"
         echo ""
+        
+        # Check if there are any feature branches
+        feature_branches=$(git branch | grep -v "main" | grep -v "^\s*$" | wc -l | tr -d ' ')
+        
+        if [ "$feature_branches" -eq 0 ]; then
+            echo "❌ No feature branches found!"
+            echo ""
+            echo "Create a feature branch first:"
+            echo "  ./git-helper.sh → Option 1"
+            echo ""
+            return
+        fi
+        
         echo "📋 Available feature branches:"
         git branch | grep -v "main"
         echo ""
         read -p "Which branch do you want to merge into main? " feature_branch
+        
+        # Validate input
+        if [ -z "$feature_branch" ]; then
+            echo "❌ No branch name provided"
+            return
+        fi
     else
         feature_branch=$current_branch
         echo "Current branch: $feature_branch"
