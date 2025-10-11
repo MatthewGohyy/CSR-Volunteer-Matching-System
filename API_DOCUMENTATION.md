@@ -2,7 +2,7 @@
 
 ## Base URL
 ```
-http://localhost:3000/api
+http://localhost:4000/api
 ```
 
 ## Authentication
@@ -501,21 +501,21 @@ Use these test credentials after running the seed:
 **Test with cURL:**
 ```bash
 # Login
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@csr.com","password":"admin123"}'
 
 # Get categories
-curl http://localhost:3000/api/opportunities/categories
+curl http://localhost:4000/api/opportunities/categories
 
 # Get requests (with auth)
-curl http://localhost:3000/api/opportunities \
+curl http://localhost:4000/api/opportunities \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 **Test with Postman:**
 1. Import the API collection
-2. Set base URL: `http://localhost:3000/api`
+2. Set base URL: `http://localhost:4000/api`
 3. For protected routes, add token in Authorization > Bearer Token
 
 ---

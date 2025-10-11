@@ -384,7 +384,7 @@ docker compose down -v
 
 Once Docker is running:
 
-1. ✅ Verify database: http://localhost:3000/api/test-db
+1. ✅ Verify database: http://localhost:4000/api/test-db
 2. ✅ Open pgAdmin: http://localhost:5050
 3. ✅ Run Prisma Studio: `npx prisma studio`
 4. ✅ Start dev server: `npm run dev`

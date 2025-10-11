@@ -96,9 +96,9 @@ cd server && npm run dev
 
 ### Access Points
 
-- 🌐 **Backend API**: http://localhost:3000
-- 🏥 **Health Check**: http://localhost:3000/health
-- 🗄️ **Database Test**: http://localhost:3000/api/test-db
+- 🌐 **Backend API**: http://localhost:4000
+- 🏥 **Health Check**: http://localhost:4000/health
+- 🗄️ **Database Test**: http://localhost:4000/api/test-db
 - 🛠️ **pgAdmin**: http://localhost:5050
 - 📊 **Prisma Studio**: Run `npx prisma studio` in server/
 
@@ -264,9 +264,10 @@ npx prisma migrate reset
 ```
 
 ### Port Conflicts
-If ports 3000, 5432, or 5050 are already in use:
-- Change ports in `docker-compose.yml`
-- Update `DATABASE_URL` in `.env`
+If ports 4000, 3001, 5432, or 5050 are already in use:
+- Change ports in `docker-compose.yml` (for database/pgAdmin)
+- Update `PORT` in `server/.env` (for backend)
+- Use `PORT=XXXX npm start` for frontend
 
 ## 📞 Support
 

@@ -94,7 +94,7 @@ JWT_SECRET=your_super_secret_jwt_key_min_32_chars_change_in_production
 JWT_EXPIRES_IN=7d
 NODE_ENV=development
 PORT=4000
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:3001
 EOF
 cd ..
 ```
@@ -106,7 +106,7 @@ JWT_SECRET=your_super_secret_jwt_key_min_32_chars_change_in_production
 JWT_EXPIRES_IN=7d
 NODE_ENV=development
 PORT=4000
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:3001
 ```
 
 ---

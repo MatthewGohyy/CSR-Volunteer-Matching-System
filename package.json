@@ -2,7 +2,7 @@
   "name": "csr-volunteer-matching-system",
   "version": "1.0.0",
   "description": "A comprehensive CSR Volunteer Matching System for connecting volunteers with opportunities",
-  "main": "server/index.js",
+  "main": "server/dist/server.js",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && npm run dev",

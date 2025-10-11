@@ -34,8 +34,8 @@ npm install
 
 ### 2. Start Frontend
 ```bash
-npm start
-# Opens at http://localhost:3000
+PORT=3001 npm start
+# Opens at http://localhost:3001
 ```
 
 ### 3. Make Sure Backend is Running
