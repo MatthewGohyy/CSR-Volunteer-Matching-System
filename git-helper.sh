@@ -22,9 +22,12 @@ show_menu() {
     echo "4) Check status"
     echo "5) Pull latest changes"
     echo "6) Complete workflow (commit + push)"
-    echo "7) Exit"
+    echo "7) Switch branches"
+    echo "8) Merge feature branch to main"
+    echo "9) List all branches"
+    echo "10) Exit"
     echo ""
-    read -p "Choose (1-7): " choice
+    read -p "Choose (1-10): " choice
     echo ""
 }
 
@@ -232,6 +235,189 @@ complete_workflow() {
     echo ""
 }
 
+# Function to switch branches
+switch_branch() {
+    echo -e "${YELLOW}Switch Branch${NC}"
+    echo ""
+    
+    echo "📋 Available branches:"
+    git branch -a
+    echo ""
+    
+    current_branch=$(git branch --show-current)
+    echo -e "${GREEN}Current branch:${NC} $current_branch"
+    echo ""
+    
+    read -p "Enter branch name to switch to: " branch_name
+    
+    # Check for uncommitted changes
+    if ! git diff-index --quiet HEAD --; then
+        echo ""
+        echo "⚠️  You have uncommitted changes!"
+        echo ""
+        echo "Options:"
+        echo "1) Commit changes first"
+        echo "2) Stash changes (save for later)"
+        echo "3) Discard changes (dangerous!)"
+        echo "4) Cancel"
+        read -p "Choose (1-4): " save_choice
+        echo ""
+        
+        case $save_choice in
+            1)
+                commit_changes
+                ;;
+            2)
+                git stash push -m "Auto-stash before switching to $branch_name"
+                echo -e "${GREEN}✅ Changes stashed${NC}"
+                echo ""
+                ;;
+            3)
+                read -p "Are you SURE you want to discard changes? (yes/no): " confirm
+                if [ "$confirm" = "yes" ]; then
+                    git reset --hard
+                    echo -e "${GREEN}✅ Changes discarded${NC}"
+                else
+                    echo "❌ Cancelled"
+                    return
+                fi
+                ;;
+            4)
+                echo "❌ Cancelled"
+                return
+                ;;
+        esac
+    fi
+    
+    git checkout "$branch_name"
+    
+    if [ $? -eq 0 ]; then
+        echo ""
+        echo -e "${GREEN}✅ Switched to branch: $branch_name${NC}"
+    else
+        echo "❌ Failed to switch branch"
+    fi
+    echo ""
+}
+
+# Function to merge feature branch to main
+merge_to_main() {
+    echo -e "${YELLOW}Merge Feature Branch to Main${NC}"
+    echo ""
+    
+    current_branch=$(git branch --show-current)
+    
+    if [ "$current_branch" = "main" ]; then
+        echo "⚠️  You're already on main branch!"
+        echo ""
+        echo "📋 Available feature branches:"
+        git branch | grep -v "main"
+        echo ""
+        read -p "Which branch do you want to merge into main? " feature_branch
+    else
+        feature_branch=$current_branch
+        echo "Current branch: $feature_branch"
+        echo "This will merge $feature_branch into main"
+        echo ""
+    fi
+    
+    # Confirm merge
+    read -p "Merge $feature_branch into main? (y/n): " confirm
+    if [ "$confirm" != "y" ]; then
+        echo "❌ Merge cancelled"
+        return
+    fi
+    
+    echo ""
+    echo "🔄 Starting merge process..."
+    echo ""
+    
+    # Step 1: Switch to main
+    echo "1️⃣ Switching to main..."
+    git checkout main
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to switch to main"
+        return
+    fi
+    echo -e "${GREEN}✅ On main branch${NC}"
+    echo ""
+    
+    # Step 2: Pull latest
+    echo "2️⃣ Pulling latest changes from remote..."
+    git pull origin main
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to pull latest changes"
+        return
+    fi
+    echo -e "${GREEN}✅ Main is up to date${NC}"
+    echo ""
+    
+    # Step 3: Merge
+    echo "3️⃣ Merging $feature_branch into main..."
+    git merge "$feature_branch"
+    
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "❌ Merge conflict detected!"
+        echo ""
+        echo "Conflicting files:"
+        git diff --name-only --diff-filter=U
+        echo ""
+        echo "📝 To resolve:"
+        echo "1. Fix conflicts in the files above"
+        echo "2. Stage resolved files: git add <file>"
+        echo "3. Complete merge: git commit"
+        echo ""
+        echo "Or abort merge: git merge --abort"
+        return
+    fi
+    
+    echo -e "${GREEN}✅ Merged successfully!${NC}"
+    echo ""
+    
+    # Step 4: Push
+    read -p "4️⃣ Push to GitHub? (y/n): " push_confirm
+    if [ "$push_confirm" = "y" ]; then
+        git push origin main
+        if [ $? -eq 0 ]; then
+            echo ""
+            echo -e "${GREEN}✅ Pushed to GitHub!${NC}"
+            echo ""
+            
+            # Optional: Delete feature branch
+            read -p "Delete feature branch '$feature_branch'? (y/n): " delete_confirm
+            if [ "$delete_confirm" = "y" ]; then
+                git branch -d "$feature_branch"
+                git push origin --delete "$feature_branch" 2>/dev/null
+                echo -e "${GREEN}✅ Feature branch deleted${NC}"
+            fi
+        else
+            echo "❌ Push failed"
+        fi
+    fi
+    echo ""
+    echo "🎉 Merge complete!"
+    echo ""
+}
+
+# Function to list branches
+list_branches() {
+    echo -e "${YELLOW}All Branches${NC}"
+    echo ""
+    
+    current_branch=$(git branch --show-current)
+    echo -e "${GREEN}Current branch:${NC} $current_branch"
+    echo ""
+    
+    echo "📋 Local branches:"
+    git branch
+    echo ""
+    
+    echo "📋 Remote branches:"
+    git branch -r
+    echo ""
+}
+
 # Main loop
 while true; do
     show_menu
@@ -256,6 +442,15 @@ while true; do
             complete_workflow
             ;;
         7)
+            switch_branch
+            ;;
+        8)
+            merge_to_main
+            ;;
+        9)
+            list_branches
+            ;;
+        10)
             echo "👋 Goodbye!"
             exit 0
             ;;
