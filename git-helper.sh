@@ -354,7 +354,9 @@ merge_to_main() {
     
     # Step 3: Merge
     echo "3️⃣ Merging $feature_branch into main..."
-    git merge "$feature_branch"
+    
+    # Use --no-edit to avoid opening vim for merge commit message
+    git merge "$feature_branch" --no-edit
     
     if [ $? -ne 0 ]; then
         echo ""
