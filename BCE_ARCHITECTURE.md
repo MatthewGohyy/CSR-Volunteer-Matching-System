@@ -14,6 +14,11 @@ Think of it like a restaurant:
 - 👨‍🍳 **Control** = Chefs (prepare the food, follow recipes)
 - 📦 **Entity** = Ingredients & Recipes (the actual data)
 
+> **📝 Note on Interpretation:**  
+> This document focuses on **Backend BCE**, where we treat our API layer as the Boundary.  
+> For academic discussions about **Classical BCE** (where frontend = Boundary), see [BCE_INTERPRETATION.md](BCE_INTERPRETATION.md).  
+> Both interpretations are valid - it depends on the scope of the system you're describing!
+
 ---
 
 ## 🎯 How BCE is Implemented in Your Project
