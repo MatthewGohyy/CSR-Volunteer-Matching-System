@@ -1,4 +1,9 @@
 # 🎯 BCE Architecture - Simple Guide
+## Classical Boundary-Control-Entity Pattern
+
+> **📝 Academic Note**: This guide uses the classical BCE interpretation (Jacobson's OOSE),  
+> where Boundary = Frontend UI, Control = Backend Logic, Entity = Database.  
+> This is the appropriate interpretation for academic reports.
 
 ## 🍴 The Restaurant Analogy (30 seconds)
 
@@ -7,18 +12,18 @@
 │              CSR VOLUNTEER MATCHING SYSTEM              │
 └─────────────────────────────────────────────────────────┘
 
-    🚪 BOUNDARY = Waiters          📂 Where: routes/
-    (Take orders, serve food)      ├── auth.ts
-                                   ├── opportunities.ts
-                                   └── matches.ts
+    🚪 BOUNDARY = Dining Area       📂 Where: client/src/
+    (Where customers interact)      ├── components/ (UI)
+                                   ├── services/ (API calls)
+                                   └── React frontend
 
-    👨‍🍳 CONTROL = Chefs             📂 Where: controllers/
-    (Cook, follow recipes)         ├── auth.controller.ts
-                                   ├── request.controller.ts
-                                   └── match.controller.ts
+    👨‍🍳 CONTROL = Kitchen            📂 Where: server/src/
+    (Where food is prepared)       ├── routes/ (endpoints)
+                                   ├── controllers/ (logic)
+                                   └── Node.js backend
 
-    📦 ENTITY = Ingredients         📂 Where: prisma/
-    (The actual food & recipes)    └── schema.prisma
+    📦 ENTITY = Storage Room        📂 Where: server/prisma/
+    (Where ingredients are stored) └── schema.prisma
 ```
 
 ---
@@ -26,73 +31,88 @@
 ## 🔄 Complete Flow (User Login Example)
 
 ```
-1. USER                    →  Enters email & password
-                              |
-2. BOUNDARY (routes/)      →  POST /api/auth/login
-   ├── Receives request
-   ├── Validates format
-   └── Routes to controller
-                              |
-3. CONTROL (controllers/)  →  AuthController.login
-   ├── Check if email exists
-   ├── Compare password hash
+1. USER                         →  Types in browser
+                                   |
+2. BOUNDARY (Frontend)          →  LoginPage.tsx
+   ├── User enters email & password
+   ├── Clicks login button
+   └── authService.login(email, pwd)
+                                   | HTTP POST
+3. CONTROL (Backend API)        →  POST /api/auth/login
+   ├── routes/auth.ts receives request
+   ├── Validates request format
+   └── Calls AuthController.login
+                                   |
+4. CONTROL (Business Logic)     →  AuthController.login
+   ├── Find user by email
+   ├── Check password hash
    ├── Generate JWT token
    └── Format response
-                              |
-4. ENTITY (Prisma)         →  Database Query
+                                   | SQL Query
+5. ENTITY (Database)            →  Prisma ORM
    └── SELECT * FROM User WHERE email = '...'
-                              |
-5. CONTROL                 →  Send response back
-                              |
-6. BOUNDARY                →  HTTP 200 { user, token }
-                              |
-7. USER                    →  See dashboard ✅
+                                   | Result
+6. CONTROL                      →  Format & send response
+                                   | JSON
+7. BOUNDARY (Frontend)          →  authService receives response
+   ├── Store JWT token
+   ├── Update UI state
+   └── Navigate to dashboard
+                                   |
+8. USER                         →  See dashboard ✅
 ```
 
 ---
 
-## 📊 Your Project Structure (Visual Map)
+## 📊 Your Project Structure (Classical BCE Map)
 
 ```
 CSR-Volunteer-Matching-System/
-└── server/src/
 
-    🚪 BOUNDARY LAYER
-    ├── routes/
-    │   ├── auth.ts              → /api/auth/*
-    │   ├── opportunities.ts     → /api/opportunities/*
-    │   ├── volunteers.ts        → /api/volunteers/*
-    │   ├── organizations.ts     → /api/organizations/*
-    │   └── matches.ts           → /api/matches/*
-    │
-    └── validators/
-        ├── auth.validator.ts    → Input validation rules
-        └── request.validator.ts
-
-    ────────────────────────────────────────────────────
-
-    👨‍🍳 CONTROL LAYER
-    ├── controllers/
-    │   ├── auth.controller.ts      → Login, Register logic
-    │   ├── request.controller.ts   → Create, view requests
-    │   ├── pin.controller.ts       → PIN operations
-    │   ├── csrRep.controller.ts    → CSR Rep operations
-    │   └── match.controller.ts     → Match logic
-    │
-    ├── middleware/
-    │   ├── auth.ts                 → JWT authentication
-    │   ├── validation.ts           → Validate inputs
-    │   └── errorHandler.ts         → Catch errors
-    │
-    └── utils/
-        ├── jwt.ts                  → Token generation
-        └── password.ts             → Password hashing
+    🚪 BOUNDARY LAYER (Frontend - User Interface)
+    └── client/src/
+        ├── components/              → UI Components
+        │   ├── LoginPage.tsx        → Login interface
+        │   ├── Dashboard.tsx        → User dashboard
+        │   ├── AdminDashboard.tsx   → Admin interface
+        │   └── CreateUserModal.tsx  → User forms
+        │
+        └── services/                → Backend communication
+            ├── authService.ts       → Auth API calls
+            ├── requestService.ts    → Request API calls
+            ├── adminService.ts      → Admin API calls
+            └── matchService.ts      → Match API calls
 
     ────────────────────────────────────────────────────
 
-    📦 ENTITY LAYER
-    └── prisma/
-        └── schema.prisma           → Data models
+    👨‍🍳 CONTROL LAYER (Backend - Business Logic)
+    └── server/src/
+        ├── routes/                  → API endpoints
+        │   ├── auth.ts              → /api/auth/*
+        │   ├── opportunities.ts     → /api/opportunities/*
+        │   ├── admin.ts             → /api/admin/*
+        │   └── matches.ts           → /api/matches/*
+        │
+        ├── controllers/             → Use case logic
+        │   ├── auth.controller.ts   → Login, Register
+        │   ├── request.controller.ts→ Request management
+        │   ├── admin.controller.ts  → Admin operations
+        │   └── match.controller.ts  → Matching logic
+        │
+        ├── middleware/              → Cross-cutting
+        │   ├── auth.ts              → JWT authentication
+        │   ├── validation.ts        → Input validation
+        │   └── errorHandler.ts      → Error handling
+        │
+        └── utils/                   → Helpers
+            ├── jwt.ts               → Token generation
+            └── password.ts          → Password hashing
+
+    ────────────────────────────────────────────────────
+
+    📦 ENTITY LAYER (Backend - Data Persistence)
+    └── server/prisma/
+        └── schema.prisma            → Data models
             ├── User
             ├── PIN
             ├── CSRRep

@@ -2,22 +2,22 @@
 
 ## 📚 What is BCE?
 
-**BCE = Boundary-Control-Entity**
+**BCE = Boundary-Control-Entity** (also known as ECB - Entity-Control-Boundary)
 
-It's a software architecture pattern that separates your application into three clear layers:
-- **B**oundary - Handles communication with the outside world
-- **C**ontrol - Contains business logic and coordinates operations
-- **E**ntity - Represents data and database models
+BCE is a classical software architecture pattern from Ivar Jacobson's Object-Oriented Software Engineering that separates applications into three clear layers:
+
+- **B**oundary - User interface and presentation layer (Frontend)
+- **C**ontrol - Business logic and application coordination (Backend)
+- **E**ntity - Data models and persistent storage (Backend)
 
 Think of it like a restaurant:
-- 🚪 **Boundary** = Waiters (take orders, serve food)
-- 👨‍🍳 **Control** = Chefs (prepare the food, follow recipes)
-- 📦 **Entity** = Ingredients & Recipes (the actual data)
+- 🚪 **Boundary** = Dining area where customers interact (Frontend UI)
+- 👨‍🍳 **Control** = Kitchen where food is prepared (Backend Logic)
+- 📦 **Entity** = Storage room with ingredients (Database)
 
-> **📝 Note on Interpretation:**  
-> This document focuses on **Backend BCE**, where we treat our API layer as the Boundary.  
-> For academic discussions about **Classical BCE** (where frontend = Boundary), see [BCE_INTERPRETATION.md](BCE_INTERPRETATION.md).  
-> Both interpretations are valid - it depends on the scope of the system you're describing!
+> **📝 Academic Note:**  
+> This document follows the **classical BCE pattern** as defined in academic literature.  
+> This is the appropriate interpretation for academic reports and presentations.
 
 ---
 
@@ -26,74 +26,124 @@ Think of it like a restaurant:
 ### **Architecture Overview:**
 
 ```
-CLIENT REQUEST
+USER INTERACTION
       ↓
-📍 BOUNDARY LAYER (Routes)
-      ↓
-🎮 CONTROL LAYER (Controllers + Middleware)
-      ↓
-📦 ENTITY LAYER (Prisma Models + Database)
+📍 BOUNDARY LAYER (Frontend - React Components)
+      ↓ HTTP/REST API
+🎮 CONTROL LAYER (Backend - Controllers + API)
+      ↓ Database Queries
+📦 ENTITY LAYER (Backend - Prisma Models + Database)
       ↓
 DATABASE
 ```
 
 ---
 
-## 🔵 **1. BOUNDARY Layer** (Routes)
+## 🔵 **1. BOUNDARY Layer** (Frontend - User Interface)
 
-**What:** Entry points for external requests  
-**Where:** `server/src/routes/`  
-**Purpose:** Define API endpoints and route requests to controllers
+**What:** User interface and presentation layer  
+**Where:** `client/src/components/` and `client/src/services/`  
+**Purpose:** Handle user interaction, display data, send requests to backend
 
 ### **Files:**
 ```
-routes/
-├── auth.ts           # Authentication endpoints
-├── opportunities.ts  # Request/opportunity endpoints
-├── volunteers.ts     # PIN endpoints
-├── organizations.ts  # CSR Rep endpoints
-└── matches.ts        # Match endpoints
+client/src/
+├── components/
+│   ├── LoginPage.tsx         # User authentication interface
+│   ├── Dashboard.tsx         # Main user dashboard
+│   ├── AdminDashboard.tsx    # Admin management interface
+│   ├── CreateUserModal.tsx   # User creation forms
+│   └── UserDetailsModal.tsx  # User information display
+│
+└── services/
+    ├── authService.ts        # Authentication API calls
+    ├── adminService.ts       # Admin operations API calls
+    ├── requestService.ts     # Request management API calls
+    └── matchService.ts       # Matching operations API calls
 ```
 
-### **Example - auth.ts:**
+### **Example - LoginPage.tsx (Boundary):**
 ```typescript
-// BOUNDARY: Defines API endpoints
-router.post('/register/pin', 
-  validateRequest(pinRegistrationRules),  // Validation
-  AuthController.registerPIN              // Route to controller
-);
+// BOUNDARY: User interface for login
+export const LoginPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-router.post('/login', 
-  validateRequest(loginRules),
-  AuthController.login
-);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // Calls Control layer via API
+      const response = await authService.login(email, password);
+      // Display result to user
+      navigate('/dashboard');
+    } catch (error) {
+      setError('Login failed');
+    }
+  };
+
+  return (
+    <form onSubmit={handleLogin}>
+      <input type="email" value={email} onChange={e => setEmail(e.target.value)} />
+      <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+      <button type="submit">Login</button>
+    </form>
+  );
+};
+```
+
+### **Example - authService.ts (Boundary - API Interface):**
+```typescript
+// BOUNDARY: Interface to backend Control layer
+export const authService = {
+  async login(email: string, password: string) {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    return response.json();
+  }
+};
 ```
 
 **What it does:**
-- ✅ Defines URL paths (`/api/auth/login`)
-- ✅ Applies validation rules
-- ✅ Routes to appropriate controller method
-- ✅ Handles HTTP methods (GET, POST, PUT, DELETE)
+- ✅ Displays UI to users
+- ✅ Captures user input (forms, clicks)
+- ✅ Validates input on client side
+- ✅ Sends HTTP requests to Control layer
+- ✅ Displays responses and feedback to users
+- ✅ Handles navigation and routing
 
 ---
 
-## 🟢 **2. CONTROL Layer** (Controllers + Middleware)
+## 🟢 **2. CONTROL Layer** (Backend - Business Logic)
 
-**What:** Business logic and coordination  
-**Where:** `server/src/controllers/` and `server/src/middleware/`  
-**Purpose:** Process requests, apply business rules, orchestrate operations
+**What:** Business logic, use case implementation, and application coordination  
+**Where:** `server/src/` (Controllers, Routes, Middleware)  
+**Purpose:** Receive requests from Boundary, implement business rules, coordinate with Entity layer
 
-### **Controllers:**
+### **Structure:**
 ```
-controllers/
-├── auth.controller.ts     # Authentication logic
-├── request.controller.ts  # Request management logic
-├── pin.controller.ts      # PIN-specific logic
-├── csrRep.controller.ts   # CSR Rep-specific logic
-└── match.controller.ts    # Matching logic
+server/src/
+├── routes/                  # API endpoint definitions
+│   ├── auth.ts             # Authentication endpoints
+│   ├── opportunities.ts    # Request/opportunity endpoints
+│   ├── admin.ts            # Admin management endpoints
+│   └── matches.ts          # Matching endpoints
+│
+├── controllers/            # Business logic implementation
+│   ├── auth.controller.ts   # Authentication use cases
+│   ├── request.controller.ts # Request management logic
+│   ├── admin.controller.ts  # Admin operations logic
+│   └── match.controller.ts  # Matching algorithms
+│
+└── middleware/             # Cross-cutting concerns
+    ├── auth.ts             # JWT authentication
+    ├── validation.ts       # Input validation
+    └── errorHandler.ts     # Error handling
 ```
 
-### **Example - auth.controller.ts:**
+### **Example - auth.controller.ts (Control Layer):**
 ```typescript
 // CONTROL: Business logic for registration
 static async registerPIN(req: Request, res: Response) {
@@ -133,34 +183,37 @@ static async registerPIN(req: Request, res: Response) {
 ```
 
 **What it does:**
-- ✅ Validates business rules
-- ✅ Processes data
-- ✅ Coordinates between layers
-- ✅ Handles errors
-- ✅ Formats responses
+- ✅ Receives HTTP requests from Boundary (Frontend)
+- ✅ Validates business rules and authorization
+- ✅ Implements use case logic
+- ✅ Coordinates with Entity layer for data operations
+- ✅ Handles errors and edge cases
+- ✅ Formats and sends responses back to Boundary
 
-### **Middleware:**
-```
-middleware/
-├── auth.ts           # JWT authentication
-├── validation.ts     # Input validation
-└── errorHandler.ts   # Error handling
-```
-
-**Example - auth.ts middleware:**
+### **API Routes (Control Layer Entry Points):**
 ```typescript
-// CONTROL: Authentication logic
+// server/src/routes/auth.ts
+// CONTROL: Receives requests from Boundary layer
+router.post('/register/pin', 
+  validate(registerPINValidation),  // Validate input
+  AuthController.registerPIN        // Execute use case
+);
+
+router.post('/login', 
+  validate(loginValidation),
+  AuthController.login
+);
+```
+
+### **Middleware (Control Layer Support):**
+```typescript
+// server/src/middleware/auth.ts
+// CONTROL: Authentication middleware
 export const authenticate = async (req, res, next) => {
-  // 1. Extract token
+  // Verify JWT token from Boundary
   const token = req.headers.authorization?.split(' ')[1];
-  
-  // 2. Verify token
   const decoded = verifyToken(token);
-  
-  // 3. Attach user to request
   req.user = decoded;
-  
-  // 4. Continue to next handler
   next();
 };
 ```
@@ -231,24 +284,51 @@ model Request {
 
 ## 🔄 **Complete Flow Example: User Login**
 
-Let's trace a login request through all BCE layers:
+Let's trace a login request through all three BCE layers:
 
-### **1. CLIENT sends request:**
-```javascript
-POST http://localhost:4000/api/auth/login
-Body: { "email": "user@example.com", "password": "pass123" }
+### **1. BOUNDARY (Frontend) - User Interaction:**
+```typescript
+// client/src/components/LoginPage.tsx
+// User fills in login form and clicks submit
+const LoginPage = () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    // Call backend API
+    const response = await authService.login(email, password);
+    if (response.token) {
+      navigate('/dashboard');
+    }
+  };
+  return <form onSubmit={handleLogin}>...</form>;
+};
 ```
 
-### **2. BOUNDARY (Routes) receives it:**
 ```typescript
-// routes/auth.ts
+// client/src/services/authService.ts
+// Boundary sends HTTP request to Control layer
+export const authService = {
+  login: async (email: string, password: string) => {
+    const response = await fetch('http://localhost:4000/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    return response.json();
+  }
+};
+```
+
+### **2. CONTROL (Backend) - Receives and Processes:**
+```typescript
+// server/src/routes/auth.ts
+// Control layer receives request from Boundary
 router.post('/login',
   validateRequest(loginRules),  // Validate input
-  AuthController.login          // Send to controller
+  AuthController.login          // Execute use case
 );
 ```
 
-### **3. CONTROL (Controller) processes it:**
+### **3. CONTROL (Controller) - Business Logic:**
 ```typescript
 // controllers/auth.controller.ts
 static async login(req, res) {
@@ -280,60 +360,108 @@ static async login(req, res) {
 }
 ```
 
-### **4. ENTITY (Prisma) queries database:**
+### **4. ENTITY (Database) - Data Access:**
 ```typescript
-// Prisma translates to SQL:
+// prisma/schema.prisma
+// Entity layer defines data structure
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  userType UserType
+  pin      PIN?
+  csrRep   CSRRep?
+}
+```
+
+```sql
+-- Prisma translates to SQL query:
 SELECT * FROM "User" 
 LEFT JOIN "PIN" ON "User"."id" = "PIN"."userId"
 LEFT JOIN "CSRRep" ON "User"."id" = "CSRRep"."userId"
 WHERE "email" = 'user@example.com'
 ```
 
-### **5. Response flows back:**
+### **5. Response flows back through layers:**
 ```
-DATABASE → Entity → Control → Boundary → CLIENT
+DATABASE → ENTITY (Data) → CONTROL (Process) → BOUNDARY (Display)
+   ↓           ↓                ↓                     ↓
+Returns    Query result   Format response     Show dashboard
+user data   to controller  + generate token    to user
+```
+
+### **6. BOUNDARY (Frontend) - Display Result:**
+```typescript
+// client/src/components/LoginPage.tsx
+// Boundary receives response and updates UI
+const response = await authService.login(email, password);
+if (response.token) {
+  localStorage.setItem('token', response.token);
+  navigate('/dashboard');  // Show user their dashboard
+}
 ```
 
 ---
 
-## 📊 **Your Project Structure (BCE Mapped)**
+## 📊 **Your Project Structure (Classical BCE Mapped)**
 
 ```
-server/src/
+CSR-Volunteer-Matching-System/
 │
-├── 📍 BOUNDARY LAYER
-│   ├── routes/
-│   │   ├── auth.ts          # /api/auth/*
-│   │   ├── opportunities.ts # /api/opportunities/*
-│   │   ├── volunteers.ts    # /api/volunteers/*
-│   │   ├── organizations.ts # /api/organizations/*
-│   │   └── matches.ts       # /api/matches/*
-│   │
-│   └── validators/          # Input validation rules
-│       ├── auth.validator.ts
-│       └── request.validator.ts
+├── 📍 BOUNDARY LAYER (Frontend - User Interface)
+│   └── client/src/
+│       ├── components/              # UI Components
+│       │   ├── LoginPage.tsx        # Authentication UI
+│       │   ├── Dashboard.tsx        # Main dashboard
+│       │   ├── AdminDashboard.tsx   # Admin interface
+│       │   ├── CreateUserModal.tsx  # User creation forms
+│       │   └── UserDetailsModal.tsx # User details display
+│       │
+│       ├── services/                # API communication
+│       │   ├── authService.ts       # Auth API calls
+│       │   ├── adminService.ts      # Admin API calls
+│       │   ├── requestService.ts    # Request API calls
+│       │   └── matchService.ts      # Match API calls
+│       │
+│       └── types/                   # TypeScript types
+│           └── index.ts             # Shared types
 │
-├── 🎮 CONTROL LAYER
-│   ├── controllers/
-│   │   ├── auth.controller.ts      # Auth business logic
-│   │   ├── request.controller.ts   # Request logic
-│   │   ├── pin.controller.ts       # PIN logic
-│   │   ├── csrRep.controller.ts    # CSR Rep logic
-│   │   └── match.controller.ts     # Match logic
-│   │
-│   ├── middleware/
-│   │   ├── auth.ts          # Authentication
-│   │   ├── validation.ts    # Validation
-│   │   └── errorHandler.ts  # Error handling
-│   │
-│   └── utils/               # Helper functions
-│       ├── jwt.ts
-│       └── password.ts
+├── 🎮 CONTROL LAYER (Backend - Business Logic)
+│   └── server/src/
+│       ├── routes/                  # API endpoints (entry points)
+│       │   ├── auth.ts              # /api/auth/*
+│       │   ├── opportunities.ts     # /api/opportunities/*
+│       │   ├── admin.ts             # /api/admin/*
+│       │   └── matches.ts           # /api/matches/*
+│       │
+│       ├── controllers/             # Use case implementation
+│       │   ├── auth.controller.ts   # Auth business logic
+│       │   ├── request.controller.ts # Request management
+│       │   ├── admin.controller.ts  # Admin operations
+│       │   └── match.controller.ts  # Matching algorithms
+│       │
+│       ├── middleware/              # Cross-cutting concerns
+│       │   ├── auth.ts              # JWT authentication
+│       │   ├── validation.ts        # Input validation
+│       │   └── errorHandler.ts      # Error handling
+│       │
+│       ├── validators/              # Validation schemas
+│       │   ├── auth.validator.ts
+│       │   └── request.validator.ts
+│       │
+│       └── utils/                   # Helper functions
+│           ├── jwt.ts               # Token generation
+│           └── password.ts          # Password hashing
 │
-└── 📦 ENTITY LAYER
-    ├── prisma/schema.prisma # Data models (outside src/)
-    ├── dto/                 # Data Transfer Objects
-    └── config/database.ts   # Database connection
+└── 📦 ENTITY LAYER (Backend - Data Persistence)
+    └── server/
+        ├── prisma/
+        │   ├── schema.prisma        # Data models & relationships
+        │   ├── migrations/          # Database migrations
+        │   └── seed.ts              # Initial data
+        │
+        └── src/config/
+            └── database.ts          # Database connection
 ```
 
 ---
@@ -526,27 +654,33 @@ model Match {
 
 ## 🎓 **Summary**
 
-**BCE in Your Project:**
+**Classical BCE in Your Project:**
 
 | Layer | What | Where | Example |
 |-------|------|-------|---------|
-| **Boundary** | API endpoints, routing | `routes/` | `POST /api/auth/login` |
-| **Control** | Business logic, coordination | `controllers/`, `middleware/` | Validate user, hash password |
-| **Entity** | Data models, database | `prisma/schema.prisma` | User, Request, Match models |
+| **Boundary** | User interface, presentation | `client/src/components/`, `client/src/services/` | LoginPage.tsx, authService.ts |
+| **Control** | Business logic, use cases | `server/src/routes/`, `server/src/controllers/` | AuthController, API endpoints |
+| **Entity** | Data models, persistence | `server/prisma/schema.prisma` | User, Request, Match models |
 
-**Flow:**
+**Complete Flow:**
 ```
-User clicks Login
+User interacts with UI
   ↓
-Boundary: Route receives request → routes/auth.ts
+Boundary: LoginPage.tsx captures input
   ↓
-Control: Validate & process → controllers/auth.controller.ts
+Boundary: authService.ts sends HTTP request
+  ↓ HTTP/REST API
+Control: routes/auth.ts receives request
   ↓
-Entity: Query database → Prisma models
+Control: auth.controller.ts validates & processes
   ↓
-Control: Format response
+Entity: Prisma queries database models
+  ↓ Query result
+Control: Formats response with JWT token
+  ↓ JSON response
+Boundary: authService.ts receives response
   ↓
-Boundary: Send to client
+Boundary: LoginPage.tsx updates UI
   ↓
 User sees dashboard
 ```
@@ -555,14 +689,46 @@ User sees dashboard
 
 ## 💡 **Key Takeaway**
 
-**BCE keeps your code organized:**
-- 📍 **Boundary** = "What endpoints do we have?"
-- 🎮 **Control** = "What rules do we follow?"
-- 📦 **Entity** = "What data do we store?"
+**Classical BCE keeps your entire application organized:**
+- 📍 **Boundary** = "How do users interact?" (Frontend UI)
+- 🎮 **Control** = "What are the business rules?" (Backend Logic)
+- 📦 **Entity** = "What data do we store?" (Database Models)
 
-Each layer talks only to its neighbors, keeping everything clean and maintainable!
+Each layer has a clear responsibility and communicates only with adjacent layers!
 
 ---
 
-**Your backend follows BCE perfectly! 🎉**
+## 📝 **For Academic Reports**
+
+When documenting BCE architecture in your academic submission:
+
+### **Architecture Description:**
+> "Our CSR Volunteer Matching System implements the **Boundary-Control-Entity (BCE)** 
+> architectural pattern, originally introduced by Ivar Jacobson in Object-Oriented 
+> Software Engineering.
+>
+> - **Boundary Layer**: Implemented using React components (`client/src/components/`) 
+>   and service modules (`client/src/services/`), handling all user interactions 
+>   and presentation logic.
+>
+> - **Control Layer**: Implemented using Node.js/Express (`server/src/controllers/`, 
+>   `server/src/routes/`), managing business logic, use case orchestration, and 
+>   API endpoints.
+>
+> - **Entity Layer**: Implemented using Prisma ORM (`server/prisma/schema.prisma`), 
+>   defining domain models and managing data persistence in PostgreSQL database.
+>
+> This separation provides clear modularity, improved maintainability, and allows 
+> independent development and testing of each layer."
+
+### **Benefits to Highlight:**
+1. **Separation of Concerns**: Each layer has distinct responsibilities
+2. **Maintainability**: Changes to UI don't affect business logic or data
+3. **Testability**: Layers can be tested independently
+4. **Scalability**: Layers can be scaled or replaced independently
+5. **Team Collaboration**: Frontend and backend teams can work in parallel
+
+---
+
+**Your system follows classical BCE architecture perfectly! 🎉**
 

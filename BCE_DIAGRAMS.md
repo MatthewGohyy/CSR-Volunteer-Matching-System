@@ -1,7 +1,10 @@
 # BCE Diagrams - CSR Volunteer Matching System
+## Classical Boundary-Control-Entity Architecture
 
 ## Overview
-This document contains BCE (Boundary-Control-Entity) diagrams for our main features, showing the flow from API routes → Controller logic → Database entities.
+This document contains **Classical BCE diagrams** for our main features, showing the flow from **Frontend UI (Boundary)** → **Backend Logic (Control)** → **Database Models (Entity)**.
+
+> **📝 Note**: These diagrams follow the classical/academic BCE interpretation, appropriate for academic reports and documentation.
 
 ---
 
@@ -9,37 +12,45 @@ This document contains BCE (Boundary-Control-Entity) diagrams for our main featu
 
 ```
 ┌─────────────────────────────────────┐     ┌──────────────────────────────────────┐     ┌─────────────────────────────────────┐
-│      auth_registrationPage          │     │       AuthController                 │     │          UserEntity                 │
+│     RegisterPage.tsx                │     │      AuthController                  │     │          UserEntity                 │
 │         (BOUNDARY)                  │────▶│         (CONTROL)                    │────▶│          (ENTITY)                   │
+│      Frontend - React               │     │       Backend - Node.js              │     │      Database - Prisma              │
 ├─────────────────────────────────────┤     ├──────────────────────────────────────┤     ├─────────────────────────────────────┤
 │                                     │     │                                      │     │                                     │
-│ Route: POST /api/auth/register/pin │     │ +async registerPIN(                  │     │ model User {                        │
-│                                     │     │    email: string,                    │     │   id: string                        │
-│ +validate(registerPINValidation)    │     │    password: string,                 │     │   email: string @unique             │
-│                                     │     │    name: string,                     │     │   password: string                  │
-│ +send_to_controller()               │     │    age: int,                         │     │   userType: UserType                │
-│                                     │     │    location: string,                 │     │   status: UserStatus                │
-│ +return_JSON_response()             │     │    phoneNumber: string,              │     │   pin: PIN                          │
-│   - 201: Success with token         │     │    accessibilityNeeds: string        │     │   csrRep: CSRRep                    │
-│   - 409: Email exists               │     │  ): Promise<Response>                │     │   createdAt: DateTime               │
-│   - 400: Validation error           │     │                                      │     │ }                                   │
-│                                     │     │ // Business Logic:                   │     │                                     │
-│                                     │     │ +check_existing_user()               │     │ model PIN {                         │
-│                                     │     │ +hash_password()                     │     │   id: string                        │
-│                                     │     │ +create_user_and_profile()           │     │   userId: string @unique            │
-│                                     │     │ +generate_jwt_token()                │     │   name: string                      │
-│                                     │     │ +format_response()                   │     │   age: int                          │
-│                                     │     │                                      │     │   location: string                  │
-│                                     │     │ // Error Handling:                   │     │   phoneNumber: string               │
-│                                     │     │ +throw AppError (409)                │     │   accessibilityNeeds: string        │
-│                                     │     │   if email exists                    │     │   user: User                        │
-│                                     │     │                                      │     │   requests: Request[]               │
-│                                     │     │                                      │     │   matches: Match[]                  │
-│                                     │     │                                      │     │ }                                   │
+│ UI Component:                       │     │ API Endpoint:                        │     │ model User {                        │
+│   +form inputs (email, password,    │     │   POST /api/auth/register/pin        │     │   id: string                        │
+│    name, age, location)             │     │                                      │     │   email: string @unique             │
+│                                     │     │ +async registerPIN(                  │     │   password: string                  │
+│ API Call:                           │     │    email: string,                    │     │   userType: UserType                │
+│   +authService.registerPIN(data)    │     │    password: string,                 │     │   status: UserStatus                │
+│                                     │     │    name: string,                     │     │   pin: PIN                          │
+│ User Actions:                       │     │    age: int,                         │     │   csrRep: CSRRep                    │
+│   +fill_form()                      │     │    location: string,                 │     │   createdAt: DateTime               │
+│   +click_register_button()          │     │    phoneNumber: string,              │     │ }                                   │
+│   +display_success_message()        │     │    accessibilityNeeds: string        │     │                                     │
+│   +navigate_to_dashboard()          │     │  ): Promise<Response>                │     │ model PIN {                         │
+│                                     │     │                                      │     │   id: string                        │
+│ HTTP Request:                       │     │ // Business Logic:                   │     │   userId: string @unique            │
+│   POST with JSON body               │     │ +check_existing_user()               │     │   name: string                      │
+│   Headers: Content-Type             │     │ +validate_input_data()               │     │   age: int                          │
+│                                     │     │ +hash_password()                     │     │   location: string                  │
+│ Response Handling:                  │     │ +create_user_and_profile()           │     │   phoneNumber: string               │
+│   - 201: Store token, redirect     │     │ +generate_jwt_token()                │     │   accessibilityNeeds: string        │
+│   - 409: Show "Email exists" error  │     │ +format_response()                   │     │   user: User                        │
+│   - 400: Show validation errors     │     │                                      │     │   requests: Request[]               │
+│                                     │     │ // Error Handling:                   │     │   matches: Match[]                  │
+│                                     │     │ +throw AppError (409)                │     │ }                                   │
+│                                     │     │   if email exists                    │     │                                     │
+│                                     │     │ +throw AppError (400)                │     │ Relationships:                      │
+│                                     │     │   if validation fails                │     │   User ← PIN (one-to-one)           │
+│                                     │     │                                      │     │   PIN  → Request (one-to-many)      │
+│                                     │     │ HTTP Response:                       │     │   PIN  → Match (one-to-many)        │
+│                                     │     │   JSON with user data + JWT token    │     │                                     │
 └─────────────────────────────────────┘     └──────────────────────────────────────┘     └─────────────────────────────────────┘
          ↑                                              ↑                                             ↑
          │                                              │                                             │
-    API Endpoint                                 Business Logic                                Database Model
+   User Interface                             Business Logic Layer                        Data Persistence Layer
+   (Presentation)                             (Application Layer)                          (Domain Models)
 ```
 
 ---
@@ -48,29 +59,41 @@ This document contains BCE (Boundary-Control-Entity) diagrams for our main featu
 
 ```
 ┌─────────────────────────────────────┐     ┌──────────────────────────────────────┐     ┌─────────────────────────────────────┐
-│         auth_loginPage              │     │       AuthController                 │     │          UserEntity                 │
+│        LoginPage.tsx                │     │       AuthController                 │     │          UserEntity                 │
 │         (BOUNDARY)                  │────▶│         (CONTROL)                    │────▶│          (ENTITY)                   │
+│      Frontend - React               │     │       Backend - Node.js              │     │      Database - Prisma              │
 ├─────────────────────────────────────┤     ├──────────────────────────────────────┤     ├─────────────────────────────────────┤
 │                                     │     │                                      │     │                                     │
-│ Route: POST /api/auth/login         │     │ +async login(                        │     │ model User {                        │
-│                                     │     │    email: string,                    │     │   id: string                        │
-│ +validate(loginValidation)          │     │    password: string                  │     │   email: string @unique             │
-│                                     │     │  ): Promise<Response>                │     │   password: string (hashed)         │
-│ +send_to_controller()               │     │                                      │     │   userType: UserType                │
-│                                     │     │ // Business Logic:                   │     │   status: UserStatus                │
-│ +return_JSON_response()             │     │ +find_user_by_email()                │     │   pin: PIN                          │
-│   - 200: Success with token         │     │ +check_user_status()                 │     │   csrRep: CSRRep                    │
-│   - 401: Invalid credentials        │     │ +verify_password()                   │     │ }                                   │
-│   - 403: Account inactive           │     │ +check_approval_status()             │     │                                     │
-│   - 403: Pending approval           │     │ +generate_jwt_token()                │     │ Relationships:                      │
-│                                     │     │ +format_response()                   │     │   User ← PIN (one-to-one)           │
-│                                     │     │                                      │     │   User ← CSRRep (one-to-one)        │
-│                                     │     │ // Error Handling:                   │     │                                     │
-│                                     │     │ +throw AppError (401)                │     │ Query:                              │
-│                                     │     │   if credentials invalid             │     │   findUnique({ email })             │
-│                                     │     │ +throw AppError (403)                │     │   include: { pin, csrRep }          │
-│                                     │     │   if account not active              │     │                                     │
+│ UI Component:                       │     │ API Endpoint:                        │     │ model User {                        │
+│   +email input field                │     │   POST /api/auth/login               │     │   id: string                        │
+│   +password input field             │     │                                      │     │   email: string @unique             │
+│   +login button                     │     │ +async login(                        │     │   password: string (hashed)         │
+│   +error message display            │     │    email: string,                    │     │   userType: UserType                │
+│                                     │     │    password: string                  │     │   status: UserStatus                │
+│ API Call:                           │     │  ): Promise<Response>                │     │   pin: PIN                          │
+│   +authService.login(email, pwd)    │     │                                      │     │   csrRep: CSRRep                    │
+│                                     │     │ // Business Logic:                   │     │ }                                   │
+│ User Actions:                       │     │ +find_user_by_email()                │     │                                     │
+│   +enter_credentials()              │     │ +check_user_status_active()          │     │ Relationships:                      │
+│   +click_login_button()             │     │ +verify_password_hash()              │     │   User ← PIN (one-to-one)           │
+│   +store_token_on_success()         │     │ +check_approval_status()             │     │   User ← CSRRep (one-to-one)        │
+│   +navigate_to_dashboard()          │     │ +generate_jwt_token()                │     │                                     │
+│                                     │     │ +format_response_with_profile()      │     │ Query:                              │
+│ HTTP Request:                       │     │                                      │     │   prisma.user.findUnique({          │
+│   POST with JSON body               │     │ // Error Handling:                   │     │     where: { email },               │
+│   { email, password }               │     │ +throw AppError (401)                │     │     include: {                      │
+│                                     │     │   if credentials invalid             │     │       pin: true,                    │
+│ Response Handling:                  │     │ +throw AppError (403)                │     │       csrRep: true                  │
+│   - 200: Save token, redirect       │     │   if account not active              │     │     }                               │
+│   - 401: Show "Invalid credentials" │     │ +throw AppError (403)                │     │   })                                │
+│   - 403: Show "Account inactive"    │     │   if pending approval                │     │                                     │
+│   - 403: Show "Pending approval"    │     │                                      │     │ Password verification:              │
+│                                     │     │ HTTP Response:                       │     │   Compare hashed password           │
+│                                     │     │   JSON with user + token + profile   │     │   using bcrypt                      │
 └─────────────────────────────────────┘     └──────────────────────────────────────┘     └─────────────────────────────────────┘
+         ↑                                              ↑                                             ↑
+         │                                              │                                             │
+   User Interface                             Business Logic Layer                        Data Persistence Layer
 ```
 
 ---
@@ -285,25 +308,32 @@ This document contains BCE (Boundary-Control-Entity) diagrams for our main featu
 
 ## Pattern Summary
 
+> **📝 Note**: All diagrams in this document use the **Classical BCE** pattern (Jacobson's OOSE),  
+> where Boundary = Frontend, Control = Backend, Entity = Database.  
+> This is the appropriate interpretation for academic reports and presentations.
+
 ### Common Flow Across All Features:
 
 ```
-1. BOUNDARY (routes/)
-   ├─ Define HTTP endpoint (GET, POST, PUT, DELETE)
+1. BOUNDARY (client/src/)
+   ├─ Display UI to user (React components)
+   ├─ Capture user input (forms, clicks)
+   ├─ Validate input on client side
+   ├─ Send HTTP requests to backend (services/)
+   └─ Display results and handle errors
+
+2. CONTROL (server/src/)
+   ├─ Receive HTTP requests (routes/)
    ├─ Apply middleware (authenticate, authorize, validate)
-   └─ Route to controller method
-
-2. CONTROL (controllers/)
-   ├─ Extract data from request
-   ├─ Apply business rules & validation
-   ├─ Coordinate with Entity layer (database)
+   ├─ Execute business logic (controllers/)
+   ├─ Coordinate with Entity layer (database queries)
    ├─ Handle errors
-   └─ Format response
+   └─ Format and send HTTP response
 
-3. ENTITY (prisma/schema.prisma)
+3. ENTITY (server/prisma/schema.prisma)
    ├─ Define data structure (models)
-   ├─ Define relationships
-   ├─ Handle database queries
+   ├─ Define relationships (one-to-many, many-to-many)
+   ├─ Handle database queries (via Prisma ORM)
    └─ Return data to Control layer
 ```
 
