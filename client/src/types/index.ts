@@ -1,5 +1,5 @@
 // User Types
-export type UserType = 'PIN' | 'CSR_REP' | 'ADMIN';
+export type UserType = 'PIN' | 'CSR_REP' | 'ADMIN' | 'PLATFORM_MANAGER';
 export type UserStatus = 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'DEACTIVATED';
 
 export interface User {
@@ -34,6 +34,14 @@ export interface CSRRepProfile {
   companyLogo?: string;
   approvalStatus: UserStatus;
   approvedAt?: string;
+}
+
+export interface PlatformManagerProfile {
+  id: string;
+  userId: string;
+  fullName: string;
+  department?: string;
+  phone?: string;
 }
 
 // Request/Opportunity Types
@@ -144,13 +152,21 @@ export interface RegisterCSRRepData {
   companyAddress?: string;
 }
 
+export interface RegisterPlatformManagerData {
+  email: string;
+  password: string;
+  fullName: string;
+  department?: string;
+  phone?: string;
+}
+
 export interface AuthResponse {
   message: string;
   user: {
     id: string;
     email: string;
     userType: UserType;
-    profile: PINProfile | CSRRepProfile;
+    profile: PINProfile | CSRRepProfile | PlatformManagerProfile;
   };
   token: string;
 }

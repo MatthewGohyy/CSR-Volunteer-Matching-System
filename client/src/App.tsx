@@ -1,7 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Heart, Users, Building2, Target } from 'lucide-react';
+import LoginPage from './components/LoginPage';
+import Dashboard from './components/Dashboard';
+import AdminDashboard from './components/AdminDashboard';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -19,12 +22,12 @@ const LandingPage = () => {
               <span className="ml-2 text-xl font-bold text-gray-900">CSR Volunteer Match</span>
             </div>
             <div className="flex items-center space-x-4">
-              <button className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
+              <Link to="/login" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
                 Login
-              </button>
-              <button className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+              </Link>
+              <Link to="/register" className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium">
                 Sign Up
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -116,6 +119,10 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/pin/dashboard" element={<Dashboard userType="PIN" />} />
+          <Route path="/csr/dashboard" element={<Dashboard userType="CSR_REP" />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard userType="ADMIN" />} />
         </Routes>
       </Router>
     </QueryClientProvider>
