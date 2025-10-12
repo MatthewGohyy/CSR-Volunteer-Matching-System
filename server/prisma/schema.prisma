@@ -11,6 +11,7 @@ enum UserType {
   PIN
   CSR_REP
   ADMIN
+  PLATFORM_MANAGER
 }
 
 enum UserStatus {
@@ -55,16 +56,17 @@ enum NotificationType {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  password      String
-  userType      UserType
-  status        UserStatus     @default(ACTIVE)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  pin           PIN?
-  csrRep        CSRRep?
-  notifications Notification[]
+  id                String             @id @default(uuid())
+  email             String             @unique
+  password          String
+  userType          UserType
+  status            UserStatus         @default(ACTIVE)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  pin               PIN?
+  csrRep            CSRRep?
+  platformManager  PlatformManager?
+  notifications     Notification[]
   @@map("users")
 }
 
@@ -100,6 +102,16 @@ model CSRRep {
   volunteerOffers           VolunteerOffer[]
   matches                   Match[]
   @@map("csr_reps")
+}
+
+model PlatformManager {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  fullName    String
+  department  String?
+  phone       String?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("platform_managers")
 }
 
 model ServiceCategory {

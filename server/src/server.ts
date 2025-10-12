@@ -13,6 +13,7 @@ import opportunityRoutes from './routes/opportunities';
 import volunteerRoutes from './routes/volunteers';
 import organizationRoutes from './routes/organizations';
 import matchRoutes from './routes/matches';
+import adminRoutes from './routes/admin';
 
 dotenv.config();
 
@@ -69,6 +70,7 @@ app.use('/api/opportunities', opportunityRoutes);
 app.use('/api/volunteers', volunteerRoutes);
 app.use('/api/organizations', organizationRoutes);
 app.use('/api/matches', matchRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {
