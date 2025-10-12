@@ -1,33 +1,37 @@
 # BCE ARCHITECTURE - ONE-PAGE CHEAT SHEET
+## Classical Boundary-Control-Entity Pattern
 
 ```
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                    CSR VOLUNTEER MATCHING SYSTEM                           ║
-║                        BCE QUICK REFERENCE                                 ║
+║                  BCE QUICK REFERENCE (Academic Version)                    ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 ```
+
+> **📝 Academic Note**: This follows classical BCE (Jacobson's OOSE)  
+> Boundary = Frontend | Control = Backend | Entity = Database
 
 ## 🎯 THE 3 LAYERS
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  🚪 BOUNDARY = Waiter (Takes orders, serves food)                        │
-│     WHERE: routes/                                                       │
-│     JOB: Define API endpoints, route requests                            │
-│     EXAMPLE: router.post('/login', AuthController.login)                 │
+│  🚪 BOUNDARY = Dining Area (Where customers interact)                    │
+│     WHERE: client/src/ (Frontend)                                        │
+│     JOB: User interface, capture input, display results                  │
+│     EXAMPLE: LoginPage.tsx, authService.login()                          │
 └──────────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  🧠 CONTROL = Chef (Cooks food, follows recipes)                         │
-│     WHERE: controllers/, middleware/                                     │
-│     JOB: Business logic, validation, coordination                        │
-│     EXAMPLE: Check password, generate token, create match                │
+│  🧠 CONTROL = Kitchen (Where food is prepared)                           │
+│     WHERE: server/src/ (Backend)                                         │
+│     JOB: Business logic, API endpoints, use cases                        │
+│     EXAMPLE: AuthController.login, routes/auth.ts                        │
 └──────────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  💾 ENTITY = Ingredients (The actual food & recipes)                     │
-│     WHERE: prisma/schema.prisma                                          │
-│     JOB: Data models, database structure                                 │
+│  💾 ENTITY = Storage Room (Where ingredients are stored)                 │
+│     WHERE: server/prisma/schema.prisma (Database)                        │
+│     JOB: Data models, relationships, persistence                         │
 │     EXAMPLE: model User { id, email, password, ... }                     │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
@@ -35,37 +39,45 @@
 ## 🔄 THE FLOW
 
 ```
-USER → BOUNDARY → CONTROL → ENTITY → DATABASE
- ↑                                        ↓
- └────────────────────────────────────────┘
-         (Response flows back up)
+USER → BOUNDARY (UI) → CONTROL (API) → ENTITY (DB) → DATABASE
+       Frontend            Backend         Models
+ ↑                                                      ↓
+ └──────────────────────────────────────────────────────┘
+         (Response flows back through all layers)
 ```
 
 ## 📂 YOUR PROJECT MAP
 
 ```
-server/src/
+CSR-Volunteer-Matching-System/
 │
-├─ 🚪 routes/                    ← BOUNDARY
-│  ├─ auth.ts                   /api/auth/*
-│  ├─ opportunities.ts          /api/opportunities/*
-│  ├─ volunteers.ts             /api/volunteers/*
-│  ├─ organizations.ts          /api/organizations/*
-│  └─ matches.ts                /api/matches/*
+├─ 🚪 client/src/                ← BOUNDARY (Frontend)
+│  ├─ components/
+│  │  ├─ LoginPage.tsx          User authentication UI
+│  │  ├─ Dashboard.tsx          Main user dashboard
+│  │  └─ AdminDashboard.tsx     Admin interface
+│  │
+│  └─ services/
+│     ├─ authService.ts         Auth API calls
+│     ├─ requestService.ts      Request API calls
+│     └─ adminService.ts        Admin API calls
 │
-├─ 🧠 controllers/               ← CONTROL
-│  ├─ auth.controller.ts        Login, Register
-│  ├─ request.controller.ts     Create, View requests
-│  ├─ pin.controller.ts         PIN operations
-│  ├─ csrRep.controller.ts      CSR Rep operations
-│  └─ match.controller.ts       Matching logic
+├─ 🧠 server/src/                ← CONTROL (Backend)
+│  ├─ routes/                   API endpoints
+│  │  ├─ auth.ts                /api/auth/*
+│  │  ├─ opportunities.ts       /api/opportunities/*
+│  │  └─ admin.ts               /api/admin/*
+│  │
+│  ├─ controllers/              Business logic
+│  │  ├─ auth.controller.ts     Login, Register
+│  │  ├─ request.controller.ts  Request management
+│  │  └─ admin.controller.ts    Admin operations
+│  │
+│  └─ middleware/               Cross-cutting
+│     ├─ auth.ts                JWT verification
+│     └─ validation.ts          Input validation
 │
-├─ 🧠 middleware/                ← CONTROL
-│  ├─ auth.ts                   JWT verification
-│  ├─ validation.ts             Input validation
-│  └─ errorHandler.ts           Error handling
-│
-└─ 💾 prisma/                    ← ENTITY
+└─ 💾 server/prisma/             ← ENTITY (Database)
    └─ schema.prisma             User, Request, Match models
 ```
 
@@ -73,11 +85,13 @@ server/src/
 
 | Question | Answer |
 |----------|--------|
-| Add new API endpoint? | `routes/` (Boundary) |
-| Change business logic? | `controllers/` (Control) |
-| Add database field? | `schema.prisma` (Entity) |
-| Validate input? | `controllers/` or `middleware/` (Control) |
-| Fix login bug? | `auth.controller.ts` (Control) |
+| Add UI component? | `client/src/components/` (Boundary) |
+| Add API call? | `client/src/services/` (Boundary) |
+| Change business logic? | `server/src/controllers/` (Control) |
+| Add API endpoint? | `server/src/routes/` (Control) |
+| Add database field? | `server/prisma/schema.prisma` (Entity) |
+| Fix login UI? | `LoginPage.tsx` (Boundary) |
+| Fix login logic? | `auth.controller.ts` (Control) |
 | Change User model? | `schema.prisma` (Entity) |
 
 ## 🎬 EXAMPLE: User Login
@@ -180,11 +194,13 @@ Query error                  → ENTITY (schema.prisma)
 ## 🎯 REMEMBER
 
 ```
-╔═══════════════════════════════════════╗
-║  WHERE?  →  BOUNDARY  →  routes/      ║
-║   HOW?   →  CONTROL   →  controllers/ ║
-║  WHAT?   →  ENTITY    →  prisma/      ║
-╚═══════════════════════════════════════╝
+╔═══════════════════════════════════════════════╗
+║  WHO?    →  BOUNDARY  →  client/ (Frontend)  ║
+║   HOW?   →  CONTROL   →  server/ (Backend)   ║
+║  WHAT?   →  ENTITY    →  prisma/ (Database)  ║
+╚═══════════════════════════════════════════════╝
+
+Classical BCE (Jacobson): Frontend → Backend → Database
 ```
 
 ---
