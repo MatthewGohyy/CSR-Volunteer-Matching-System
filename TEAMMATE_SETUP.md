@@ -94,7 +94,7 @@ JWT_SECRET=your_super_secret_jwt_key_min_32_chars_change_in_production
 JWT_EXPIRES_IN=7d
 NODE_ENV=development
 PORT=4000
-FRONTEND_URL=http://localhost:3001
+FRONTEND_URL=http://localhost:3000
 EOF
 cd ..
 ```
@@ -106,7 +106,7 @@ JWT_SECRET=your_super_secret_jwt_key_min_32_chars_change_in_production
 JWT_EXPIRES_IN=7d
 NODE_ENV=development
 PORT=4000
-FRONTEND_URL=http://localhost:3001
+FRONTEND_URL=http://localhost:3000
 ```
 
 ---
@@ -173,13 +173,13 @@ You should see:
 #### **Terminal 2: Start Frontend** (in a new terminal)
 ```bash
 cd client
-PORT=3001 npm start
+npm start
 ```
 
 You should see:
 ```
 Compiled successfully!
-Local: http://localhost:3001
+Local: http://localhost:3000
 ```
 
 ---
@@ -205,7 +205,7 @@ Should show:
 #### **Test Frontend:**
 Open browser and go to:
 ```
-http://localhost:3001
+http://localhost:3000
 ```
 
 Should show the CSR Volunteer Match landing page with a beautiful UI.
@@ -232,7 +232,7 @@ Your development environment is now identical to your teammate's!
 
 ```
 CSR-Volunteer-Matching-System/
-├── client/                 # React Frontend (Port 3001)
+├── client/                 # React Frontend (Port 3000)
 │   ├── src/
 │   │   ├── config/        # API configuration
 │   │   ├── services/      # API service files
@@ -278,7 +278,7 @@ git checkout -b feature/your-task-name
 cd server && npm run dev
 
 # 5. Start frontend (Terminal 2)
-cd client && PORT=3001 npm start
+cd client && npm start
 ```
 
 ### **During Development:**
@@ -322,7 +322,7 @@ npx prisma migrate reset
 cd client
 
 # Start development server
-PORT=3001 npm start
+npm start
 
 # Build for production
 npm run build
@@ -595,9 +595,9 @@ Go through this to confirm everything works:
 - [ ] Database migrated (`npx prisma migrate dev`)
 - [ ] Database seeded (`npm run seed`)
 - [ ] Backend starts (`cd server && npm run dev`)
-- [ ] Frontend starts (`cd client && PORT=3001 npm start`)
+- [ ] Frontend starts (`cd client && npm start`)
 - [ ] Health endpoint works (http://localhost:4000/health)
-- [ ] Frontend loads (http://localhost:3001)
+- [ ] Frontend loads (http://localhost:3000)
 - [ ] pgAdmin accessible (http://localhost:5050)
 - [ ] Can create git branch (`git checkout -b test`)
 - [ ] Can push to GitHub (`git push`)
@@ -611,7 +611,7 @@ You now have:
 - ✅ All dependencies installed
 - ✅ Database running
 - ✅ Backend API running (Port 4000)
-- ✅ Frontend running (Port 3001)
+- ✅ Frontend running (Port 3000)
 - ✅ Git workflow tools
 - ✅ Access to all documentation
 
@@ -624,7 +624,7 @@ You now have:
 ## 📞 **Quick Reference**
 
 **Services:**
-- Frontend: http://localhost:3001
+- Frontend: http://localhost:3000
 - Backend: http://localhost:4000
 - pgAdmin: http://localhost:5050
 - Prisma Studio: `npx prisma studio` → http://localhost:5555
@@ -638,7 +638,7 @@ You now have:
 # Start everything
 docker compose up -d
 cd server && npm run dev     # Terminal 1
-cd client && PORT=3001 npm start  # Terminal 2
+cd client && npm start       # Terminal 2
 
 # Git workflow
 ./git-helper.sh

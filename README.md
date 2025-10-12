@@ -264,7 +264,7 @@ npx prisma migrate reset
 ```
 
 ### Port Conflicts
-If ports 4000, 3001, 5432, or 5050 are already in use:
+If ports 3000, 4000, 5432, or 5050 are already in use:
 - Change ports in `docker-compose.yml` (for database/pgAdmin)
 - Update `PORT` in `server/.env` (for backend)
 - Use `PORT=XXXX npm start` for frontend

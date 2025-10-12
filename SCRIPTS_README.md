@@ -22,6 +22,7 @@
 - ✅ Check status
 - ✅ Complete workflow (commit + push)
 
+
 **When to use:**
 - Every day for all git operations
 - Instead of typing git commands manually

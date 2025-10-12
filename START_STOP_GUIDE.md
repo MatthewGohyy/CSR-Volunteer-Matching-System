@@ -17,7 +17,7 @@ npm run dev
 **Terminal 2: Frontend**
 ```bash
 cd client
-PORT=3001 npm start
+npm start
 ```
 
 **Terminal 3: Database (if not running)**
@@ -37,7 +37,7 @@ docker compose up -d
 cd server && npm run dev > /tmp/backend.log 2>&1 &
 
 # Start frontend in background
-cd client && PORT=3001 npm start > /tmp/frontend.log 2>&1 &
+cd client && npm start > /tmp/frontend.log 2>&1 &
 
 # View logs
 tail -f /tmp/backend.log   # Backend logs
@@ -120,7 +120,7 @@ cd server && npm run dev
 pkill -f "react-scripts"
 
 # Start
-cd client && PORT=3001 npm start
+cd client && npm start
 ```
 
 ### **Restart Docker:**
@@ -147,7 +147,7 @@ curl http://localhost:4000/health
 ```bash
 ps aux | grep react-scripts
 # Or
-curl http://localhost:3001
+curl http://localhost:3000
 ```
 
 ### **Check Docker:**
@@ -161,7 +161,7 @@ echo "=== Backend ===" && \
 curl -s http://localhost:4000/health 2>&1 | head -1 && \
 echo "" && \
 echo "=== Frontend ===" && \
-curl -s http://localhost:3001 2>&1 | head -1 && \
+curl -s http://localhost:3000 2>&1 | head -1 && \
 echo "" && \
 echo "=== Docker ===" && \
 docker compose ps
@@ -194,7 +194,7 @@ docker compose up -d  # if not running
 cd server && npm run dev
 
 # Start frontend (new terminal)
-cd client && PORT=3001 npm start
+cd client && npm start
 ```
 
 ### **Quick Restart (Code Changes Not Reflecting):**
@@ -203,7 +203,7 @@ cd client && PORT=3001 npm start
 pkill -f nodemon && cd server && npm run dev
 
 # Frontend auto-reloads, but if stuck:
-pkill -f "react-scripts" && cd client && PORT=3001 npm start
+pkill -f "react-scripts" && cd client && npm start
 ```
 
 ---
@@ -214,11 +214,11 @@ pkill -f "react-scripts" && cd client && PORT=3001 npm start
 ```bash
 # Find what's using the port
 lsof -i :4000   # Backend
-lsof -i :3001   # Frontend
+lsof -i :3000   # Frontend
 
 # Kill it
 lsof -ti :4000 | xargs kill -9
-lsof -ti :3001 | xargs kill -9
+lsof -ti :3000 | xargs kill -9
 ```
 
 ### **Process Won't Stop:**
@@ -247,7 +247,7 @@ pkill node
 # START
 docker compose up -d              # Database
 cd server && npm run dev          # Backend
-cd client && PORT=3001 npm start  # Frontend
+cd client && npm start            # Frontend
 
 # STOP
 Ctrl+C                            # If in terminal
@@ -257,7 +257,7 @@ docker compose down               # Docker
 
 # CHECK
 curl http://localhost:4000/health # Backend
-curl http://localhost:3001        # Frontend
+curl http://localhost:3000        # Frontend
 docker compose ps                 # Docker
 
 # RESTART

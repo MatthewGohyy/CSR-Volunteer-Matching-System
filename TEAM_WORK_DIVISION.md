@@ -85,8 +85,8 @@ npm run dev
 # Your Friend (Frontend):
 cd client
 npm install
-PORT=3001 npm start
-# Frontend runs on http://localhost:3001
+npm start
+# Frontend runs on http://localhost:3000
 ```
 
 ---
@@ -233,7 +233,7 @@ git pull origin main
 
 # Start services
 # YOU: cd server && npm run dev
-# FRIEND: cd client && PORT=3001 npm start
+# FRIEND: cd client && npm start
 ```
 
 ### **During Work:**
@@ -422,7 +422,7 @@ cd ..
 ### **YOUR FRIEND (Right Now):**
 ```bash
 cd client
-PORT=3001 npm start
+npm start
 # Then start building pages/auth/LoginPage.tsx
 # Use the example above!
 ```

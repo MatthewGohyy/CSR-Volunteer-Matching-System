@@ -68,11 +68,35 @@
 - Database operations
 - Migration guide
 
-### **[BCE_ARCHITECTURE.md](BCE_ARCHITECTURE.md)** 🏗️ ARCHITECTURE
+### **[BCE_ARCHITECTURE.md](BCE_ARCHITECTURE.md)** 🏗️ COMPLETE ARCHITECTURE
 - Boundary-Control-Entity pattern explained
 - Code organization
 - Layer responsibilities
 - Examples from codebase
+
+### **[BCE_SIMPLE_GUIDE.md](BCE_SIMPLE_GUIDE.md)** 📄 SIMPLE GUIDE (RECOMMENDED!)
+- One-page visual guide
+- Quick explanations with examples
+- Perfect for understanding BCE quickly
+- Restaurant analogy included
+
+### **[BCE_PRESENTATION.md](BCE_PRESENTATION.md)** 🎤 PRESENTATION SLIDES
+- 17-slide presentation deck
+- Perfect for team meetings
+- Visual explanations
+- Presenter notes included
+
+### **[BCE_CHEAT_SHEET.md](BCE_CHEAT_SHEET.md)** ⚡ ONE-PAGE CHEAT SHEET
+- Printable quick reference
+- All key info on one page
+- Debugging guide
+- Perfect for desk reference
+
+### **[BCE_DIAGRAMS.md](BCE_DIAGRAMS.md)** 📊 VISUAL BCE DIAGRAMS
+- 8 complete BCE flow diagrams
+- Shows Boundary → Control → Entity for each feature
+- Class diagram style visualization
+- Perfect for understanding data flow
 
 ---
 
@@ -84,9 +108,17 @@
 3. Git: [GITHUB_WORKFLOW.md](GITHUB_WORKFLOW.md)
 
 ### **"I need to build a feature"**
-1. API: [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
-2. Database: [DATABASE.md](DATABASE.md)
-3. Architecture: [BCE_ARCHITECTURE.md](BCE_ARCHITECTURE.md)
+1. Architecture: [BCE_SIMPLE_GUIDE.md](BCE_SIMPLE_GUIDE.md) ⭐ Start here!
+2. API: [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+3. Database: [DATABASE.md](DATABASE.md)
+4. Full Architecture: [BCE_ARCHITECTURE.md](BCE_ARCHITECTURE.md)
+
+### **"I need to explain BCE to someone"**
+1. Cheat Sheet: [BCE_CHEAT_SHEET.md](BCE_CHEAT_SHEET.md) ⭐ Print this!
+2. Visual Diagrams: [BCE_DIAGRAMS.md](BCE_DIAGRAMS.md) ⭐ Show flow!
+3. Simple Guide: [BCE_SIMPLE_GUIDE.md](BCE_SIMPLE_GUIDE.md)
+4. Presentation: [BCE_PRESENTATION.md](BCE_PRESENTATION.md) (17 slides)
+5. Full Details: [BCE_ARCHITECTURE.md](BCE_ARCHITECTURE.md)
 
 ### **"I need quick info"**
 1. Start/Stop: [START_STOP_GUIDE.md](START_STOP_GUIDE.md)
@@ -111,11 +143,15 @@
 | API_DOCUMENTATION.md | 9KB | Full API reference | Building features |
 | API_QUICK_REFERENCE.md | 3KB | Quick API lookup | Quick endpoint check |
 | DATABASE.md | 12KB | Database guide | Working with data |
-| BCE_ARCHITECTURE.md | 13KB | Architecture | Understanding structure |
+| BCE_ARCHITECTURE.md | 13KB | Complete architecture | Deep understanding |
+| **BCE_SIMPLE_GUIDE.md** ⭐ | **6KB** | **Simple BCE guide** | **Learning BCE** |
+| **BCE_PRESENTATION.md** 🎤 | **5KB** | **BCE slides** | **Presenting to team** |
+| **BCE_CHEAT_SHEET.md** ⚡ | **3KB** | **Quick BCE reference** | **Quick lookups** |
+| **BCE_DIAGRAMS.md** 📊 | **12KB** | **Visual BCE flows** | **Understanding flows** |
 | GITHUB_WORKFLOW.md | 13KB | Git workflow | Team collaboration |
 | DOCKER_GUIDE.md | 9KB | Docker guide | Container issues |
 
-**Total: 9 essential documents | ~86KB of documentation**
+**Total: 13 essential documents | ~112KB of documentation**
 
 ---
 

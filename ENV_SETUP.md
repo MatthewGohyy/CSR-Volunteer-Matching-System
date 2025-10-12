@@ -46,7 +46,7 @@ JWT_SECRET=your_super_secret_jwt_key_min_32_chars_change_in_production
 JWT_EXPIRES_IN=7d
 NODE_ENV=development
 PORT=4000
-FRONTEND_URL=http://localhost:3001
+FRONTEND_URL=http://localhost:3000
 ```
 
 ### **4. Verify the file exists:**
@@ -72,7 +72,7 @@ JWT_SECRET=your_super_secret_jwt_key_min_32_chars_change_in_production
 JWT_EXPIRES_IN=7d
 NODE_ENV=development
 PORT=4000
-FRONTEND_URL=http://localhost:3001
+FRONTEND_URL=http://localhost:3000
 EOF
 ```
 
@@ -92,7 +92,7 @@ Then run:
 | `JWT_EXPIRES_IN` | `7d` | Token expiration (7 days) |
 | `NODE_ENV` | `development` | Environment mode |
 | `PORT` | `4000` | Backend server port |
-| `FRONTEND_URL` | `http://localhost:3001` | Frontend URL for CORS |
+| `FRONTEND_URL` | `http://localhost:3000` | Frontend URL for CORS |
 
 ---
 

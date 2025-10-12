@@ -204,7 +204,7 @@ git rebase main
    ## How to Test
    1. Run `npm install` in server
    2. Run `docker compose up -d`
-   3. Test login at http://localhost:3001/login
+   3. Test login at http://localhost:3000/login
 
    ## Screenshots
    [Add if UI changes]
