@@ -13,9 +13,11 @@ import {
   MoreVertical,
   Eye,
   Edit,
-  Trash2
+  Trash2,
+  LogOut
 } from 'lucide-react';
 import { adminService, type AdminUser, type CreateUserData } from '../services/adminService';
+import { authService } from '../services/authService';
 import { UserType, UserStatus } from '../types';
 import CreateUserModal from './CreateUserModal';
 import UserDetailsModal from './UserDetailsModal';
@@ -56,14 +58,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     },
   });
 
-  // Approve CSR Rep mutation
-  const approveCSRRepMutation = useMutation({
-    mutationFn: adminService.approveCSRRep,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-    },
-  });
-
   // Filter users based on search and status
   const filteredUsers = usersData?.users.filter(user => {
     const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -87,20 +81,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     }
   };
 
-  const handleApproveCSRRep = (userId: string) => {
-    if (window.confirm('Are you sure you want to approve this CSR Representative?')) {
-      approveCSRRepMutation.mutate(userId);
-    }
-  };
-
   const getStatusColor = (status: UserStatus) => {
     switch (status) {
       case 'ACTIVE':
         return 'text-green-600 bg-green-100';
       case 'SUSPENDED':
         return 'text-red-600 bg-red-100';
-      case 'PENDING':
-        return 'text-yellow-600 bg-yellow-100';
       case 'DEACTIVATED':
         return 'text-gray-600 bg-gray-100';
       default:
@@ -161,6 +147,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 <UserPlus className="h-4 w-4 mr-2" />
                 Create User
               </button>
+              <button
+                onClick={() => authService.logout()}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -169,7 +162,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
@@ -222,23 +215,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <AlertCircle className="h-6 w-6 text-yellow-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Pending CSR Reps</dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {usersData?.users.filter(u => u.userType === 'CSR_REP' && u.status === 'PENDING').length || 0}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Users Table */}
@@ -267,7 +243,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                   <option value="ALL">All Status</option>
                   <option value="ACTIVE">Active</option>
                   <option value="SUSPENDED">Suspended</option>
-                  <option value="PENDING">Pending</option>
                   <option value="DEACTIVATED">Deactivated</option>
                 </select>
               </div>
@@ -328,16 +303,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                         disabled={activateUserMutation.isPending}
                       >
                         <CheckCircle className="h-4 w-4" />
-                      </button>
-                    )}
-
-                    {user.userType === 'CSR_REP' && user.status === 'PENDING' && (
-                      <button
-                        onClick={() => handleApproveCSRRep(user.id)}
-                        className="text-blue-400 hover:text-blue-600"
-                        disabled={approveCSRRepMutation.isPending}
-                      >
-                        <Shield className="h-4 w-4" />
                       </button>
                     )}
                   </div>

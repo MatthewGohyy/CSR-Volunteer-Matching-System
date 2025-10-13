@@ -1,0 +1,26 @@
+/*
+  Warnings:
+
+  - The values [PENDING] on the enum `UserStatus` will be removed. If these variants are still used in the database, this will fail.
+  - You are about to drop the column `approvalStatus` on the `csr_reps` table. All the data in the column will be lost.
+  - You are about to drop the column `approvedAt` on the `csr_reps` table. All the data in the column will be lost.
+
+*/
+
+-- First, update all PENDING users to ACTIVE
+UPDATE "users" SET "status" = 'ACTIVE' WHERE "status" = 'PENDING';
+
+-- Drop the CSR Rep columns that depend on UserStatus enum
+ALTER TABLE "csr_reps" DROP COLUMN "approvalStatus",
+DROP COLUMN "approvedAt";
+
+-- AlterEnum
+BEGIN;
+CREATE TYPE "UserStatus_new" AS ENUM ('ACTIVE', 'SUSPENDED', 'DEACTIVATED');
+ALTER TABLE "users" ALTER COLUMN "status" DROP DEFAULT;
+ALTER TABLE "users" ALTER COLUMN "status" TYPE "UserStatus_new" USING ("status"::text::"UserStatus_new");
+ALTER TYPE "UserStatus" RENAME TO "UserStatus_old";
+ALTER TYPE "UserStatus_new" RENAME TO "UserStatus";
+DROP TYPE "UserStatus_old";
+ALTER TABLE "users" ALTER COLUMN "status" SET DEFAULT 'ACTIVE';
+COMMIT;

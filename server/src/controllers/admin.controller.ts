@@ -144,15 +144,13 @@ export class AdminController {
                 contactPerson,
                 phoneNumber,
                 companyAddress,
-                approvalStatus: UserStatus.ACTIVE, // Admin-created CSR reps are auto-approved
-                approvedAt: new Date(),
               },
             },
           },
-        include: {
-          csrRep: true,
-        },
-      });
+          include: {
+            csrRep: true,
+          },
+        });
       } else if (userType === UserType.PLATFORM_MANAGER) {
         const { fullName, department, phone } = profileData;
 
@@ -212,51 +210,6 @@ export class AdminController {
     }
   }
 
-  // Approve CSR Rep
-  static async approveCSRRep(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { id } = req.params;
-
-      const user = await prisma.user.findUnique({
-        where: { id },
-        include: { csrRep: true },
-      });
-
-      if (!user) {
-        throw new AppError('User not found', 404);
-      }
-
-      if (user.userType !== UserType.CSR_REP) {
-        throw new AppError('User is not a CSR Representative', 400);
-      }
-
-      const updatedUser = await prisma.user.update({
-        where: { id },
-        data: {
-          status: UserStatus.ACTIVE,
-          csrRep: {
-            update: {
-              approvalStatus: UserStatus.ACTIVE,
-              approvedAt: new Date(),
-            },
-          },
-        },
-        include: {
-          pin: true,
-          csrRep: true,
-          platformManager: true,
-        },
-      });
-
-      res.json({
-        message: 'CSR Representative approved successfully',
-        user: updatedUser,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
   // Delete user
   static async deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -272,28 +225,6 @@ export class AdminController {
     }
   }
 
-  // Get pending CSR Reps
-  static async getPendingCSRReps(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const users = await prisma.user.findMany({
-        where: {
-          userType: UserType.CSR_REP,
-          status: UserStatus.PENDING,
-        },
-        include: {
-          csrRep: true,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
-
-      res.json({ users });
-    } catch (error) {
-      next(error);
-    }
-  }
-
   // Get system statistics
   static async getSystemStats(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -301,7 +232,6 @@ export class AdminController {
         totalUsers,
         activeUsers,
         suspendedUsers,
-        pendingCSRReps,
         totalRequests,
         activeRequests,
         totalMatches,
@@ -310,12 +240,6 @@ export class AdminController {
         prisma.user.count(),
         prisma.user.count({ where: { status: UserStatus.ACTIVE } }),
         prisma.user.count({ where: { status: UserStatus.SUSPENDED } }),
-        prisma.user.count({
-          where: {
-            userType: UserType.CSR_REP,
-            status: UserStatus.PENDING,
-          },
-        }),
         prisma.request.count(),
         prisma.request.count({ where: { status: 'ACTIVE' } }),
         prisma.match.count(),
@@ -327,7 +251,6 @@ export class AdminController {
           total: totalUsers,
           active: activeUsers,
           suspended: suspendedUsers,
-          pendingCSRReps,
         },
         requests: {
           total: totalRequests,

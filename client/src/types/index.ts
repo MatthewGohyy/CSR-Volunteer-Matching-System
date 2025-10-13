@@ -1,6 +1,6 @@
 // User Types
 export type UserType = 'PIN' | 'CSR_REP' | 'ADMIN' | 'PLATFORM_MANAGER';
-export type UserStatus = 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'DEACTIVATED';
+export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
 
 export interface User {
   id: string;
@@ -32,8 +32,6 @@ export interface CSRRepProfile {
   phoneNumber: string;
   companyAddress?: string;
   companyLogo?: string;
-  approvalStatus: UserStatus;
-  approvedAt?: string;
 }
 
 export interface PlatformManagerProfile {

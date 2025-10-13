@@ -110,7 +110,6 @@ export class AuthController {
               contactPerson,
               phoneNumber,
               companyAddress,
-              approvalStatus: UserStatus.PENDING, // Requires admin approval
             },
           },
         },
@@ -127,7 +126,7 @@ export class AuthController {
       });
 
       res.status(201).json({
-        message: 'CSR Representative registered successfully. Pending admin approval.',
+        message: 'CSR Representative registered successfully.',
         user: {
           id: user.id,
           email: user.email,
@@ -168,11 +167,6 @@ export class AuthController {
       const isPasswordValid = await comparePassword(password, user.password);
       if (!isPasswordValid) {
         throw new AppError('Invalid email or password', 401);
-      }
-
-      // Check CSR Rep approval status
-      if (user.userType === UserType.CSR_REP && user.csrRep?.approvalStatus === UserStatus.PENDING) {
-        throw new AppError('Account pending admin approval', 403);
       }
 
       // Generate token

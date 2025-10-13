@@ -40,8 +40,6 @@ export interface AdminUser extends User {
     contactPerson: string;
     phoneNumber: string;
     companyAddress?: string;
-    approvalStatus: UserStatus;
-    approvedAt?: string;
   };
   platformManager?: PlatformManagerProfile;
 }
@@ -88,21 +86,9 @@ export const adminService = {
     return adminService.updateUserStatus(id, 'ACTIVE');
   },
 
-  // Approve CSR Rep
-  approveCSRRep: async (id: string): Promise<AdminUser> => {
-    const response = await api.put<{ user: AdminUser; message: string }>(`/admin/users/${id}/approve`);
-    return response.data.user;
-  },
-
   // Delete user
   deleteUser: async (id: string): Promise<void> => {
     await api.delete(`/admin/users/${id}`);
-  },
-
-  // Get pending CSR Reps
-  getPendingCSRReps: async (): Promise<AdminUser[]> => {
-    const response = await api.get<{ users: AdminUser[] }>('/admin/users/pending-csr-reps');
-    return response.data.users;
   },
 
   // Get system statistics

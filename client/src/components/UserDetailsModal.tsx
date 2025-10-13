@@ -15,8 +15,6 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose }) =>
         return 'text-green-600 bg-green-100';
       case 'SUSPENDED':
         return 'text-red-600 bg-red-100';
-      case 'PENDING':
-        return 'text-yellow-600 bg-yellow-100';
       case 'DEACTIVATED':
         return 'text-gray-600 bg-gray-100';
       default:
@@ -45,8 +43,6 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose }) =>
         return <CheckCircle className="h-5 w-5 text-green-600" />;
       case 'SUSPENDED':
         return <XCircle className="h-5 w-5 text-red-600" />;
-      case 'PENDING':
-        return <AlertCircle className="h-5 w-5 text-yellow-600" />;
       case 'DEACTIVATED':
         return <XCircle className="h-5 w-5 text-gray-600" />;
       default:
@@ -235,17 +231,6 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose }) =>
                       <p className="text-sm font-medium text-gray-900">{user.csrRep.companyAddress}</p>
                     </div>
                   </div>
-                )}
-              </div>
-              <div className="mt-4 flex items-center">
-                <span className="text-sm text-gray-500 mr-2">Approval Status:</span>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.csrRep.approvalStatus)}`}>
-                  {user.csrRep.approvalStatus}
-                </span>
-                {user.csrRep.approvedAt && (
-                  <span className="ml-4 text-sm text-gray-500">
-                    Approved: {formatDate(user.csrRep.approvedAt)}
-                  </span>
                 )}
               </div>
             </div>

@@ -16,7 +16,6 @@ enum UserType {
 
 enum UserStatus {
   ACTIVE
-  PENDING
   SUSPENDED
   DEACTIVATED
 }
@@ -95,8 +94,6 @@ model CSRRep {
   phoneNumber               String
   companyAddress            String?
   companyLogo               String?
-  approvalStatus            UserStatus       @default(PENDING)
-  approvedAt                DateTime?
   user                      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   shortlists                Shortlist[]
   volunteerOffers           VolunteerOffer[]

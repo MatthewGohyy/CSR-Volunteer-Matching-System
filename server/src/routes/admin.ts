@@ -13,11 +13,7 @@ router.get('/users', AdminController.getUsers);
 router.get('/users/:id', AdminController.getUserById);
 router.post('/users', AdminController.createUser);
 router.put('/users/:id/status', AdminController.updateUserStatus);
-router.put('/users/:id/approve', AdminController.approveCSRRep);
 router.delete('/users/:id', AdminController.deleteUser);
-
-// Specialized routes
-router.get('/users/pending-csr-reps', AdminController.getPendingCSRReps);
 
 // System statistics
 router.get('/stats', AdminController.getSystemStats);
