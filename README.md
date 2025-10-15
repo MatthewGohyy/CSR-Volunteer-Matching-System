@@ -2,6 +2,31 @@
 
 A comprehensive platform for connecting volunteers with Corporate Social Responsibility (CSR) opportunities.
 
+---
+
+## 🎓 **New to the Codebase?**
+
+### 📚 **[START HERE - Complete Learning Guide](./START_HERE.md)**
+
+We've created comprehensive guides to help you understand the codebase:
+
+- 🌟 **[UNDERSTANDING_SUMMARY.md](./UNDERSTANDING_SUMMARY.md)** - Quick 20-min overview
+- 📖 **[COMPLETE_BEGINNER_GUIDE.md](./COMPLETE_BEGINNER_GUIDE.md)** - Detailed explanations with analogies
+- 📊 **[VISUAL_ARCHITECTURE.md](./VISUAL_ARCHITECTURE.md)** - Diagrams and flowcharts
+- 🔬 **[HANDS_ON_EXPLORATION.md](./HANDS_ON_EXPLORATION.md)** - Interactive exercises to practice
+- 🎴 **[QUICK_REFERENCE_CARD.md](./QUICK_REFERENCE_CARD.md)** - Keep this handy while coding
+
+**Don't understand the structure?** These guides explain:
+- Why client and server are separate
+- What BCE (Boundary-Control-Entity) architecture means
+- How data flows from UI to database
+- Where to find routes, controllers, components
+- How to add new features
+
+👉 **[Click here to start learning!](./START_HERE.md)**
+
+---
+
 ## 🚀 Features
 
 - **Volunteer Registration & Profiles**: Create detailed volunteer profiles with skills, interests, and availability
