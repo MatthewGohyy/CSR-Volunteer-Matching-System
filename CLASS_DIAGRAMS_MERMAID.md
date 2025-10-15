@@ -1,16 +1,146 @@
 # Class Diagrams - Mermaid Format
 
-This document contains class diagrams in Mermaid format that can be rendered directly on GitHub and most markdown viewers.
+This document contains class diagrams and ERD in Mermaid format that render automatically on GitHub.
 
 ## Table of Contents
-1. [Entity Relationship Diagram](#1-entity-relationship-diagram)
-2. [Controller Class Diagram](#2-controller-class-diagram)
-3. [Service Layer Diagram](#3-service-layer-diagram)
-4. [System Architecture Overview](#4-system-architecture-overview)
+1. [Entity Relationship Diagram (ERD)](#1-entity-relationship-diagram-erd)
+2. [Entity Class Diagram](#2-entity-class-diagram)
+3. [Controller Class Diagram](#3-controller-class-diagram)
+4. [Service Layer Diagram](#4-service-layer-diagram)
 
 ---
 
-## 1. Entity Relationship Diagram
+## 1. Entity Relationship Diagram (ERD)
+
+```mermaid
+erDiagram
+    User ||--o| PIN : "has"
+    User ||--o| CSRRep : "has"
+    User ||--o| PlatformManager : "has"
+    User ||--o{ Notification : "receives"
+    
+    PIN ||--o{ Request : "creates"
+    PIN ||--o{ Match : "participates in"
+    
+    CSRRep ||--o{ Shortlist : "creates"
+    CSRRep ||--o{ VolunteerOffer : "submits"
+    CSRRep ||--o{ Match : "participates in"
+    
+    ServiceCategory ||--o{ Request : "categorizes"
+    
+    Request ||--o{ Shortlist : "has"
+    Request ||--o{ VolunteerOffer : "receives"
+    Request ||--o| Match : "becomes"
+    
+    User {
+        uuid id PK
+        string email UK
+        string password
+        enum userType
+        enum status
+        datetime createdAt
+        datetime updatedAt
+    }
+    
+    PIN {
+        uuid id PK
+        uuid userId FK
+        string name
+        int age
+        string location
+        string phoneNumber
+        string accessibilityNeeds
+        string profilePhoto
+    }
+    
+    CSRRep {
+        uuid id PK
+        uuid userId FK
+        string companyName
+        string companyRegistrationNumber UK
+        string industry
+        string contactPerson
+        string phoneNumber
+        string companyAddress
+        string companyLogo
+    }
+    
+    PlatformManager {
+        uuid id PK
+        uuid userId FK
+        string fullName
+        string department
+        string phone
+    }
+    
+    ServiceCategory {
+        uuid id PK
+        string name UK
+        string description
+        string iconUrl
+        boolean isActive
+        datetime createdAt
+        datetime updatedAt
+    }
+    
+    Request {
+        uuid id PK
+        uuid pinId FK
+        uuid categoryId FK
+        string title
+        string description
+        enum urgency
+        datetime dateNeeded
+        string location
+        enum status
+        int viewCount
+        int shortlistCount
+        datetime createdAt
+        datetime updatedAt
+    }
+    
+    Shortlist {
+        uuid id PK
+        uuid csrRepId FK
+        uuid requestId FK
+        datetime createdAt
+    }
+    
+    VolunteerOffer {
+        uuid id PK
+        uuid csrRepId FK
+        uuid requestId FK
+        string message
+        enum status
+        datetime createdAt
+        datetime updatedAt
+    }
+    
+    Match {
+        uuid id PK
+        uuid requestId FK,UK
+        uuid csrRepId FK
+        uuid pinId FK
+        enum status
+        datetime matchedAt
+        datetime completedAt
+        string cancellationReason
+        datetime updatedAt
+    }
+    
+    Notification {
+        uuid id PK
+        uuid userId FK
+        enum type
+        string message
+        boolean isRead
+        datetime createdAt
+    }
+```
+
+---
+
+## 2. Entity Class Diagram
 
 ```mermaid
 classDiagram
@@ -140,7 +270,7 @@ classDiagram
 
 ---
 
-## 2. Controller Class Diagram
+## 3. Controller Class Diagram
 
 ```mermaid
 classDiagram
@@ -216,7 +346,7 @@ classDiagram
 
 ---
 
-## 3. Service Layer Diagram
+## 4. Service Layer Diagram
 
 ```mermaid
 classDiagram
@@ -298,301 +428,6 @@ classDiagram
 
 ---
 
-## 4. System Architecture Overview
-
-```mermaid
-graph TB
-    subgraph "Frontend - Boundary Layer"
-        A[LoginPage]
-        B[AdminDashboard]
-        C[PINDashboard]
-        D[CSRRepDashboard]
-        E[RequestForm]
-        F[RequestList]
-    end
-
-    subgraph "API Services"
-        G[AuthService]
-        H[AdminService]
-        I[RequestService]
-        J[CSRRepService]
-        K[PINService]
-    end
-
-    subgraph "Backend Controllers"
-        L[AuthController]
-        M[AdminController]
-        N[RequestController]
-        O[CSRRepController]
-        P[PINController]
-    end
-
-    subgraph "Service Layer"
-        Q[UserService]
-        R[MatchingService]
-        S[CSROpportunityService]
-    end
-
-    subgraph "Data Access"
-        T[(PostgreSQL Database)]
-        U[Prisma ORM]
-    end
-
-    subgraph "Entities"
-        V[User]
-        W[PIN]
-        X[CSRRep]
-        Y[Request]
-        Z[Match]
-    end
-
-    A --> G
-    B --> H
-    C --> K
-    D --> J
-    E --> I
-    F --> I
-
-    G --> L
-    H --> M
-    I --> N
-    J --> O
-    K --> P
-
-    L --> Q
-    M --> Q
-    N --> Q
-    O --> R
-    P --> R
-
-    Q --> U
-    R --> U
-    S --> U
-
-    U --> T
-
-    U -.-> V
-    U -.-> W
-    U -.-> X
-    U -.-> Y
-    U -.-> Z
-```
-
----
-
-## 5. Frontend Component Architecture
-
-```mermaid
-classDiagram
-    class LoginPage {
-        -String email
-        -String password
-        -String error
-        -AuthService authService
-        +handleSubmit(e)
-        +validateForm() boolean
-        +navigateToDashboard()
-    }
-
-    class AdminDashboard {
-        -User[] users
-        -User selectedUser
-        -Boolean showCreateModal
-        -AdminService adminService
-        +fetchUsers()
-        +handleCreateUser(data)
-        +handleUpdateUser(id, data)
-        +handleSuspendUser(id)
-        +handleSearch(term)
-    }
-
-    class CreateUserModal {
-        -Object formData
-        -String[] userTypes
-        -Function onClose
-        -Function onSubmit
-        +handleInputChange(e)
-        +handleSubmit(e)
-        +resetForm()
-    }
-
-    class UserDetailsModal {
-        -User user
-        -Function onClose
-        -Function onUpdate
-        +handleUpdate(data)
-    }
-
-    class AuthService {
-        -String baseURL
-        +login(credentials) Promise~AuthResponse~
-        +logout()
-        +getToken() String
-        +setToken(token)
-        +isAuthenticated() boolean
-    }
-
-    class AdminService {
-        -String baseURL
-        +getUsers(params) Promise~User[]~
-        +createUser(userData) Promise~User~
-        +updateUser(id, data) Promise~User~
-        +deleteUser(id) Promise~void~
-        +suspendUser(id) Promise~void~
-    }
-
-    class RequestService {
-        -String baseURL
-        +getRequests(filters) Promise~Request[]~
-        +createRequest(data) Promise~Request~
-        +updateRequest(id, data) Promise~Request~
-        +deleteRequest(id) Promise~void~
-    }
-
-    LoginPage --> AuthService
-    AdminDashboard --> AdminService
-    AdminDashboard *-- CreateUserModal
-    AdminDashboard *-- UserDetailsModal
-```
-
----
-
-## 6. Request Flow Sequence
-
-```mermaid
-sequenceDiagram
-    participant U as User/Browser
-    participant L as LoginPage
-    participant AS as AuthService
-    participant AC as AuthController
-    participant DB as Database
-
-    U->>L: Enter credentials
-    L->>L: validateForm()
-    L->>AS: login(credentials)
-    AS->>AC: POST /api/auth/login
-    AC->>DB: findUser(email)
-    DB-->>AC: user data
-    AC->>AC: validatePassword()
-    AC->>AC: generateToken()
-    AC-->>AS: {user, token}
-    AS-->>L: AuthResponse
-    L->>L: navigateToDashboard()
-    L-->>U: Redirect to Dashboard
-```
-
----
-
-## 7. User Creation Flow
-
-```mermaid
-sequenceDiagram
-    participant A as Admin
-    participant AD as AdminDashboard
-    participant CM as CreateUserModal
-    participant AdminS as AdminService
-    participant AdminC as AdminController
-    participant DB as Database
-
-    A->>AD: Click "Create User"
-    AD->>CM: Open modal
-    A->>CM: Fill form & submit
-    CM->>CM: validateForm()
-    CM->>AdminS: createUser(formData)
-    AdminS->>AdminC: POST /api/admin/users
-    AdminC->>AdminC: validateUserType()
-    AdminC->>AdminC: hashPassword()
-    AdminC->>DB: createUser + Profile
-    DB-->>AdminC: created user
-    AdminC-->>AdminS: {user, message}
-    AdminS-->>CM: success response
-    CM->>AD: Close modal & refresh
-    AD->>AdminS: fetchUsers()
-    AdminS-->>AD: updated user list
-```
-
----
-
-## 8. Request Matching Flow
-
-```mermaid
-sequenceDiagram
-    participant CSR as CSR Rep
-    participant UI as Dashboard
-    participant RS as RequestService
-    participant RC as RequestController
-    participant MS as MatchingService
-    participant DB as Database
-
-    CSR->>UI: Browse requests
-    UI->>RS: getRequests(filters)
-    RS->>RC: GET /api/requests
-    RC->>DB: findMany(filters)
-    DB-->>RC: requests[]
-    RC-->>RS: requests with details
-    RS-->>UI: display requests
-    
-    CSR->>UI: Click "Shortlist"
-    UI->>RS: shortlistRequest(requestId)
-    RS->>RC: POST /api/csrrep/shortlist
-    RC->>DB: create shortlist
-    RC->>DB: increment shortlistCount
-    DB-->>RC: shortlist created
-    RC-->>RS: success
-    RS-->>UI: update UI
-    
-    CSR->>UI: Click "Submit Offer"
-    UI->>RS: submitOffer(requestId, message)
-    RS->>RC: POST /api/csrrep/offer
-    RC->>DB: create volunteer offer
-    RC->>DB: create notification
-    DB-->>RC: offer created
-    RC-->>RS: success
-    RS-->>UI: show confirmation
-```
-
----
-
-## Enums and Types
-
-### UserType Enum
-```
-PIN | CSR_REP | ADMIN | PLATFORM_MANAGER
-```
-
-### UserStatus Enum
-```
-ACTIVE | SUSPENDED | DEACTIVATED
-```
-
-### RequestStatus Enum
-```
-ACTIVE | MATCHED | COMPLETED | CANCELLED
-```
-
-### UrgencyLevel Enum
-```
-LOW | MEDIUM | HIGH
-```
-
-### OfferStatus Enum
-```
-PENDING | ACCEPTED | DECLINED
-```
-
-### MatchStatus Enum
-```
-ACTIVE | COMPLETED | CANCELLED
-```
-
-### NotificationType Enum
-```
-VOLUNTEER_OFFER | OFFER_ACCEPTED | OFFER_DECLINED | 
-MATCH_CONFIRMED | MATCH_CANCELLED | REQUEST_UPDATED
-```
-
----
-
 ## How to View These Diagrams
 
 ### GitHub
@@ -608,19 +443,10 @@ Mermaid diagrams render automatically on GitHub. Just view this file in your rep
 
 ---
 
-## Key Architecture Patterns
-
-1. **BCE Pattern**: Boundary (UI) → Controller (API) → Entity (Database)
-2. **Repository Pattern**: Data access abstraction
-3. **Service Layer**: Business logic encapsulation
-4. **MVC Pattern**: Model-View-Controller separation
-5. **Dependency Injection**: Loose coupling between components
-
----
-
-## Related Documentation
-
-- [PlantUML Class Diagrams](./CLASS_DIAGRAMS.md) - Detailed UML diagrams
-- [BCE Architecture Guide](./BCE_ARCHITECTURE.md) - Architecture explanation
-- [API Documentation](./API_DOCUMENTATION.md) - API endpoints reference
+## Notes
+- **PK** = Primary Key
+- **FK** = Foreign Key
+- **UK** = Unique Key
+- Diagrams render automatically on GitHub
+- For PlantUML diagrams, see [CLASS_DIAGRAMS.md](./CLASS_DIAGRAMS.md)
 

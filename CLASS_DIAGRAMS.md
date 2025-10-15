@@ -1,17 +1,156 @@
 # Class Diagrams - CSR Volunteer Matching System
 
-This document contains UML class diagrams for the CSR Volunteer Matching System following the Boundary-Controller-Entity (BCE) architectural pattern.
+This document contains UML class diagrams and Entity Relationship Diagrams (ERD) for the CSR Volunteer Matching System.
 
 ## Table of Contents
-1. [Entity Layer Class Diagram](#1-entity-layer-class-diagram)
-2. [Controller Layer Class Diagram](#2-controller-layer-class-diagram)
-3. [Service & Repository Layer Class Diagram](#3-service--repository-layer-class-diagram)
-4. [Complete BCE Architecture Diagram](#4-complete-bce-architecture-diagram)
-5. [Frontend Component Class Diagram](#5-frontend-component-class-diagram)
+1. [Entity Relationship Diagram (ERD)](#1-entity-relationship-diagram-erd)
+2. [Entity Layer Class Diagram](#2-entity-layer-class-diagram)
+3. [Controller Layer Class Diagram](#3-controller-layer-class-diagram)
+4. [Service Layer Class Diagram](#4-service-layer-class-diagram)
 
 ---
 
-## 1. Entity Layer Class Diagram
+## 1. Entity Relationship Diagram (ERD)
+
+This ERD shows the database schema and relationships between entities.
+
+```plantuml
+@startuml ERD
+
+!define table(x) class x << (T,#FFAAAA) >>
+!define primary_key(x) <u>x</u>
+!define foreign_key(x) <i>x</i>
+
+table(User) {
+  primary_key(id: UUID)
+  email: String {unique}
+  password: String
+  userType: Enum
+  status: Enum
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+table(PIN) {
+  primary_key(id: UUID)
+  foreign_key(userId: UUID)
+  name: String
+  age: Integer
+  location: String
+  phoneNumber: String
+  accessibilityNeeds: String
+  profilePhoto: String
+}
+
+table(CSRRep) {
+  primary_key(id: UUID)
+  foreign_key(userId: UUID)
+  companyName: String
+  companyRegistrationNumber: String {unique}
+  industry: String
+  contactPerson: String
+  phoneNumber: String
+  companyAddress: String
+  companyLogo: String
+}
+
+table(PlatformManager) {
+  primary_key(id: UUID)
+  foreign_key(userId: UUID)
+  fullName: String
+  department: String
+  phone: String
+}
+
+table(ServiceCategory) {
+  primary_key(id: UUID)
+  name: String {unique}
+  description: String
+  iconUrl: String
+  isActive: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+table(Request) {
+  primary_key(id: UUID)
+  foreign_key(pinId: UUID)
+  foreign_key(categoryId: UUID)
+  title: String
+  description: String
+  urgency: Enum
+  dateNeeded: DateTime
+  location: String
+  status: Enum
+  viewCount: Integer
+  shortlistCount: Integer
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+table(Shortlist) {
+  primary_key(id: UUID)
+  foreign_key(csrRepId: UUID)
+  foreign_key(requestId: UUID)
+  createdAt: DateTime
+}
+
+table(VolunteerOffer) {
+  primary_key(id: UUID)
+  foreign_key(csrRepId: UUID)
+  foreign_key(requestId: UUID)
+  message: String
+  status: Enum
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+table(Match) {
+  primary_key(id: UUID)
+  foreign_key(requestId: UUID) {unique}
+  foreign_key(csrRepId: UUID)
+  foreign_key(pinId: UUID)
+  status: Enum
+  matchedAt: DateTime
+  completedAt: DateTime
+  cancellationReason: String
+  updatedAt: DateTime
+}
+
+table(Notification) {
+  primary_key(id: UUID)
+  foreign_key(userId: UUID)
+  type: Enum
+  message: String
+  isRead: Boolean
+  createdAt: DateTime
+}
+
+' Relationships
+User ||--o{ PIN : "1:0..1"
+User ||--o{ CSRRep : "1:0..1"
+User ||--o{ PlatformManager : "1:0..1"
+User ||--o{ Notification : "1:many"
+
+PIN ||--o{ Request : "1:many"
+PIN ||--o{ Match : "1:many"
+
+CSRRep ||--o{ Shortlist : "1:many"
+CSRRep ||--o{ VolunteerOffer : "1:many"
+CSRRep ||--o{ Match : "1:many"
+
+ServiceCategory ||--o{ Request : "1:many"
+
+Request ||--o{ Shortlist : "1:many"
+Request ||--o{ VolunteerOffer : "1:many"
+Request ||--|| Match : "1:0..1"
+
+@enduml
+```
+
+---
+
+## 2. Entity Layer Class Diagram
 
 The Entity layer represents the core business objects and database models.
 
@@ -219,7 +358,7 @@ Request "1" -- "0..1" Match : becomes >
 
 ---
 
-## 2. Controller Layer Class Diagram
+## 3. Controller Layer Class Diagram
 
 The Controller layer handles HTTP requests and orchestrates business logic.
 
@@ -300,9 +439,9 @@ class MatchController extends BaseController {
 
 ---
 
-## 3. Service & Repository Layer Class Diagram
+## 4. Service Layer Class Diagram
 
-The Service layer contains business logic, and Repository layer handles data access.
+The Service layer contains business logic and repository interfaces for data access.
 
 ```plantuml
 @startuml Service_Repository_Layer
@@ -446,321 +585,10 @@ UserService ..> ApiResponse : returns
 
 ---
 
-## 4. Complete BCE Architecture Diagram
-
-This diagram shows the complete Boundary-Controller-Entity architecture.
-
-```plantuml
-@startuml BCE_Complete_Architecture
-
-package "Boundary Layer (Frontend)" {
-  class LoginPage {
-    - email: string
-    - password: string
-    + handleLogin(): void
-    + validateForm(): boolean
-  }
-  
-  class AdminDashboard {
-    - users: User[]
-    - selectedUser: User
-    + fetchUsers(): void
-    + createUser(data: object): void
-    + updateUser(id: string, data: object): void
-    + suspendUser(id: string): void
-  }
-  
-  class RequestForm {
-    - formData: object
-    + handleSubmit(): void
-    + validateInputs(): boolean
-  }
-  
-  class RequestList {
-    - requests: Request[]
-    - filters: object
-    + fetchRequests(): void
-    + applyFilters(filters: object): void
-  }
-  
-  class ShortlistView {
-    - shortlists: Shortlist[]
-    + addToShortlist(requestId: string): void
-    + removeFromShortlist(id: string): void
-  }
-}
-
-package "Controller Layer (Backend)" {
-  class AuthController {
-    + {static} login()
-    + {static} registerPIN()
-    + {static} registerCSRRep()
-  }
-  
-  class AdminController {
-    + {static} getUsers()
-    + {static} createUser()
-    + {static} updateUserStatus()
-    + {static} deleteUser()
-  }
-  
-  class RequestController {
-    + {static} createRequest()
-    + {static} getRequests()
-    + {static} updateRequest()
-    + {static} deleteRequest()
-  }
-  
-  class CSRRepController {
-    + {static} shortlistRequest()
-    + {static} submitOffer()
-    + {static} getShortlists()
-  }
-  
-  class PINController {
-    + {static} getProfile()
-    + {static} updateProfile()
-    + {static} getMyMatches()
-  }
-}
-
-package "Service Layer" {
-  class UserService {
-    + createUser()
-    + getUserById()
-    + updateUser()
-  }
-  
-  class MatchingService {
-    + findMatchesForVolunteer()
-    - calculateMatchScore()
-  }
-  
-  class CSROpportunityService {
-    + createOpportunity()
-    + getActiveOpportunities()
-  }
-}
-
-package "Entity Layer (Database Models)" {
-  class User {
-    - id: string
-    - email: string
-    - userType: UserType
-    - status: UserStatus
-  }
-  
-  class PIN {
-    - id: string
-    - userId: string
-    - name: string
-  }
-  
-  class CSRRep {
-    - id: string
-    - userId: string
-    - companyName: string
-  }
-  
-  class Request {
-    - id: string
-    - pinId: string
-    - title: string
-    - status: RequestStatus
-  }
-  
-  class Match {
-    - id: string
-    - requestId: string
-    - csrRepId: string
-    - status: MatchStatus
-  }
-  
-  class Shortlist {
-    - id: string
-    - csrRepId: string
-    - requestId: string
-  }
-}
-
-package "Data Access Layer" {
-  interface PrismaClient {
-    + user
-    + pin
-    + csrRep
-    + request
-    + match
-    + shortlist
-  }
-}
-
-' Relationships
-LoginPage --> AuthController : HTTP POST /api/auth/login
-AdminDashboard --> AdminController : HTTP GET/POST/PUT /api/admin/*
-RequestForm --> RequestController : HTTP POST /api/requests
-RequestList --> RequestController : HTTP GET /api/requests
-ShortlistView --> CSRRepController : HTTP POST/DELETE /api/csrrep/shortlist
-
-AuthController --> UserService : uses
-AdminController --> UserService : uses
-RequestController ..> Request : manages
-CSRRepController ..> Shortlist : manages
-PINController ..> PIN : manages
-
-UserService --> PrismaClient : queries
-MatchingService --> PrismaClient : queries
-CSROpportunityService --> PrismaClient : queries
-
-PrismaClient ..> User : CRUD
-PrismaClient ..> PIN : CRUD
-PrismaClient ..> CSRRep : CRUD
-PrismaClient ..> Request : CRUD
-PrismaClient ..> Match : CRUD
-PrismaClient ..> Shortlist : CRUD
-
-@enduml
-```
-
----
-
-## 5. Frontend Component Class Diagram
-
-The frontend React components with TypeScript interfaces.
-
-```plantuml
-@startuml Frontend_Components
-
-interface User {
-  + id: string
-  + email: string
-  + userType: UserType
-  + status: UserStatus
-}
-
-interface Request {
-  + id: string
-  + title: string
-  + description: string
-  + status: RequestStatus
-  + urgency: UrgencyLevel
-}
-
-interface ServiceCategory {
-  + id: string
-  + name: string
-  + description: string
-  + isActive: boolean
-}
-
-class AuthService {
-  - baseURL: string
-  + login(credentials: LoginCredentials): Promise<AuthResponse>
-  + logout(): void
-  + getToken(): string | null
-  + setToken(token: string): void
-  + isAuthenticated(): boolean
-}
-
-class AdminService {
-  - baseURL: string
-  + getUsers(params: object): Promise<User[]>
-  + createUser(userData: object): Promise<User>
-  + updateUser(id: string, data: object): Promise<User>
-  + deleteUser(id: string): Promise<void>
-  + suspendUser(id: string): Promise<void>
-  + getSystemStats(): Promise<object>
-}
-
-class RequestService {
-  - baseURL: string
-  + getRequests(filters: object): Promise<Request[]>
-  + createRequest(data: object): Promise<Request>
-  + updateRequest(id: string, data: object): Promise<Request>
-  + deleteRequest(id: string): Promise<void>
-  + getCategories(): Promise<ServiceCategory[]>
-}
-
-class CSRRepService {
-  - baseURL: string
-  + shortlistRequest(requestId: string): Promise<Shortlist>
-  + getShortlists(): Promise<Shortlist[]>
-  + submitOffer(requestId: string, message: string): Promise<VolunteerOffer>
-  + getMyOffers(): Promise<VolunteerOffer[]>
-  + getMyMatches(): Promise<Match[]>
-}
-
-class PINService {
-  - baseURL: string
-  + getProfile(): Promise<PINProfile>
-  + updateProfile(data: object): Promise<PINProfile>
-  + getMyRequests(): Promise<Request[]>
-  + getMyMatches(): Promise<Match[]>
-}
-
-class LoginPage {
-  - email: string
-  - password: string
-  - error: string
-  - authService: AuthService
-  + handleSubmit(e: Event): void
-  + validateForm(): boolean
-  + navigateToDashboard(): void
-}
-
-class AdminDashboard {
-  - users: User[]
-  - selectedUser: User | null
-  - showCreateModal: boolean
-  - adminService: AdminService
-  + useEffect(): void
-  + fetchUsers(): Promise<void>
-  + handleCreateUser(data: object): Promise<void>
-  + handleUpdateUser(id: string, data: object): Promise<void>
-  + handleSuspendUser(id: string): Promise<void>
-  + handleSearch(term: string): void
-}
-
-class CreateUserModal {
-  - formData: object
-  - userTypes: string[]
-  - onClose: Function
-  - onSubmit: Function
-  + handleInputChange(e: Event): void
-  + handleSubmit(e: Event): void
-  + resetForm(): void
-}
-
-class UserDetailsModal {
-  - user: User
-  - onClose: Function
-  - onUpdate: Function
-  + handleUpdate(data: object): void
-}
-
-' Relationships
-LoginPage --> AuthService : uses
-AdminDashboard --> AdminService : uses
-AdminDashboard *-- CreateUserModal : contains
-AdminDashboard *-- UserDetailsModal : contains
-
-CreateUserModal ..> User : creates
-UserDetailsModal ..> User : updates
-
-AuthService ..> User : authenticates
-AdminService ..> User : manages
-RequestService ..> Request : manages
-CSRRepService ..> Request : interacts with
-PINService ..> Request : creates
-
-@enduml
-```
-
----
-
 ## How to Use These Diagrams
 
 ### Online Rendering
-1. **PlantUML Online Editor**: Copy any diagram code and paste it into [PlantText](https://www.planttext.com/) or [PlantUML Web Server](http://www.plantuml.com/plantuml/uml/)
+1. **PlantUML Online Editor**: Copy diagram code and paste into [PlantText](https://www.planttext.com/) or [PlantUML Web Server](http://www.plantuml.com/plantuml/uml/)
 2. **VS Code Extension**: Install "PlantUML" extension in VS Code to preview diagrams directly
 
 ### Generate Images
@@ -772,56 +600,42 @@ sudo apt-get install plantuml  # Linux
 
 # Generate PNG images
 plantuml CLASS_DIAGRAMS.md
-```
 
-### Mermaid Alternative
-If you prefer Mermaid diagrams (better GitHub support), I can also provide the diagrams in Mermaid format.
+# Generate SVG images (scalable)
+plantuml -tsvg CLASS_DIAGRAMS.md
+```
 
 ---
 
 ## Diagram Descriptions
 
-### 1. Entity Layer
-- Shows all database models and their relationships
+### 1. ERD (Entity Relationship Diagram)
+- Shows database schema and table relationships
+- Includes primary keys (underlined) and foreign keys (italicized)
+- Demonstrates cardinality (1:1, 1:many, many:many)
+
+### 2. Entity Layer
+- Shows all entity classes and their relationships
 - Includes enums for type safety
 - Demonstrates one-to-one, one-to-many relationships
 
-### 2. Controller Layer  
+### 3. Controller Layer  
 - Shows all HTTP request handlers
-- Demonstrates separation of concerns
+- Demonstrates API endpoints and methods
 - Includes authentication and authorization logic
 
-### 3. Service & Repository Layer
+### 4. Service Layer
 - Repository interfaces for data access abstraction
 - Service classes containing business logic
 - Shows dependency injection pattern
-
-### 4. BCE Complete Architecture
-- End-to-end view of the system
-- Shows data flow from UI to Database
-- Demonstrates layered architecture
-
-### 5. Frontend Components
-- React components with TypeScript
-- Service layer for API communication
-- Modal components for user interactions
-
----
-
-## Architecture Patterns Used
-
-1. **BCE (Boundary-Controller-Entity)**: Clear separation of concerns
-2. **Repository Pattern**: Abstracted data access layer
-3. **Service Layer Pattern**: Business logic encapsulation
-4. **DTO Pattern**: Data transfer objects for API communication
-5. **Dependency Injection**: Loose coupling between layers
 
 ---
 
 ## Notes
 - All diagrams follow UML 2.0 standards
+- Primary keys are underlined in ERD
+- Foreign keys are italicized in ERD
 - Private methods/fields marked with `-`
 - Public methods/fields marked with `+`
 - Static methods marked with `{static}`
-- Abstract classes shown with italics in PlantUML
 

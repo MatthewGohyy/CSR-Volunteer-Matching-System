@@ -104,35 +104,23 @@
 - When to use each interpretation
 - Perfect for academic discussions
 
-### **[CLASS_DIAGRAMS_INDEX.md](CLASS_DIAGRAMS_INDEX.md)** 📊 CLASS DIAGRAMS HUB
-- Complete class diagram documentation index
-- Links to all diagram files
-- Quick navigation guide
+### **[CLASS_DIAGRAMS_INDEX.md](CLASS_DIAGRAMS_INDEX.md)** 📊 CLASS DIAGRAMS & ERD HUB
+- Navigation guide for all diagrams
+- ERD and Class diagrams documentation
 - Tools and viewing instructions
+- Quick reference for academic submissions
 
-### **[CLASS_DIAGRAMS.md](CLASS_DIAGRAMS.md)** 📐 UML CLASS DIAGRAMS (PlantUML)
-- Professional UML diagrams
-- Entity, Controller, Service layers
-- Complete BCE architecture diagram
+### **[CLASS_DIAGRAMS.md](CLASS_DIAGRAMS.md)** 📐 UML DIAGRAMS (PlantUML)
+- ERD (Entity Relationship Diagram)
+- Entity, Controller, Service class diagrams
+- Professional UML format
 - Perfect for academic submissions
 
-### **[CLASS_DIAGRAMS_MERMAID.md](CLASS_DIAGRAMS_MERMAID.md)** 🎨 CLASS DIAGRAMS (Mermaid)
-- GitHub-friendly diagrams
+### **[CLASS_DIAGRAMS_MERMAID.md](CLASS_DIAGRAMS_MERMAID.md)** 🎨 DIAGRAMS (Mermaid)
+- ERD (Entity Relationship Diagram)
+- Entity, Controller, Service class diagrams
 - Auto-renders on GitHub
-- Sequence diagrams included
 - Perfect for team collaboration
-
-### **[CLASS_DIAGRAM_CHEATSHEET.md](CLASS_DIAGRAM_CHEATSHEET.md)** ⚡ CLASS DIAGRAM QUICK REF
-- Quick entity reference
-- Controller & service signatures
-- Request flow examples
-- Perfect for coding reference
-
-### **[DIAGRAMS_README.md](DIAGRAMS_README.md)** 📚 DIAGRAM USAGE GUIDE
-- How to read UML diagrams
-- Tool installation guide
-- Symbol and notation reference
-- Perfect for diagram beginners
 
 ---
 
@@ -168,12 +156,10 @@
 2. Docker issues: [DOCKER_GUIDE.md](DOCKER_GUIDE.md) Troubleshooting
 3. Git issues: [GITHUB_WORKFLOW.md](GITHUB_WORKFLOW.md) Common Questions
 
-### **"I need class diagrams"** ⭐ NEW!
+### **"I need class diagrams & ERD"** ⭐ NEW!
 1. **Start Here**: [CLASS_DIAGRAMS_INDEX.md](CLASS_DIAGRAMS_INDEX.md) ⭐ Navigation hub
 2. **GitHub Viewing**: [CLASS_DIAGRAMS_MERMAID.md](CLASS_DIAGRAMS_MERMAID.md) ⭐ Auto-renders
-3. **Professional UML**: [CLASS_DIAGRAMS.md](CLASS_DIAGRAMS.md) ⭐ For submissions
-4. **Quick Reference**: [CLASS_DIAGRAM_CHEATSHEET.md](CLASS_DIAGRAM_CHEATSHEET.md)
-5. **Learn UML**: [DIAGRAMS_README.md](DIAGRAMS_README.md)
+3. **Academic Submission**: [CLASS_DIAGRAMS.md](CLASS_DIAGRAMS.md) ⭐ Generate images
 
 ---
 
@@ -193,15 +179,13 @@
 | **BCE_CHEAT_SHEET.md** ⚡ | **3KB** | **Quick BCE reference** | **Quick lookups** |
 | **BCE_DIAGRAMS.md** 📊 | **12KB** | **Visual BCE flows** | **Understanding flows** |
 | **BCE_INTERPRETATION.md** 🤔 | **8KB** | **BCE perspectives** | **Academic discussions** |
-| **CLASS_DIAGRAMS_INDEX.md** 📊 | **5KB** | **Diagram navigation** | **Finding diagrams** |
-| **CLASS_DIAGRAMS.md** 📐 | **15KB** | **UML diagrams (PlantUML)** | **Academic submission** |
-| **CLASS_DIAGRAMS_MERMAID.md** 🎨 | **18KB** | **Diagrams (Mermaid)** | **GitHub viewing** |
-| **CLASS_DIAGRAM_CHEATSHEET.md** ⚡ | **10KB** | **Quick class reference** | **Coding reference** |
-| **DIAGRAMS_README.md** 📚 | **8KB** | **Diagram usage guide** | **Learning UML** |
+| **CLASS_DIAGRAMS_INDEX.md** 📊 | **5KB** | **ERD & Class diagram hub** | **Finding diagrams** |
+| **CLASS_DIAGRAMS.md** 📐 | **12KB** | **ERD + Class diagrams (PlantUML)** | **Academic submission** |
+| **CLASS_DIAGRAMS_MERMAID.md** 🎨 | **10KB** | **ERD + Class diagrams (Mermaid)** | **GitHub viewing** |
 | GITHUB_WORKFLOW.md | 13KB | Git workflow | Team collaboration |
 | DOCKER_GUIDE.md | 9KB | Docker guide | Container issues |
 
-**Total: 19 essential documents | ~176KB of documentation**
+**Total: 16 essential documents | ~145KB of documentation**
 
 ---
 
