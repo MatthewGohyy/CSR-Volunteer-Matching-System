@@ -151,6 +151,7 @@ export class AuthController {
         include: {
           pin: true,
           csrRep: true,
+          platformManager: true,
         },
       });
 
@@ -182,7 +183,7 @@ export class AuthController {
           id: user.id,
           email: user.email,
           userType: user.userType,
-          profile: user.pin || user.csrRep,
+          profile: user.pin || user.csrRep || user.platformManager || null,
         },
         token,
       });
@@ -201,6 +202,7 @@ export class AuthController {
         include: {
           pin: true,
           csrRep: true,
+          platformManager: true,
         },
       });
 
@@ -212,7 +214,7 @@ export class AuthController {
         user: {
           ...user,
           password: undefined,
-          profile: user.pin || user.csrRep,
+          profile: user.pin || user.csrRep || user.platformManager || null,
         },
       });
     } catch (error) {

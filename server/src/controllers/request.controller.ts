@@ -55,7 +55,7 @@ export class RequestController {
   // Get all requests (with filters)
   static async getRequests(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { status, urgency, categoryId, page = '1', limit = '10' } = req.query;
+      const { status, urgency, categoryId, search, page = '1', limit = '10' } = req.query;
 
       const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);
@@ -71,6 +71,15 @@ export class RequestController {
       }
       if (categoryId) {
         where.categoryId = categoryId;
+      }
+
+      // Add text search
+      if (search && typeof search === 'string') {
+        where.OR = [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { location: { contains: search, mode: 'insensitive' } },
+        ];
       }
 
       const [requests, total] = await Promise.all([

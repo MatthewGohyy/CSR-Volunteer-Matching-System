@@ -111,6 +111,11 @@ export class CSRRepController {
   static async getShortlists(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.userId;
+      const { search, page = '1', limit = '20' } = req.query;
+
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const skip = (pageNum - 1) * limitNum;
 
       // Get CSR Rep profile
       const csrRep = await prisma.cSRRep.findUnique({ where: { userId } });
@@ -118,28 +123,54 @@ export class CSRRepController {
         throw new AppError('CSR Rep profile not found', 404);
       }
 
-      const shortlists = await prisma.shortlist.findMany({
-        where: { csrRepId: csrRep.id },
-        include: {
-          request: {
-            include: {
-              category: true,
-              pin: {
-                select: {
-                  name: true,
-                  location: true,
-                  accessibilityNeeds: true,
+      const where: any = { csrRepId: csrRep.id };
+
+      // Add text search
+      if (search && typeof search === 'string') {
+        where.request = {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
+            { location: { contains: search, mode: 'insensitive' } },
+          ],
+        };
+      }
+
+      const [shortlists, total] = await Promise.all([
+        prisma.shortlist.findMany({
+          where,
+          include: {
+            request: {
+              include: {
+                category: true,
+                pin: {
+                  select: {
+                    name: true,
+                    location: true,
+                    accessibilityNeeds: true,
+                  },
                 },
               },
             },
           },
-        },
-        orderBy: {
-          createdAt: 'desc',
+          orderBy: {
+            createdAt: 'desc',
+          },
+          skip,
+          take: limitNum,
+        }),
+        prisma.shortlist.count({ where }),
+      ]);
+
+      res.json({
+        shortlists,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum),
         },
       });
-
-      res.json({ shortlists });
     } catch (error) {
       next(error);
     }

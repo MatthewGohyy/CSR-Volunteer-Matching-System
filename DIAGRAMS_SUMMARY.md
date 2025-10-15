@@ -39,8 +39,14 @@ Shows:
 - Unique constraints (UK)
 - Relationships between tables (1:1, 1:many)
 
+**Important Note:** 
+- User table has 4 user types: PIN, CSR_REP, **ADMIN**, PLATFORM_MANAGER
+- **However**, only 3 profile tables exist: PIN, CSRRep, PlatformManager
+- **ADMIN users have NO separate profile table** - they use only the base User fields
+
 **Tables:**
-- User, PIN, CSRRep, PlatformManager
+- User (with 4 user types)
+- PIN, CSRRep, PlatformManager (profile tables)
 - Request, ServiceCategory
 - Shortlist, VolunteerOffer, Match, Notification
 

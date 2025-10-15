@@ -12,6 +12,8 @@ This document contains class diagrams and ERD in Mermaid format that render auto
 
 ## 1. Entity Relationship Diagram (ERD)
 
+**Note:** User table has 4 user types (PIN, CSR_REP, ADMIN, PLATFORM_MANAGER), but ADMIN users have no separate profile table. Only PIN, CSRRep, and PlatformManager have profile tables.
+
 ```mermaid
 erDiagram
     User ||--o| PIN : "has"
@@ -36,10 +38,11 @@ erDiagram
         uuid id PK
         string email UK
         string password
-        enum userType
+        enum userType "PIN, CSR_REP, ADMIN, PLATFORM_MANAGER"
         enum status
         datetime createdAt
         datetime updatedAt
+        string note "ADMIN users have no profile table"
     }
     
     PIN {
@@ -142,6 +145,8 @@ erDiagram
 
 ## 2. Entity Class Diagram
 
+**Note:** UserType includes PIN, CSR_REP, ADMIN, and PLATFORM_MANAGER, but ADMIN users have no profile table.
+
 ```mermaid
 classDiagram
     class User {
@@ -152,7 +157,7 @@ classDiagram
         +UserStatus status
         +DateTime createdAt
         +DateTime updatedAt
-        +getProfile()
+        +getProfile() PINProfile or CSRRepProfile or PlatformManagerProfile or null
         +updateStatus()
     }
 

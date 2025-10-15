@@ -174,5 +174,138 @@ export class PINController {
       next(error);
     }
   }
+
+  // Get completed request history
+  static async getCompletedRequests(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+      const { page = '1', limit = '10' } = req.query;
+
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const skip = (pageNum - 1) * limitNum;
+
+      // Get PIN profile
+      const pin = await prisma.pIN.findUnique({ where: { userId } });
+      if (!pin) {
+        throw new AppError('PIN profile not found', 404);
+      }
+
+      // Query completed or matched requests
+      const where = {
+        pinId: pin.id,
+        status: { in: ['COMPLETED', 'MATCHED'] },
+      };
+
+      const [requests, total] = await Promise.all([
+        prisma.request.findMany({
+          where,
+          include: {
+            category: true,
+            match: {
+              include: {
+                csrRep: {
+                  select: {
+                    companyName: true,
+                    contactPerson: true,
+                    phoneNumber: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            updatedAt: 'desc',
+          },
+          skip,
+          take: limitNum,
+        }),
+        prisma.request.count({ where }),
+      ]);
+
+      res.json({
+        requests,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Search completed requests
+  static async searchCompletedRequests(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+      const { q, page = '1', limit = '10' } = req.query;
+
+      if (!q || typeof q !== 'string') {
+        throw new AppError('Search query is required', 400);
+      }
+
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const skip = (pageNum - 1) * limitNum;
+
+      // Get PIN profile
+      const pin = await prisma.pIN.findUnique({ where: { userId } });
+      if (!pin) {
+        throw new AppError('PIN profile not found', 404);
+      }
+
+      // Query with search
+      const where = {
+        pinId: pin.id,
+        status: { in: ['COMPLETED', 'MATCHED'] },
+        OR: [
+          { title: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
+        ],
+      };
+
+      const [requests, total] = await Promise.all([
+        prisma.request.findMany({
+          where,
+          include: {
+            category: true,
+            match: {
+              include: {
+                csrRep: {
+                  select: {
+                    companyName: true,
+                    contactPerson: true,
+                    phoneNumber: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            updatedAt: 'desc',
+          },
+          skip,
+          take: limitNum,
+        }),
+        prisma.request.count({ where }),
+      ]);
+
+      res.json({
+        query: q,
+        requests,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 

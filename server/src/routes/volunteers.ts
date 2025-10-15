@@ -20,4 +20,8 @@ router.get('/notifications', PINController.getNotifications);
 router.put('/notifications/:notificationId/read', PINController.markNotificationRead);
 router.put('/notifications/read-all', PINController.markAllNotificationsRead);
 
+// Request history
+router.get('/requests/history', PINController.getCompletedRequests);
+router.get('/requests/history/search', PINController.searchCompletedRequests);
+
 export default router;

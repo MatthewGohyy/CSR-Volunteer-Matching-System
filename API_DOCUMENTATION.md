@@ -152,13 +152,14 @@ GET /api/opportunities/categories
 
 ### Get All Requests
 ```http
-GET /api/opportunities?status=ACTIVE&urgency=HIGH&page=1&limit=10
+GET /api/opportunities?status=ACTIVE&urgency=HIGH&search=food&page=1&limit=10
 ```
 
 **Query Parameters:**
 - `status`: ACTIVE, MATCHED, COMPLETED, CANCELLED
 - `urgency`: LOW, MEDIUM, HIGH
 - `categoryId`: UUID
+- `search`: Text search in title, description, location ✨ NEW
 - `page`: number (default: 1)
 - `limit`: number (default: 10)
 
@@ -270,6 +271,18 @@ PUT /api/volunteers/notifications/read-all
 Authorization: Bearer <token>
 ```
 
+### Get Completed Request History
+```http
+GET /api/volunteers/requests/history?page=1&limit=10
+Authorization: Bearer <token>
+```
+
+### Search Completed Request History
+```http
+GET /api/volunteers/requests/history/search?q=food&page=1&limit=10
+Authorization: Bearer <token>
+```
+
 ---
 
 ## 🏢 Organization (CSR Rep) Endpoints
@@ -297,9 +310,14 @@ Authorization: Bearer <token>
 
 ### Get Shortlisted Requests
 ```http
-GET /api/organizations/shortlists
+GET /api/organizations/shortlists?search=food&page=1&limit=20
 Authorization: Bearer <token>
 ```
+
+**Query Parameters:**
+- `search`: Text search in title, description, location ✨ NEW
+- `page`: Page number (default: 1)
+- `limit`: Items per page (default: 20)
 
 ### Submit Volunteer Offer
 ```http
@@ -450,6 +468,206 @@ Authorization: Bearer <token>
 - `MATCH_CONFIRMED` - Match confirmed
 - `MATCH_CANCELLED` - Match cancelled
 - `REQUEST_UPDATED` - Request was updated
+
+---
+
+## 🧑‍💼 Admin Endpoints
+
+**Base Path:** `/api/admin`  
+**Authorization:** Admin only
+
+### List Users
+```http
+GET /api/admin/users?page=1&limit=10
+```
+
+### Search Users
+```http
+GET /api/admin/users/search?q=john&userType=PIN&status=ACTIVE
+```
+
+### Get User by ID
+```http
+GET /api/admin/users/:id
+```
+
+### Create User
+```http
+POST /api/admin/users
+```
+
+**Body (PIN example):**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "userType": "PIN",
+  "name": "John Doe",
+  "age": 65,
+  "location": "Singapore",
+  "phoneNumber": "+65 1234 5678"
+}
+```
+
+### Update User Email
+```http
+PUT /api/admin/users/:id
+```
+
+**Body:**
+```json
+{
+  "email": "newemail@example.com"
+}
+```
+
+### Update User Status
+```http
+PUT /api/admin/users/:id/status
+```
+
+**Body:**
+```json
+{
+  "status": "SUSPENDED"
+}
+```
+
+### Update User Profiles
+```http
+PUT /api/admin/users/:id/profile/pin
+PUT /api/admin/users/:id/profile/csr-rep
+PUT /api/admin/users/:id/profile/platform-manager
+```
+
+**Body (PIN example):**
+```json
+{
+  "name": "Updated Name",
+  "age": 66,
+  "location": "Updated Location"
+}
+```
+
+### Delete User
+```http
+DELETE /api/admin/users/:id
+```
+
+### Get System Statistics
+```http
+GET /api/admin/stats
+```
+
+**Response:**
+```json
+{
+  "users": {
+    "total": 200,
+    "active": 180,
+    "suspended": 20
+  },
+  "requests": {
+    "total": 150,
+    "active": 80
+  },
+  "matches": {
+    "total": 90,
+    "active": 45
+  }
+}
+```
+
+---
+
+## 🧭 Platform Manager Endpoints
+
+**Base Path:** `/api/platform-manager`  
+**Authorization:** Platform Manager only
+
+### Create Category
+```http
+POST /api/platform-manager/categories
+```
+
+**Body:**
+```json
+{
+  "name": "Food Assistance",
+  "description": "Help with meals and groceries",
+  "icon": "🍽️"
+}
+```
+
+### List Categories
+```http
+GET /api/platform-manager/categories?page=1&limit=10&search=food&isActive=true
+```
+
+### Search Categories
+```http
+GET /api/platform-manager/categories/search?q=food
+```
+
+### Update Category
+```http
+PUT /api/platform-manager/categories/:id
+```
+
+**Body:**
+```json
+{
+  "name": "Updated Name",
+  "description": "Updated description",
+  "isActive": true
+}
+```
+
+### Delete Category
+```http
+DELETE /api/platform-manager/categories/:id?permanent=false
+```
+- `permanent=false`: Soft delete (deactivate)
+- `permanent=true`: Hard delete (only if no associated requests)
+
+### Get Platform Statistics
+```http
+GET /api/platform-manager/stats?period=monthly
+```
+
+**Periods:** `daily`, `weekly`, `monthly`, `all`
+
+**Response:**
+```json
+{
+  "period": "monthly",
+  "categories": {
+    "total": 15,
+    "active": 12,
+    "inactive": 3,
+    "topCategories": [
+      { "id": "uuid", "name": "Food Assistance", "requestCount": 45 }
+    ]
+  },
+  "requests": {
+    "total": 150,
+    "active": 80,
+    "completed": 70,
+    "periodNew": 25
+  },
+  "matches": {
+    "total": 90,
+    "active": 40,
+    "completed": 50,
+    "periodNew": 15
+  },
+  "users": {
+    "total": 200,
+    "pins": 120,
+    "csrReps": 80
+  }
+}
+```
 
 ---
 

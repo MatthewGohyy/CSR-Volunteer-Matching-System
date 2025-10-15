@@ -14,6 +14,8 @@ This document contains UML class diagrams and Entity Relationship Diagrams (ERD)
 
 This ERD shows the database schema and relationships between entities.
 
+**Note:** User table has 4 user types (PIN, CSR_REP, ADMIN, PLATFORM_MANAGER), but ADMIN users have no separate profile table. Only PIN, CSRRep, and PlatformManager have profile tables.
+
 ```plantuml
 @startuml ERD
 
@@ -25,10 +27,12 @@ table(User) {
   primary_key(id: UUID)
   email: String {unique}
   password: String
-  userType: Enum
+  userType: Enum <<PIN|CSR_REP|ADMIN|PLATFORM_MANAGER>>
   status: Enum
   createdAt: DateTime
   updatedAt: DateTime
+  --
+  Note: ADMIN users have no profile table
 }
 
 table(PIN) {
@@ -161,7 +165,7 @@ The Entity layer represents the core business objects and database models.
 enum UserType {
   PIN
   CSR_REP
-  ADMIN
+  ADMIN <<note: no profile table>>
   PLATFORM_MANAGER
 }
 
@@ -214,7 +218,8 @@ class User {
   - status: UserStatus
   - createdAt: DateTime
   - updatedAt: DateTime
-  + getProfile(): PINProfile | CSRRepProfile | PlatformManagerProfile
+  <<note: ADMIN users have no profile table>>
+  + getProfile(): PINProfile | CSRRepProfile | PlatformManagerProfile | null
   + updateStatus(status: UserStatus): void
   + validatePassword(password: string): boolean
 }
@@ -616,8 +621,9 @@ plantuml -tsvg CLASS_DIAGRAMS.md
 
 ### 2. Entity Layer
 - Shows all entity classes and their relationships
-- Includes enums for type safety
+- Includes enums for type safety (Note: UserType has 4 values but only 3 profile tables)
 - Demonstrates one-to-one, one-to-many relationships
+- **Important:** ADMIN is a valid user type but has no separate profile table
 
 ### 3. Controller Layer  
 - Shows all HTTP request handlers

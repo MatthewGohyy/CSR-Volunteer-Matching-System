@@ -72,6 +72,8 @@ plantuml -tsvg CLASS_DIAGRAMS.md
 - Includes primary keys, foreign keys, and unique constraints
 - Demonstrates cardinality (1:1, 1:many, many:many)
 
+**⚠️ Important:** The User table supports 4 user types (PIN, CSR_REP, ADMIN, PLATFORM_MANAGER), but ADMIN users have NO separate profile table. Only PIN, CSRRep, and PlatformManager have profile tables.
+
 ### Class Diagrams
 
 #### 1. Entity Layer
