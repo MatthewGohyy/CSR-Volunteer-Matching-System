@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PINRepository } from '../../repositories/PIN.repository';
-import { RequestRepository } from '../../repositories/Request.repository';
+import { PINEntity } from '../../entities/PIN.entity';
+import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -11,17 +11,15 @@ import { AppError } from '../../middleware/errorHandler';
 export class DeleteRequestController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const pinRepository = new PINRepository();
-      const requestRepository = new RequestRepository();
       const userId = (req as any).user!.userId;
       const { id } = req.params;
 
-      const pin = await pinRepository.findByUserId(userId);
+      const pin = await PINEntity.findByUserId(userId);
       if (!pin) {
         throw new AppError('PIN profile not found', 404);
       }
 
-      const existingRequest = await requestRepository.findById(id);
+      const existingRequest = await RequestEntity.findById(id);
       if (!existingRequest) {
         throw new AppError('Request not found', 404);
       }
@@ -29,7 +27,7 @@ export class DeleteRequestController {
         throw new AppError('Unauthorized to delete this request', 403);
       }
 
-      await requestRepository.delete(id);
+      await RequestEntity.delete(id);
 
       res.json({ message: 'Request deleted successfully' });
     } catch (error) {

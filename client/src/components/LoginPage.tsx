@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { Eye, EyeOff, Heart, Mail, Lock, AlertCircle } from 'lucide-react';
-import { authService } from '../services/authService';
-import type { LoginCredentials } from '../types';
+import api from '../config/api';
+import type { LoginCredentials, AuthResponse } from '../types';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -15,7 +15,15 @@ const LoginPage: React.FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const loginMutation = useMutation({
-    mutationFn: authService.login,
+    mutationFn: async (credentials: LoginCredentials): Promise<AuthResponse> => {
+      // Direct API call to controller (Boundary -> Controller)
+      const response = await api.post<AuthResponse>('/auth/login', credentials);
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+      return response.data;
+    },
     onSuccess: (data) => {
       // Redirect based on user type
       if (data.user.userType === 'PIN') {

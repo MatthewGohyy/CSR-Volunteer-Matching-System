@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ServiceCategoryRepository } from '../../repositories/ServiceCategory.repository';
+import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
 
 /**
  * Get Categories Controller
@@ -9,8 +9,7 @@ import { ServiceCategoryRepository } from '../../repositories/ServiceCategory.re
 export class GetCategoriesController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const categoryRepository = new ServiceCategoryRepository();
-      const categories = await categoryRepository.findActive();
+      const categories = await ServiceCategoryEntity.findActive();
 
       res.json({ categories });
     } catch (error) {

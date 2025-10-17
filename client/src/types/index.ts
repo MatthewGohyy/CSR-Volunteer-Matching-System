@@ -169,3 +169,54 @@ export interface AuthResponse {
   token: string;
 }
 
+// Admin Types
+export interface CreateUserData {
+  email: string;
+  password: string;
+  userType: UserType;
+  // PIN specific fields
+  name?: string;
+  age?: number;
+  location?: string;
+  phoneNumber?: string;
+  accessibilityNeeds?: string;
+  // CSR Rep specific fields
+  companyName?: string;
+  companyRegistrationNumber?: string;
+  industry?: string;
+  contactPerson?: string;
+  companyAddress?: string;
+  // Platform Manager specific fields
+  fullName?: string;
+  department?: string;
+  phone?: string;
+}
+
+export interface AdminUser extends User {
+  pin?: {
+    id: string;
+    name: string;
+    age?: number;
+    location?: string;
+    phoneNumber?: string;
+    accessibilityNeeds?: string;
+  };
+  csrRep?: {
+    id: string;
+    companyName: string;
+    companyRegistrationNumber: string;
+    industry?: string;
+    contactPerson: string;
+    phoneNumber: string;
+    companyAddress?: string;
+  };
+  platformManager?: PlatformManagerProfile;
+}
+
+export interface UsersResponse {
+  users: AdminUser[];
+  total: number;
+  page: number;
+  limit: number;
+}
+

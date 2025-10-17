@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRepository } from '../../repositories/User.repository';
-import { PINRepository } from '../../repositories/PIN.repository';
-import { CSRRepRepository } from '../../repositories/CSRRep.repository';
+import { UserEntity } from '../../entities/User.entity';
+import { PINEntity } from '../../entities/PIN.entity';
+import { CSRRepEntity } from '../../entities/CSRRep.entity';
 import { hashPassword } from '../../utils/password';
 import { AppError } from '../../middleware/errorHandler';
 import { UserType, UserStatus } from '@prisma/client';
@@ -17,12 +17,9 @@ export class CreateUserAccountController {
     try {
       const { email, password, userType, ...profileData } = req.body;
 
-      const userRepository = new UserRepository();
-      const pinRepository = new PINRepository();
-      const csrRepRepository = new CSRRepRepository();
 
       // Check if user already exists
-      const existingUser = await userRepository.findByEmail(email);
+      const existingUser = await UserEntity.findByEmail(email);
       if (existingUser) {
         throw new AppError('Email already registered', 409);
       }

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRepository } from '../../repositories/User.repository';
+import { UserEntity } from '../../entities/User.entity';
 import { UserType } from '@prisma/client';
 
 /**
@@ -11,16 +11,15 @@ import { UserType } from '@prisma/client';
 export class SearchUserProfilesController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userRepository = new UserRepository();
       const { query, userType } = req.query;
 
       let users;
       if (query && typeof query === 'string') {
-        users = await userRepository.search(query, 1, 1000);
+        users = await UserEntity.search(query, 1, 1000);
       } else if (userType) {
-        users = await userRepository.findByType(userType as UserType, 1, 1000);
+        users = await UserEntity.findByType(userType as UserType, 1, 1000);
       } else {
-        users = await userRepository.findAll(1, 1000);
+        users = await UserEntity.findAll(1, 1000);
       }
 
       const profiles = users.map(user => ({

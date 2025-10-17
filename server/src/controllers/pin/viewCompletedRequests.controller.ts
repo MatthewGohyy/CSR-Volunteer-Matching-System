@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PINRepository } from '../../repositories/PIN.repository';
-import { RequestRepository } from '../../repositories/Request.repository';
+import { PINEntity } from '../../entities/PIN.entity';
+import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus } from '@prisma/client';
 
@@ -21,18 +21,16 @@ export class ViewCompletedRequestsController {
       const skip = (pageNum - 1) * limitNum;
 
       // Get PIN profile
-      const pinRepository = new PINRepository();
-      const requestRepository = new RequestRepository();
 
-      const pin = await pinRepository.findByUserId(userId);
+      const pin = await PINEntity.findByUserId(userId);
       if (!pin) {
         throw new AppError('PIN profile not found', 404);
       }
 
-      const completed = await requestRepository.findByStatus(RequestStatus.COMPLETED, pageNum, limitNum);
-      const matched = await requestRepository.findByStatus(RequestStatus.MATCHED, pageNum, limitNum);
+      const completed = await RequestEntity.findByStatus(RequestStatus.COMPLETED, pageNum, limitNum);
+      const matched = await RequestEntity.findByStatus(RequestStatus.MATCHED, pageNum, limitNum);
       const requests = [...completed, ...matched].filter(r => r.pinId === pin.id);
-      const total = await requestRepository.countByPIN(pin.id);
+      const total = await RequestEntity.countByPIN(pin.id);
 
       res.json({
         requests,

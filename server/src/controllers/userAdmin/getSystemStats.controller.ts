@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRepository } from '../../repositories/User.repository';
-import { RequestRepository } from '../../repositories/Request.repository';
-import { MatchRepository } from '../../repositories/Match.repository';
+import { UserEntity } from '../../entities/User.entity';
+import { RequestEntity } from '../../entities/Request.entity';
+import { MatchEntity } from '../../entities/Match.entity';
 import { UserStatus, RequestStatus, MatchStatus } from '@prisma/client';
 
 /**
@@ -12,9 +12,6 @@ import { UserStatus, RequestStatus, MatchStatus } from '@prisma/client';
 export class GetSystemStatsController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userRepository = new UserRepository();
-      const requestRepository = new RequestRepository();
-      const matchRepository = new MatchRepository();
 
       const [
         totalUsers,
@@ -24,12 +21,12 @@ export class GetSystemStatsController {
         activeRequests,
         totalMatches,
       ] = await Promise.all([
-        userRepository.count(),
-        userRepository.countByStatus(UserStatus.ACTIVE),
-        userRepository.countByStatus(UserStatus.SUSPENDED),
-        requestRepository.count(),
-        requestRepository.countByStatus(RequestStatus.ACTIVE),
-        matchRepository.count(),
+        UserEntity.count(),
+        UserEntity.countByStatus(UserStatus.ACTIVE),
+        UserEntity.countByStatus(UserStatus.SUSPENDED),
+        RequestEntity.count(),
+        RequestEntity.countByStatus(RequestStatus.ACTIVE),
+        MatchEntity.count(),
       ]);
 
       res.json({

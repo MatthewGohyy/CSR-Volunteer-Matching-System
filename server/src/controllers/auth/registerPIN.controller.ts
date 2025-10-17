@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRepository } from '../../repositories/User.repository';
+import { UserEntity } from '../../entities/User.entity';
 import { hashPassword } from '../../utils/password';
 import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
@@ -9,16 +9,15 @@ import { prisma } from '../../config/database';
 /**
  * Controller for PIN user registration
  * User Story: Register as a Person in Need (PIN)
+ * Architecture: BCE framework - Controller calls Entity methods directly
  */
 export class RegisterPINController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password, name, age, location, phoneNumber, accessibilityNeeds } = req.body;
 
-      const userRepository = new UserRepository();
-
-      // Check if user already exists
-      const existingUser = await userRepository.findByEmail(email);
+      // Check if user already exists via Entity
+      const existingUser = await UserEntity.findByEmail(email);
       if (existingUser) {
         throw new AppError('Email already registered', 409);
       }

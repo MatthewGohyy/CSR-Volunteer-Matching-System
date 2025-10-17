@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { RequestRepository } from '../../repositories/Request.repository';
+import { RequestEntity } from '../../entities/Request.entity';
 import { RequestStatus } from '@prisma/client';
 
 /**
@@ -9,16 +9,15 @@ import { RequestStatus } from '@prisma/client';
 export class ViewRequestsController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const requestRepository = new RequestRepository();
       const { status, categoryId } = req.query;
 
       let requests;
       if (status) {
-        requests = await requestRepository.findByStatus(status as RequestStatus, 1, 100);
+        requests = await RequestEntity.findByStatus(status as RequestStatus, 1, 100);
       } else if (categoryId) {
-        requests = await requestRepository.findByCategory(categoryId as string, 1, 100);
+        requests = await RequestEntity.findByCategory(categoryId as string, 1, 100);
       } else {
-        requests = await requestRepository.findAll(1, 100);
+        requests = await RequestEntity.findAll(1, 100);
       }
 
       res.json({ requests });

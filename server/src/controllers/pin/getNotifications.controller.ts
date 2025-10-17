@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { NotificationRepository } from '../../repositories/Notification.repository';
+import { NotificationEntity } from '../../entities/Notification.entity';
 import { AuthRequest } from '../../middleware/auth';
 
 /**
@@ -9,10 +9,9 @@ import { AuthRequest } from '../../middleware/auth';
 export class GetNotificationsController {
   static async handle(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const notificationRepository = new NotificationRepository();
       const userId = req.user!.userId;
 
-      const notifications = await notificationRepository.findByUserId(userId, 1, 50);
+      const notifications = await NotificationEntity.findByUserId(userId, 1, 50);
 
       res.json({ notifications });
     } catch (error) {

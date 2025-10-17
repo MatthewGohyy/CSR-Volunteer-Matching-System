@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { PINRepository } from '../../repositories/PIN.repository';
+import { PINEntity } from '../../entities/PIN.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -10,11 +10,10 @@ import { AuthRequest } from '../../middleware/auth';
 export class UpdateProfileController {
   static async handle(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const pinRepository = new PINRepository();
       const userId = req.user!.userId;
       const { name, age, location, phoneNumber, accessibilityNeeds, profilePhoto } = req.body;
 
-      const pin = await pinRepository.findByUserId(userId);
+      const pin = await PINEntity.findByUserId(userId);
       if (!pin) {
         throw new AppError('PIN profile not found', 404);
       }
@@ -27,7 +26,7 @@ export class UpdateProfileController {
       if (accessibilityNeeds !== undefined) updateData.accessibilityNeeds = accessibilityNeeds;
       if (profilePhoto) updateData.profilePhoto = profilePhoto;
 
-      const updated = await pinRepository.updateByUserId(userId, updateData);
+      const updated = await PINEntity.updateByUserId(userId, updateData);
 
       res.json({
         message: 'Profile updated successfully',

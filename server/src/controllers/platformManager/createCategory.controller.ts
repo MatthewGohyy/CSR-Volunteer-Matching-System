@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { ServiceCategoryRepository } from '../../repositories/ServiceCategory.repository';
+import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 import { prisma } from '../../config/database';
@@ -14,16 +14,15 @@ export class CreateCategoryController {
       const { name, description, iconUrl } = req.body;
 
       // Check if category with same name already exists
-      const categoryRepository = new ServiceCategoryRepository();
 
-      const allCategories = await categoryRepository.findAll(1, 1000);
+      const allCategories = await ServiceCategoryEntity.findAll(1, 1000);
       const existingCategory = allCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
 
       if (existingCategory) {
         throw new AppError('Category with this name already exists', 409);
       }
 
-      const category = await categoryRepository.create({
+      const category = await ServiceCategoryEntity.create({
         name,
         description,
         iconUrl,

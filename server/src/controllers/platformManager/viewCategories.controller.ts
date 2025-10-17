@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { ServiceCategoryRepository } from '../../repositories/ServiceCategory.repository';
+import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 import { prisma } from '../../config/database';
@@ -14,10 +14,9 @@ export class ViewCategoriesController {
       const { id } = req.params;
 
       // If ID is provided, return single category
-      const categoryRepository = new ServiceCategoryRepository();
 
       if (id) {
-        const category = await categoryRepository.findById(id);
+        const category = await ServiceCategoryEntity.findById(id);
 
         if (!category) {
           throw new AppError('Category not found', 404);

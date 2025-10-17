@@ -1,7 +1,6 @@
 import React from 'react';
 import { X, User, Building2, Mail, Phone, MapPin, Calendar, Shield, CheckCircle, XCircle, AlertCircle, Settings } from 'lucide-react';
-import { AdminUser } from '../services/adminService';
-import { UserType, UserStatus } from '../types';
+import { AdminUser, UserType, UserStatus } from '../types';
 
 interface UserDetailsModalProps {
   user: AdminUser;

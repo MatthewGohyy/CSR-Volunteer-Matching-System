@@ -1,7 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Heart, LogOut, User, Building2 } from 'lucide-react';
-import { authService } from '../services/authService';
+import api from '../config/api';
+import type { User as UserType } from '../types';
 
 interface DashboardProps {
   userType: 'PIN' | 'CSR_REP' | 'ADMIN';
@@ -10,11 +11,18 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ userType }) => {
   const { data: user, isLoading } = useQuery({
     queryKey: ['profile'],
-    queryFn: authService.getProfile,
+    queryFn: async (): Promise<UserType> => {
+      // Direct API call to controller (Boundary -> Controller)
+      const response = await api.get<{ user: UserType }>('/auth/profile');
+      return response.data.user;
+    },
   });
 
   const handleLogout = () => {
-    authService.logout();
+    // Clear local storage and redirect
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/';
   };
 
   if (isLoading) {

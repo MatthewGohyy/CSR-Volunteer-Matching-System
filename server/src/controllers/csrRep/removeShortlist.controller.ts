@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
-import { CSRRepRepository } from '../../repositories/CSRRep.repository';
-import { ShortlistRepository } from '../../repositories/Shortlist.repository';
-import { RequestRepository } from '../../repositories/Request.repository';
+import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { ShortlistEntity } from '../../entities/Shortlist.entity';
+import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -16,17 +16,14 @@ export class RemoveShortlistController {
       const { requestId } = req.params;
 
       // Get CSR Rep profile
-      const csrRepRepository = new CSRRepRepository();
-      const shortlistRepository = new ShortlistRepository();
-      const requestRepository = new RequestRepository();
 
-      const csrRep = await csrRepRepository.findByUserId(userId);
+      const csrRep = await CSRRepEntity.findByUserId(userId);
       if (!csrRep) {
         throw new AppError('CSR Rep profile not found', 404);
       }
 
-      await shortlistRepository.deleteByCSRRepAndRequest(csrRep.id, requestId);
-      await requestRepository.incrementShortlistCount(requestId);
+      await ShortlistEntity.deleteByCSRRepAndRequest(csrRep.id, requestId);
+      await RequestEntity.incrementShortlistCountDB(requestId);
 
       res.json({ message: 'Request removed from shortlist' });
     } catch (error) {

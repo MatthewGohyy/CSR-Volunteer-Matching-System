@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { CSRRepRepository } from '../../repositories/CSRRep.repository';
-import { ShortlistRepository } from '../../repositories/Shortlist.repository';
+import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { ShortlistEntity } from '../../entities/Shortlist.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -13,13 +13,11 @@ export class SearchShortlistController {
       const userId = (req as any).user!.userId;
       const { query } = req.query;
 
-      const csrRepRepository = new CSRRepRepository();
-      const shortlistRepository = new ShortlistRepository();
 
-      const csrRep = await csrRepRepository.findByUserId(userId);
+      const csrRep = await CSRRepEntity.findByUserId(userId);
       if (!csrRep) throw new AppError('CSR Rep profile not found', 404);
 
-      const shortlists = await shortlistRepository.findByCSRRep(csrRep.id, 1, 100);
+      const shortlists = await ShortlistEntity.findByCSRRep(csrRep.id, 1, 100);
 
       res.json({ shortlists, total: shortlists.length });
     } catch (error) {

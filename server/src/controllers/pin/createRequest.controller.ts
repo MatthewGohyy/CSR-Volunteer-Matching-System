@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PINRepository } from '../../repositories/PIN.repository';
-import { RequestRepository } from '../../repositories/Request.repository';
+import { PINEntity } from '../../entities/PIN.entity';
+import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { UrgencyLevel, RequestStatus } from '@prisma/client';
 
@@ -12,17 +12,15 @@ import { UrgencyLevel, RequestStatus } from '@prisma/client';
 export class CreateRequestController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const pinRepository = new PINRepository();
-      const requestRepository = new RequestRepository();
       const userId = (req as any).user!.userId;
       const { categoryId, title, description, urgency, dateNeeded, location } = req.body;
 
-      const pin = await pinRepository.findByUserId(userId);
+      const pin = await PINEntity.findByUserId(userId);
       if (!pin) {
         throw new AppError('PIN profile not found', 404);
       }
 
-      const request = await requestRepository.create({
+      const request = await RequestEntity.create({
         pinId: pin.id,
         categoryId,
         title,

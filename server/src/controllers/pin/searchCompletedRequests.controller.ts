@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PINRepository } from '../../repositories/PIN.repository';
-import { RequestRepository } from '../../repositories/Request.repository';
+import { PINEntity } from '../../entities/PIN.entity';
+import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus } from '@prisma/client';
 
@@ -25,15 +25,13 @@ export class SearchCompletedRequestsController {
       const skip = (pageNum - 1) * limitNum;
 
       // Get PIN profile
-      const pinRepository = new PINRepository();
-      const requestRepository = new RequestRepository();
 
-      const pin = await pinRepository.findByUserId(userId);
+      const pin = await PINEntity.findByUserId(userId);
       if (!pin) {
         throw new AppError('PIN profile not found', 404);
       }
 
-      let allRequests = await requestRepository.findByPIN(pin.id, 1, 1000);
+      let allRequests = await RequestEntity.findByPIN(pin.id, 1, 1000);
       allRequests = allRequests.filter(r => 
         (r.status === RequestStatus.COMPLETED || r.status === RequestStatus.MATCHED) &&
         (r.title.toLowerCase().includes(q.toLowerCase()) || r.description.toLowerCase().includes(q.toLowerCase()))

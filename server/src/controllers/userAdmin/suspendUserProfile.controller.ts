@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRepository } from '../../repositories/User.repository';
+import { UserEntity } from '../../entities/User.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { UserStatus } from '@prisma/client';
 
@@ -14,9 +14,8 @@ export class SuspendUserProfileController {
     try {
       const { id } = req.params;
 
-      const userRepository = new UserRepository();
 
-      const user = await userRepository.suspend(id);
+      const user = await UserEntity.suspend(id);
 
       res.json({
         message: 'User profile suspended successfully',

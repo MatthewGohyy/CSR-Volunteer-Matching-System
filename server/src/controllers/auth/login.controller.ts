@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRepository } from '../../repositories/User.repository';
+import { UserEntity } from '../../entities/User.entity';
 import { comparePassword } from '../../utils/password';
 import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
@@ -13,16 +13,15 @@ import { AppError } from '../../middleware/errorHandler';
  * - Story #24: As a CSR Rep, I want to log in to my account
  * - Story #33: As a Platform Manager, I want to log in to my account
  * 
- * Architecture: Uses UserRepository for database access
+ * Architecture: BCE framework - Controller calls Entity methods directly
  */
 export class LoginController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userRepository = new UserRepository();
       const { email, password } = req.body;
 
-      // Find user via repository
-      const user = await userRepository.findByEmail(email);
+      // Find user via Entity (direct database access)
+      const user = await UserEntity.findByEmail(email);
 
       if (!user) {
         throw new AppError('Invalid email or password', 401);

@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
-import { CSRRepRepository } from '../../repositories/CSRRep.repository';
-import { VolunteerOfferRepository } from '../../repositories/VolunteerOffer.repository';
+import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { VolunteerOfferEntity } from '../../entities/VolunteerOffer.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -14,15 +14,13 @@ export class ViewOffersController {
       const userId = req.user!.userId;
 
       // Get CSR Rep profile
-      const csrRepRepository = new CSRRepRepository();
-      const offerRepository = new VolunteerOfferRepository();
 
-      const csrRep = await csrRepRepository.findByUserId(userId);
+      const csrRep = await CSRRepEntity.findByUserId(userId);
       if (!csrRep) {
         throw new AppError('CSR Rep profile not found', 404);
       }
 
-      const offers = await offerRepository.findByCSRRep(csrRep.id, 1, 100);
+      const offers = await VolunteerOfferEntity.findByCSRRep(csrRep.id, 1, 100);
 
       res.json({ offers });
     } catch (error) {

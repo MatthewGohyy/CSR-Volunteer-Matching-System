@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { ServiceCategoryRepository } from '../../repositories/ServiceCategory.repository';
+import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 import { prisma } from '../../config/database';
@@ -14,15 +14,14 @@ export class DeleteCategoryController {
       const { id } = req.params;
 
       // Check if category exists
-      const categoryRepository = new ServiceCategoryRepository();
 
-      const category = await categoryRepository.findById(id);
+      const category = await ServiceCategoryEntity.findById(id);
 
       if (!category) {
         throw new AppError('Category not found', 404);
       }
 
-      await categoryRepository.delete(id);
+      await ServiceCategoryEntity.delete(id);
 
       res.json({
         message: 'Service category deleted successfully',

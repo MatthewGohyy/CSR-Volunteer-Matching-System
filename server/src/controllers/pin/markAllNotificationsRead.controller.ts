@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { NotificationRepository } from '../../repositories/Notification.repository';
+import { NotificationEntity } from '../../entities/Notification.entity';
 import { AuthRequest } from '../../middleware/auth';
 
 /**
@@ -9,10 +9,9 @@ import { AuthRequest } from '../../middleware/auth';
 export class MarkAllNotificationsReadController {
   static async handle(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const notificationRepository = new NotificationRepository();
       const userId = req.user!.userId;
 
-      await notificationRepository.markAllAsRead(userId);
+      await NotificationEntity.markAllAsRead(userId);
 
       res.json({ message: 'All notifications marked as read' });
     } catch (error) {

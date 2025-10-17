@@ -1,9 +1,9 @@
 import { Response, NextFunction } from 'express';
-import { CSRRepRepository } from '../../repositories/CSRRep.repository';
-import { RequestRepository } from '../../repositories/Request.repository';
-import { VolunteerOfferRepository } from '../../repositories/VolunteerOffer.repository';
-import { NotificationRepository } from '../../repositories/Notification.repository';
-import { PINRepository } from '../../repositories/PIN.repository';
+import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { RequestEntity } from '../../entities/Request.entity';
+import { VolunteerOfferEntity } from '../../entities/VolunteerOffer.entity';
+import { NotificationEntity } from '../../entities/Notification.entity';
+import { PINEntity } from '../../entities/PIN.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 import { OfferStatus, RequestStatus, NotificationType } from '@prisma/client';
@@ -20,18 +20,13 @@ export class SubmitOfferController {
       const { requestId, message } = req.body;
 
       // Get CSR Rep profile
-      const csrRepRepository = new CSRRepRepository();
-      const requestRepository = new RequestRepository();
-      const offerRepository = new VolunteerOfferRepository();
-      const notificationRepository = new NotificationRepository();
-      const pinRepository = new PINRepository();
 
-      const csrRep = await csrRepRepository.findByUserId(userId);
+      const csrRep = await CSRRepEntity.findByUserId(userId);
       if (!csrRep) {
         throw new AppError('CSR Rep profile not found', 404);
       }
 
-      const request = await requestRepository.findById(requestId);
+      const request = await RequestEntity.findById(requestId);
       if (!request) {
         throw new AppError('Request not found', 404);
       }
@@ -41,12 +36,12 @@ export class SubmitOfferController {
       }
 
       // Get PIN for notification
-      const pin = await pinRepository.findById(request.pinId);
+      const pin = await PINEntity.findById(request.pinId);
       if (!pin) {
         throw new AppError('PIN not found', 404);
       }
 
-      const offers = await offerRepository.findByCSRRep(csrRep.id, 1, 1000);
+      const offers = await VolunteerOfferEntity.findByCSRRep(csrRep.id, 1, 1000);
       const existingOffer = offers.find(o => o.requestId === requestId);
       if (existingOffer) {
         throw new AppError('Offer already submitted', 409);

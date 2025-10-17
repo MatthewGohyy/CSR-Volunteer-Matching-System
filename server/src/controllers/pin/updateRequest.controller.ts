@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PINRepository } from '../../repositories/PIN.repository';
-import { RequestRepository } from '../../repositories/Request.repository';
+import { PINEntity } from '../../entities/PIN.entity';
+import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -11,18 +11,16 @@ import { AppError } from '../../middleware/errorHandler';
 export class UpdateRequestController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const pinRepository = new PINRepository();
-      const requestRepository = new RequestRepository();
       const userId = (req as any).user!.userId;
       const { id } = req.params;
       const { title, description, urgency, dateNeeded, location, status } = req.body;
 
-      const pin = await pinRepository.findByUserId(userId);
+      const pin = await PINEntity.findByUserId(userId);
       if (!pin) {
         throw new AppError('PIN profile not found', 404);
       }
 
-      const existingRequest = await requestRepository.findById(id);
+      const existingRequest = await RequestEntity.findById(id);
       if (!existingRequest) {
         throw new AppError('Request not found', 404);
       }
@@ -38,7 +36,7 @@ export class UpdateRequestController {
       if (location) updateData.location = location;
       if (status) updateData.status = status;
 
-      const request = await requestRepository.update(id, updateData);
+      const request = await RequestEntity.update(id, updateData);
 
       res.json({
         message: 'Request updated successfully',

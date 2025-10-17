@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRepository } from '../../repositories/User.repository';
+import { UserEntity } from '../../entities/User.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -10,19 +10,18 @@ import { AppError } from '../../middleware/errorHandler';
 export class UpdateUserAccountController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userRepository = new UserRepository();
       const { id } = req.params;
       const { email, status } = req.body;
 
       // Check if user exists
-      const existingUser = await userRepository.findById(id);
+      const existingUser = await UserEntity.findById(id);
       if (!existingUser) {
         throw new AppError('User not found', 404);
       }
 
       // Check if email is being changed and if it already exists
       if (email && email !== existingUser.email) {
-        const emailExists = await userRepository.findByEmail(email);
+        const emailExists = await UserEntity.findByEmail(email);
         if (emailExists) {
           throw new AppError('Email already in use', 409);
         }
@@ -33,7 +32,7 @@ export class UpdateUserAccountController {
       if (email) updateData.email = email;
       if (status) updateData.status = status;
       
-      const user = await userRepository.update(id, updateData);
+      const user = await UserEntity.update(id, updateData);
 
       res.json({
         message: 'User account updated successfully',

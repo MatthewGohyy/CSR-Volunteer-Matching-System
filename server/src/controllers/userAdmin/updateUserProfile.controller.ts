@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRepository } from '../../repositories/User.repository';
-import { PINRepository } from '../../repositories/PIN.repository';
-import { CSRRepRepository } from '../../repositories/CSRRep.repository';
+import { UserEntity } from '../../entities/User.entity';
+import { PINEntity } from '../../entities/PIN.entity';
+import { CSRRepEntity } from '../../entities/CSRRep.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { UserType } from '@prisma/client';
 import { prisma } from '../../config/database';
@@ -17,11 +17,8 @@ export class UpdateUserProfileController {
       const { id } = req.params;
       const profileData = req.body;
 
-      const userRepository = new UserRepository();
-      const pinRepository = new PINRepository();
-      const csrRepRepository = new CSRRepRepository();
 
-      const user = await userRepository.findById(id);
+      const user = await UserEntity.findById(id);
 
       if (!user) {
         throw new AppError('User not found', 404);
@@ -41,7 +38,7 @@ export class UpdateUserProfileController {
         if (accessibilityNeeds !== undefined) updateData.accessibilityNeeds = accessibilityNeeds;
         if (profilePhoto) updateData.profilePhoto = profilePhoto;
         
-        updatedProfile = await pinRepository.updateByUserId(id, updateData);
+        updatedProfile = await PINEntity.updateByUserId(id, updateData);
       } else if (user.userType === UserType.CSR_REP && user.csrRep) {
         const { companyName, industry, contactPerson, phoneNumber, companyAddress, companyLogo } = profileData;
         
@@ -53,7 +50,7 @@ export class UpdateUserProfileController {
         if (companyAddress) updateData.companyAddress = companyAddress;
         if (companyLogo) updateData.companyLogo = companyLogo;
         
-        updatedProfile = await csrRepRepository.updateByUserId(id, updateData);
+        updatedProfile = await CSRRepEntity.updateByUserId(id, updateData);
       } else if (user.userType === UserType.PLATFORM_MANAGER && user.platformManager) {
         const { fullName, department, phone } = profileData;
         

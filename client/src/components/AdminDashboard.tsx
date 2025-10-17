@@ -16,9 +16,8 @@ import {
   Trash2,
   LogOut
 } from 'lucide-react';
-import { adminService, type AdminUser, type CreateUserData } from '../services/adminService';
-import { authService } from '../services/authService';
-import { UserType, UserStatus } from '../types';
+import api from '../config/api';
+import { UserType, UserStatus, AdminUser, UsersResponse } from '../types';
 import CreateUserModal from './CreateUserModal';
 import UserDetailsModal from './UserDetailsModal';
 
@@ -36,23 +35,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
   const queryClient = useQueryClient();
 
-  // Fetch users
+  // Fetch users - Direct API call to controller (Boundary -> Controller)
   const { data: usersData, isLoading, error } = useQuery({
     queryKey: ['admin-users', currentPage],
-    queryFn: () => adminService.getUsers(currentPage, 10),
+    queryFn: async (): Promise<UsersResponse> => {
+      const response = await api.get<UsersResponse>(`/admin/users?page=${currentPage}&limit=10`);
+      return response.data;
+    },
   });
 
-  // Suspend user mutation
+  // Suspend user mutation - Direct API call to controller (Boundary -> Controller)
   const suspendUserMutation = useMutation({
-    mutationFn: adminService.suspendUser,
+    mutationFn: async (id: string): Promise<AdminUser> => {
+      const response = await api.put<{ user: AdminUser; message: string }>(`/admin/users/${id}/status`, { status: 'SUSPENDED' });
+      return response.data.user;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
   });
 
-  // Activate user mutation
+  // Activate user mutation - Direct API call to controller (Boundary -> Controller)
   const activateUserMutation = useMutation({
-    mutationFn: adminService.activateUser,
+    mutationFn: async (id: string): Promise<AdminUser> => {
+      const response = await api.put<{ user: AdminUser; message: string }>(`/admin/users/${id}/status`, { status: 'ACTIVE' });
+      return response.data.user;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
@@ -148,7 +156,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 Create User
               </button>
               <button
-                onClick={() => authService.logout()}
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('user');
+                  window.location.href = '/';
+                }}
                 className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
               >
                 <LogOut className="h-4 w-4 mr-2" />

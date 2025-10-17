@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRepository } from '../../repositories/User.repository';
-import { CSRRepRepository } from '../../repositories/CSRRep.repository';
+import { UserEntity } from '../../entities/User.entity';
+import { CSRRepEntity } from '../../entities/CSRRep.entity';
 import { hashPassword } from '../../utils/password';
 import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
@@ -25,10 +25,8 @@ export class RegisterCSRRepController {
         companyAddress,
       } = req.body;
 
-      const userRepository = new UserRepository();
-      const csrRepRepository = new CSRRepRepository();
 
-      const existingUser = await userRepository.findByEmail(email);
+      const existingUser = await UserEntity.findByEmail(email);
       if (existingUser) {
         throw new AppError('Email already registered', 409);
       }

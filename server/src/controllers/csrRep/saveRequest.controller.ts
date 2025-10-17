@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { CSRRepRepository } from '../../repositories/CSRRep.repository';
-import { RequestRepository } from '../../repositories/Request.repository';
-import { ShortlistRepository } from '../../repositories/Shortlist.repository';
+import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { RequestEntity } from '../../entities/Request.entity';
+import { ShortlistEntity } from '../../entities/Shortlist.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -14,25 +14,22 @@ export class SaveRequestController {
       const userId = (req as any).user!.userId;
       const { requestId } = req.body;
 
-      const csrRepRepository = new CSRRepRepository();
-      const requestRepository = new RequestRepository();
-      const shortlistRepository = new ShortlistRepository();
 
-      const csrRep = await csrRepRepository.findByUserId(userId);
+      const csrRep = await CSRRepEntity.findByUserId(userId);
       if (!csrRep) throw new AppError('CSR Rep profile not found', 404);
 
-      const request = await requestRepository.findById(requestId);
+      const request = await RequestEntity.findById(requestId);
       if (!request) throw new AppError('Request not found', 404);
 
-      const exists = await shortlistRepository.exists(csrRep.id, requestId);
+      const exists = await ShortlistEntity.exists(csrRep.id, requestId);
       if (exists) throw new AppError('Request already shortlisted', 409);
 
-      const shortlist = await shortlistRepository.create({
+      const shortlist = await ShortlistEntity.create({
         csrRepId: csrRep.id,
         requestId,
       });
 
-      await requestRepository.incrementShortlistCount(requestId);
+      await RequestEntity.incrementShortlistCountDB(requestId);
 
       res.status(201).json({ message: 'Request shortlisted successfully', shortlist });
     } catch (error) {

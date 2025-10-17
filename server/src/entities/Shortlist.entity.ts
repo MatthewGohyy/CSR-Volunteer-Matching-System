@@ -1,10 +1,11 @@
 import { Shortlist as PrismaShortlist } from '@prisma/client';
+import { prisma } from '../config/database';
 
 /**
  * Shortlist Entity Class
  * 
- * Represents a CSR Rep's shortlisted request.
- * Maps to the Prisma Shortlist model.
+ * Represents a CSR Rep's shortlisted request with business logic and CRUD methods.
+ * Follows the BCE framework - Entity handles all database operations.
  */
 export class ShortlistEntity implements PrismaShortlist {
   id: string;
@@ -33,5 +34,117 @@ export class ShortlistEntity implements PrismaShortlist {
    */
   isRecent(): boolean {
     return this.getAgeInDays() < 7;
+  }
+
+  // ============================================
+  // CRUD Methods (Static) - Database Operations
+  // ============================================
+
+  /**
+   * Find shortlist by ID
+   */
+  static async findById(id: string) {
+    const shortlist = await prisma.shortlist.findUnique({
+      where: { id },
+      include: {
+        request: { include: { pin: true, category: true } },
+        csrRep: true,
+      },
+    });
+    return shortlist ? new ShortlistEntity(shortlist) : null;
+  }
+
+  /**
+   * Find shortlists by CSR Rep
+   */
+  static async findByCSRRep(csrRepId: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const shortlists = await prisma.shortlist.findMany({
+      where: { csrRepId },
+      skip,
+      take: limit,
+      include: {
+        request: { include: { pin: true, category: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return shortlists.map(s => new ShortlistEntity(s));
+  }
+
+  /**
+   * Find shortlists by request
+   */
+  static async findByRequest(requestId: string) {
+    const shortlists = await prisma.shortlist.findMany({
+      where: { requestId },
+      include: {
+        csrRep: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return shortlists.map(s => new ShortlistEntity(s));
+  }
+
+  /**
+   * Create a new shortlist
+   */
+  static async create(data: {
+    csrRepId: string;
+    requestId: string;
+  }) {
+    const shortlist = await prisma.shortlist.create({
+      data,
+      include: {
+        request: { include: { pin: true, category: true } },
+        csrRep: true,
+      },
+    });
+    return new ShortlistEntity(shortlist);
+  }
+
+  /**
+   * Delete shortlist by ID
+   */
+  static async delete(id: string): Promise<boolean> {
+    await prisma.shortlist.delete({ where: { id } });
+    return true;
+  }
+
+  /**
+   * Delete shortlist by CSR Rep and Request
+   */
+  static async deleteByCSRRepAndRequest(csrRepId: string, requestId: string): Promise<boolean> {
+    await prisma.shortlist.delete({
+      where: {
+        csrRepId_requestId: { csrRepId, requestId },
+      },
+    });
+    return true;
+  }
+
+  /**
+   * Check if shortlist exists
+   */
+  static async exists(csrRepId: string, requestId: string): Promise<boolean> {
+    const shortlist = await prisma.shortlist.findUnique({
+      where: {
+        csrRepId_requestId: { csrRepId, requestId },
+      },
+    });
+    return !!shortlist;
+  }
+
+  /**
+   * Count shortlists by CSR Rep
+   */
+  static async countByCSRRep(csrRepId: string): Promise<number> {
+    return prisma.shortlist.count({ where: { csrRepId } });
+  }
+
+  /**
+   * Count shortlists by request
+   */
+  static async countByRequest(requestId: string): Promise<number> {
+    return prisma.shortlist.count({ where: { requestId } });
   }
 }

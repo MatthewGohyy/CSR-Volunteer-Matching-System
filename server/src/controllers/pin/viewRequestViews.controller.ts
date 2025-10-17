@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PINRepository } from '../../repositories/PIN.repository';
-import { RequestRepository } from '../../repositories/Request.repository';
+import { PINEntity } from '../../entities/PIN.entity';
+import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -14,15 +14,13 @@ export class ViewRequestViewsController {
     try {
       const userId = (req as any).user!.userId;
 
-      const pinRepository = new PINRepository();
-      const requestRepository = new RequestRepository();
 
-      const pin = await pinRepository.findByUserId(userId);
+      const pin = await PINEntity.findByUserId(userId);
       if (!pin) {
         throw new AppError('PIN profile not found', 404);
       }
 
-      const requests = await requestRepository.findByPIN(pin.id, 1, 1000);
+      const requests = await RequestEntity.findByPIN(pin.id, 1, 1000);
 
       res.json({ requests });
     } catch (error) {

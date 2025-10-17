@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { X, User, Building2, Mail, Lock, Phone, MapPin, Calendar, Settings } from 'lucide-react';
-import { adminService, type CreateUserData } from '../services/adminService';
-import { UserType } from '../types';
+import api from '../config/api';
+import { UserType, CreateUserData, AdminUser } from '../types';
 
 interface CreateUserModalProps {
   onClose: () => void;
@@ -35,7 +35,11 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const createUserMutation = useMutation({
-    mutationFn: adminService.createUser,
+    mutationFn: async (userData: CreateUserData): Promise<AdminUser> => {
+      // Direct API call to controller (Boundary -> Controller)
+      const response = await api.post<{ user: AdminUser; message: string }>('/admin/users', userData);
+      return response.data.user;
+    },
     onSuccess: () => {
       onSuccess();
     },

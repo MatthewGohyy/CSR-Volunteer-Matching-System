@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
-import { PINRepository } from '../../repositories/PIN.repository';
-import { MatchRepository } from '../../repositories/Match.repository';
+import { PINEntity } from '../../entities/PIN.entity';
+import { MatchEntity } from '../../entities/Match.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -11,16 +11,14 @@ import { AuthRequest } from '../../middleware/auth';
 export class ViewMatchesController {
   static async handle(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const pinRepository = new PINRepository();
-      const matchRepository = new MatchRepository();
       const userId = req.user!.userId;
 
-      const pin = await pinRepository.findByUserId(userId);
+      const pin = await PINEntity.findByUserId(userId);
       if (!pin) {
         throw new AppError('PIN profile not found', 404);
       }
 
-      const matches = await matchRepository.findByPIN(pin.id, 1, 100);
+      const matches = await MatchEntity.findByPIN(pin.id, 1, 100);
 
       res.json({ matches });
     } catch (error) {

@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { ServiceCategoryRepository } from '../../repositories/ServiceCategory.repository';
+import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 import { prisma } from '../../config/database';
@@ -15,16 +15,15 @@ export class UpdateCategoryController {
       const { name, description, iconUrl, isActive } = req.body;
 
       // Check if category exists
-      const categoryRepository = new ServiceCategoryRepository();
 
-      const existingCategory = await categoryRepository.findById(id);
+      const existingCategory = await ServiceCategoryEntity.findById(id);
 
       if (!existingCategory) {
         throw new AppError('Category not found', 404);
       }
 
       if (name && name !== existingCategory.name) {
-        const allCategories = await categoryRepository.findAll(1, 1000);
+        const allCategories = await ServiceCategoryEntity.findAll(1, 1000);
         const duplicate = allCategories.find(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== id);
 
         if (duplicate) {
@@ -38,7 +37,7 @@ export class UpdateCategoryController {
       if (iconUrl !== undefined) updateData.iconUrl = iconUrl;
       if (isActive !== undefined) updateData.isActive = isActive;
 
-      const category = await categoryRepository.update(id, updateData);
+      const category = await ServiceCategoryEntity.update(id, updateData);
 
       res.json({
         message: 'Service category updated successfully',

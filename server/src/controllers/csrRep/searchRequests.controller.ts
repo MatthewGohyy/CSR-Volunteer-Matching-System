@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { CSRRepRepository } from '../../repositories/CSRRep.repository';
-import { RequestRepository } from '../../repositories/Request.repository';
+import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus, UrgencyLevel } from '@prisma/client';
 
@@ -14,15 +14,13 @@ export class SearchRequestsController {
       const userId = (req as any).user!.userId;
       const { query, status, urgency, categoryId } = req.query;
 
-      const csrRepRepository = new CSRRepRepository();
-      const requestRepository = new RequestRepository();
 
-      const csrRep = await csrRepRepository.findByUserId(userId);
+      const csrRep = await CSRRepEntity.findByUserId(userId);
       if (!csrRep) {
         throw new AppError('CSR Rep profile not found', 404);
       }
 
-      let requests = await requestRepository.findAll(1, 100);
+      let requests = await RequestEntity.findAll(1, 100);
 
       if (status) {
         requests = requests.filter(r => r.status === status);

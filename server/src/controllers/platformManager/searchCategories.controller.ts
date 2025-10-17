@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { ServiceCategoryRepository } from '../../repositories/ServiceCategory.repository';
+import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
 import { AuthRequest } from '../../middleware/auth';
 
 /**
@@ -15,13 +15,12 @@ export class SearchCategoriesController {
       const limitNum = parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
 
-      const categoryRepository = new ServiceCategoryRepository();
 
       let allCategories;
       if (q && typeof q === 'string' && q.trim()) {
-        allCategories = await categoryRepository.search(q.trim(), 1, 1000);
+        allCategories = await ServiceCategoryEntity.search(q.trim(), 1, 1000);
       } else {
-        allCategories = await categoryRepository.findAll(1, 1000);
+        allCategories = await ServiceCategoryEntity.findAll(1, 1000);
       }
 
       if (includeInactive !== 'true') {

@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
-import { ServiceCategoryRepository } from '../../repositories/ServiceCategory.repository';
-import { RequestRepository } from '../../repositories/Request.repository';
-import { MatchRepository } from '../../repositories/Match.repository';
+import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
+import { RequestEntity } from '../../entities/Request.entity';
+import { MatchEntity } from '../../entities/Match.entity';
 import { AuthRequest } from '../../middleware/auth';
 import { RequestStatus, MatchStatus } from '@prisma/client';
 
@@ -13,9 +13,6 @@ import { RequestStatus, MatchStatus } from '@prisma/client';
 export class GetPlatformStatsController {
   static async handle(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const categoryRepository = new ServiceCategoryRepository();
-      const requestRepository = new RequestRepository();
-      const matchRepository = new MatchRepository();
 
       const [
         totalCategories,
@@ -25,12 +22,12 @@ export class GetPlatformStatsController {
         completedRequests,
         totalMatches,
       ] = await Promise.all([
-        categoryRepository.count(),
-        categoryRepository.findActive().then(c => c.length),
-        requestRepository.count(),
-        requestRepository.countByStatus(RequestStatus.ACTIVE),
-        requestRepository.countByStatus(RequestStatus.COMPLETED),
-        matchRepository.count(),
+        ServiceCategoryEntity.count(),
+        ServiceCategoryEntity.findActive().then(c => c.length),
+        RequestEntity.count(),
+        RequestEntity.countByStatus(RequestStatus.ACTIVE),
+        RequestEntity.countByStatus(RequestStatus.COMPLETED),
+        MatchEntity.count(),
       ]);
 
       res.json({

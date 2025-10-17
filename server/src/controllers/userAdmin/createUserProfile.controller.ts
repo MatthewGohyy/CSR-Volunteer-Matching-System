@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRepository } from '../../repositories/User.repository';
-import { PINRepository } from '../../repositories/PIN.repository';
-import { CSRRepRepository } from '../../repositories/CSRRep.repository';
+import { UserEntity } from '../../entities/User.entity';
+import { PINEntity } from '../../entities/PIN.entity';
+import { CSRRepEntity } from '../../entities/CSRRep.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { UserType } from '@prisma/client';
 import { prisma } from '../../config/database';
@@ -15,11 +15,8 @@ export class CreateUserProfileController {
     try {
       const { userId, userType, profileData } = req.body;
 
-      const userRepository = new UserRepository();
-      const pinRepository = new PINRepository();
-      const csrRepRepository = new CSRRepRepository();
 
-      const user = await userRepository.findById(userId);
+      const user = await UserEntity.findById(userId);
 
       if (!user) {
         throw new AppError('User not found', 404);

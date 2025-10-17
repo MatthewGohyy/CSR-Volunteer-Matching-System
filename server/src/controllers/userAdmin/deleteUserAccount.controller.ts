@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRepository } from '../../repositories/User.repository';
+import { UserEntity } from '../../entities/User.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -10,15 +10,14 @@ import { AppError } from '../../middleware/errorHandler';
 export class DeleteUserAccountController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userRepository = new UserRepository();
       const { id } = req.params;
 
-      const user = await userRepository.findById(id);
+      const user = await UserEntity.findById(id);
       if (!user) {
         throw new AppError('User not found', 404);
       }
 
-      await userRepository.delete(id);
+      await UserEntity.delete(id);
 
       res.json({ message: 'User deleted successfully' });
     } catch (error) {
