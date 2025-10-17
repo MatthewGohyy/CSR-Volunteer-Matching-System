@@ -164,7 +164,7 @@ export interface AuthResponse {
     id: string;
     email: string;
     userType: UserType;
-    profile: PINProfile | CSRRepProfile | PlatformManagerProfile;
+    profile: PINProfile | CSRRepProfile | PlatformManagerProfile | null;
   };
   token: string;
 }

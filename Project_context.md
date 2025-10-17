@@ -1,0 +1,84 @@
+# Project Description - CSR Matching Application 
+In this project, your team is asked to design and develop a system to match Corporate Social Responsibility (CSR) corporate volunteers (CV) to the person-in-need (PIN). Each company will have a main CSR Representative (on behalf of the CVs) to connect with the PIN.
+
+Your main task is to create an application which satisfies all defined user stories
+
+# Project Requirements
+- Follow the Boundary-Controller-Entity framework.
+- Adopt test-driven development i.e. test plans, test cases (include unit test cases)
+- The system should have 100 synthetic user data in total comprising of all user types
+
+Below are the 4 user types and their roles: 
+(1) CSR Representative: Connect with PINs to provide help
+(2) Person-In-Need (PIN): Connect with CSR Representatives to receive help
+(3) User Admin: Manage different types of users and user profiles (user account administration)
+(4) Platform Manager: Manage categories for volunteer services and get reports (daily,
+weekly, monthly)
+
+
+# User Stories
+
+## 🧑‍💼 User Administrator (12 Stories)
+
+| Taiga ID | User Story | Sprint |
+|-----------|-------------|---------|
+| 1 | As a User Admin, I want to log in to my account so that I can manage PIN and CSR Rep user accounts. | 1 |
+| 2 | As a User Admin, I want to log out of my account so that I can ensure my account security. | 1 |
+| 3 | As a User Admin, I want to create user accounts so that new users can log in. | 1 |
+| 4 | As a User Admin, I want to view user accounts so that I can update the details. | 1 |
+| 5 | As a User Admin, I want to update a user account so that the latest information is shown. | 1 |
+| 6 | As a User Admin, I want to suspend a user account so that user cannot log in. | 1 |
+| 7 | As a User Admin, I want to search user accounts so that I can find the correct user account. | 1 |
+| 8 | As a User Admin, I want to create user profiles so that new roles can be assigned. | 1 |
+| 9 | As a User Admin, I want to view user profiles so that I can update the details. | 1 |
+| 10 | As a User Admin, I want to update a user profile so that the latest information is shown. | 1 |
+| 11 | As a User Admin, I want to suspend a user profile so that the associated role or permissions are temporarily disabled. | 1 |
+| 12 | As a User Admin, I want to search user profiles so that I can find the correct user profile. | 1 |
+
+---
+
+## 🙋‍♀️ Person-In-Need (PIN) (11 Stories)
+
+| Taiga ID | User Story | Sprint |
+|-----------|-------------|---------|
+| 13 | As a PIN, I want to log in to my account so that I can submit and track requests. | 1 |
+| 14 | As a PIN, I want to log out of my account so that I can ensure my account security. | 1 |
+| 15 | As a PIN, I want to create a request so that I can get matched with a CSR Rep. | 1 |
+| 16 | As a PIN, I want to view my requests so that I can monitor their status and progress. | 1 |
+| 17 | As a PIN, I want to update my request so that I can update details if something changes. | 1 |
+| 18 | As a PIN, I want to delete my request so that I no longer get matched with a CSR Representative. | 1 |
+| 19 | As a PIN, I want to search my request so that I can quickly find a specific one. | 1 |
+| 20 | As a PIN, I want to view the number of views of my requests so that I can track engagement and progress. | 1 |
+| 21 | As a PIN, I want to view the number of shortlists of my requests so that I can track interest from CSR Reps. | 1 |
+| 22 | As a PIN, I want to search the history of previously completed requests so that I can review past help I’ve received. | 1 |
+| 23 | As a PIN, I want to view history of previously completed requests so that I can review past help I’ve received. | 1 |
+
+---
+
+## 🤝 CSR Representative (9 Stories)
+
+| Taiga ID | User Story | Sprint |
+|-----------|-------------|---------|
+| 24 | As a CSR Rep, I want to log in to my account so that I can view and manage requests. | 1 |
+| 25 | As a CSR Rep, I want to log out of my account so that I can ensure my account security. | 1 |
+| 26 | As a CSR Rep, I want to search requests so that I can find appropriate requests that I can provide assistance. | 1 |
+| 27 | As a CSR Rep, I want to view requests so that I can understand the needs of the PIN and offer help accordingly. | 1 |
+| 28 | As a CSR Rep, I want to save requests so that I can shortlist and find them easily in the future. | 1 |
+| 29 | As a CSR Rep, I want to search my shortlist so that I can find requests that I am interested in helping with. | 1 |
+| 30 | As a CSR Rep, I want to view my shortlist so that I can easily access requests that I am interested in helping with. | 1 |
+| 31 | As a CSR Rep, I want to search the history of previously completed requests so that I can review past assistance I have provided. | 1 |
+| 32 | As a CSR Rep, I want to view the history of previously completed requests so that I can review past assistance I have provided. | 1 |
+
+---
+
+## 🧭 Platform Manager (7 Stories)
+
+| Taiga ID | User Story | Sprint |
+|-----------|-------------|---------|
+| 33 | As a Platform Manager, I want to log in to my account so that I can manage PIN request categories. | 1 |
+| 34 | As a Platform Manager, I want to log out of my account so that I can ensure my account security. | 1 |
+| 35 | As a Platform Manager, I want to create request categories so that I can organize PIN requests into relevant groups. | 1 |
+| 36 | As a Platform Manager, I want to view request categories so that I can review existing classifications and ensure they are accurate. | 1 |
+| 37 | As a Platform Manager, I want to update request categories so that I can keep them up to date with changing needs. | 1 |
+| 38 | As a Platform Manager, I want to delete request categories so that I can remove outdated or redundant categories. | 1 |
+| 39 | As a Platform Manager, I want to search request categories so that I can quickly locate a specific category to manage. | 1 |
