@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, User, Building2, Mail, Phone, MapPin, Calendar, Shield, CheckCircle, XCircle, AlertCircle, Settings, Lock, UserCheck } from 'lucide-react';
+import { X, User, Building2, Mail, Calendar, Shield, CheckCircle, XCircle, AlertCircle, Settings, Lock, UserCheck, Edit3, Save, X as XIcon } from 'lucide-react';
 import { AdminUser, UserType, UserStatus, ProfileStatus } from '../types';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '../config/api';
 import Toast, { ToastType } from './Toast';
 
@@ -16,6 +16,10 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [currentUser, setCurrentUser] = useState<AdminUser>(user);
+  const [activeTab, setActiveTab] = useState<'account' | 'profile'>('account');
+  const [isEditingAccount, setIsEditingAccount] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editFormData, setEditFormData] = useState<any>({});
 
   const closeToast = () => {
     setToast(null);
@@ -162,6 +166,64 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
     });
   };
 
+  // Edit functions
+  const startEditingAccount = () => {
+    setIsEditingAccount(true);
+    setEditFormData({
+      email: currentUser.email,
+      status: currentUser.status
+    });
+  };
+
+  const startEditingProfile = () => {
+    setIsEditingProfile(true);
+    const profileData = profile ? { ...profile } : {};
+    setEditFormData(profileData);
+  };
+
+  const cancelEditing = () => {
+    setIsEditingAccount(false);
+    setIsEditingProfile(false);
+    setEditFormData({});
+  };
+
+  const saveAccountChanges = async () => {
+    setIsProcessing(true);
+    try {
+      await api.put(`/admin/users/${user.id}`, {
+        email: editFormData.email,
+        status: editFormData.status
+      });
+      await refreshUserData();
+      setIsEditingAccount(false);
+      setToast({
+        message: 'Account updated successfully',
+        type: 'success'
+      });
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to update account');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const saveProfileChanges = async () => {
+    setIsProcessing(true);
+    try {
+      await api.put(`/admin/profiles/${user.id}`, editFormData);
+      await refreshUserData();
+      setIsEditingProfile(false);
+      setToast({
+        message: 'Profile updated successfully',
+        type: 'success'
+      });
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to update profile');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
@@ -203,266 +265,462 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
             </div>
           </div>
 
-          {/* === USER ACCOUNT SECTION === */}
-          <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
-            <div className="flex items-center justify-between mb-3">
-              <h5 className="text-base font-semibold text-gray-900 flex items-center">
-                <Lock className="h-5 w-5 mr-2 text-blue-600" />
-                User Account (Authentication)
-              </h5>
-              <div className="flex items-center space-x-2">
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(currentUser.status)}`}>
-                  {currentUser.status}
-                </span>
-                {getStatusIcon(currentUser.status)}
-              </div>
-            </div>
-            
-            <p className="text-sm text-gray-600 mb-4">
-              {currentUser.status === 'SUSPENDED' 
-                ? '⚠️ User cannot login - Account is suspended' 
-                : currentUser.status === 'ACTIVE'
-                ? '✓ User can login - Account is active'
-                : 'Account is deactivated'}
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="flex items-center">
-                <Mail className="h-4 w-4 text-gray-400 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="text-sm font-medium text-gray-900">{currentUser.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 text-gray-400 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-500">Account Created</p>
-                  <p className="text-sm font-medium text-gray-900">{formatDate(currentUser.createdAt)}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Account Action Buttons */}
-            <div className="flex space-x-2 pt-2 border-t border-blue-200">
-              {currentUser.status === 'ACTIVE' ? (
-                <button
-                  onClick={() => handleAccountStatusChange('SUSPENDED')}
-                  disabled={isProcessing}
-                  className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center"
-                >
-                  <Lock className="h-4 w-4 mr-2" />
-                  Suspend Account (Block Login)
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleAccountStatusChange('ACTIVE')}
-                  disabled={isProcessing}
-                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center"
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Activate Account (Allow Login)
-                </button>
-              )}
-            </div>
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('account')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'account'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                User Account
+              </button>
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'profile'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                User Profile
+              </button>
+            </nav>
           </div>
 
-          {/* === USER PROFILE SECTION === */}
-          {currentUser.userType !== 'ADMIN' && profile && (
-            <div className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
-              <div className="flex items-center justify-between mb-3">
-                <h5 className="text-base font-semibold text-gray-900 flex items-center">
-                  <UserCheck className="h-5 w-5 mr-2 text-purple-600" />
-                  User Profile (Role & Permissions)
+          {/* Tab Content */}
+          {activeTab === 'account' && (
+            <div className="space-y-4">
+              {/* Account Header */}
+              <div className="flex items-center justify-between">
+                <h5 className="text-lg font-medium text-gray-900 flex items-center">
+                  <Lock className="h-5 w-5 mr-2 text-blue-600" />
+                  Account Information
                 </h5>
                 <div className="flex items-center space-x-2">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(profileStatus)}`}>
-                    {profileStatus}
-                  </span>
-                  {getStatusIcon(profileStatus)}
+                  {!isEditingAccount ? (
+                    <button
+                      onClick={startEditingAccount}
+                      className="flex items-center px-3 py-1 text-sm font-medium text-primary-600 hover:text-primary-500"
+                    >
+                      <Edit3 className="h-4 w-4 mr-1" />
+                      Edit
+                    </button>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={saveAccountChanges}
+                        disabled={isProcessing}
+                        className="flex items-center px-3 py-1 text-sm font-medium text-green-600 hover:text-green-500 disabled:opacity-50"
+                      >
+                        <Save className="h-4 w-4 mr-1" />
+                        Save
+                      </button>
+                      <button
+                        onClick={cancelEditing}
+                        className="flex items-center px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-500"
+                      >
+                        <XIcon className="h-4 w-4 mr-1" />
+                        Cancel
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
-              
-              <p className="text-sm text-gray-600 mb-4">
-                {profileStatus === 'SUSPENDED'
-                  ? '⚠️ User can login but cannot perform role-specific tasks - Profile is suspended'
-                  : profileStatus === 'ACTIVE'
-                  ? '✓ User can perform all role-specific tasks - Profile is active'
-                  : 'Profile is deactivated'}
-              </p>
 
-              {/* Profile Action Buttons */}
-              <div className="flex space-x-2 pt-2 border-t border-purple-200">
-                {profileStatus === 'ACTIVE' ? (
-                  <button
-                    onClick={() => handleProfileStatusChange('SUSPENDED')}
-                    disabled={isProcessing}
-                    className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Suspend Profile (Disable Tasks)
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleProfileStatusChange('ACTIVE')}
-                    disabled={isProcessing}
-                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Activate Profile (Enable Tasks)
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* PIN Profile */}
-          {currentUser.pin && (
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h5 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
-                <User className="h-4 w-4 mr-2" />
-                Person in Need Profile
-              </h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center">
-                  <User className="h-4 w-4 text-gray-400 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500">Name</p>
-                    <p className="text-sm font-medium text-gray-900">{currentUser.pin.name}</p>
+              {/* Account Details */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center">
+                    <Mail className="h-4 w-4 text-gray-400 mr-3" />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-500">Email</p>
+                      {isEditingAccount ? (
+                        <input
+                          type="email"
+                          value={editFormData.email || ''}
+                          onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm font-medium text-gray-900">{currentUser.email}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-                {currentUser.pin.age && (
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 text-gray-400 mr-3" />
                     <div>
-                      <p className="text-sm text-gray-500">Age</p>
-                      <p className="text-sm font-medium text-gray-900">{currentUser.pin.age}</p>
+                      <p className="text-sm text-gray-500">Account Created</p>
+                      <p className="text-sm font-medium text-gray-900">{formatDate(currentUser.createdAt)}</p>
                     </div>
                   </div>
-                )}
-                {currentUser.pin.location && (
                   <div className="flex items-center">
-                    <MapPin className="h-4 w-4 text-gray-400 mr-3" />
-                    <div>
-                      <p className="text-sm text-gray-500">Location</p>
-                      <p className="text-sm font-medium text-gray-900">{currentUser.pin.location}</p>
+                    <Shield className="h-4 w-4 text-gray-400 mr-3" />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-500">Status</p>
+                      {isEditingAccount ? (
+                        <select
+                          value={editFormData.status || ''}
+                          onChange={(e) => setEditFormData({...editFormData, status: e.target.value})}
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        >
+                          <option value="ACTIVE">Active</option>
+                          <option value="SUSPENDED">Suspended</option>
+                          <option value="DEACTIVATED">Deactivated</option>
+                        </select>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(currentUser.status)}`}>
+                            {currentUser.status}
+                          </span>
+                          {getStatusIcon(currentUser.status)}
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
-                {currentUser.pin.phoneNumber && (
-                  <div className="flex items-center">
-                    <Phone className="h-4 w-4 text-gray-400 mr-3" />
-                    <div>
-                      <p className="text-sm text-gray-500">Phone</p>
-                      <p className="text-sm font-medium text-gray-900">{currentUser.pin.phoneNumber}</p>
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
-              {currentUser.pin.accessibilityNeeds && (
-                <div className="mt-4">
-                  <p className="text-sm text-gray-500 mb-1">Accessibility Needs</p>
-                  <p className="text-sm text-gray-900">{currentUser.pin.accessibilityNeeds}</p>
+
+              {/* Account Actions */}
+              {!isEditingAccount && (
+                <div className="flex space-x-2">
+                  {currentUser.status === 'ACTIVE' ? (
+                    <button
+                      onClick={() => handleAccountStatusChange('SUSPENDED')}
+                      disabled={isProcessing}
+                      className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center"
+                    >
+                      <Lock className="h-4 w-4 mr-2" />
+                      Suspend Account
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleAccountStatusChange('ACTIVE')}
+                      disabled={isProcessing}
+                      className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Activate Account
+                    </button>
+                  )}
                 </div>
               )}
             </div>
           )}
 
-          {/* CSR Rep Profile */}
-          {currentUser.csrRep && (
-            <div className="bg-purple-50 rounded-lg p-4">
-              <h5 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
-                <Building2 className="h-4 w-4 mr-2" />
-                CSR Representative Profile
-              </h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center">
-                  <Building2 className="h-4 w-4 text-gray-400 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500">Company Name</p>
-                    <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.companyName}</p>
-                  </div>
+          {activeTab === 'profile' && (
+            <div className="space-y-4">
+              {/* Profile Header */}
+              <div className="flex items-center justify-between">
+                <h5 className="text-lg font-medium text-gray-900 flex items-center">
+                  <UserCheck className="h-5 w-5 mr-2 text-purple-600" />
+                  Profile Information
+                </h5>
+                <div className="flex items-center space-x-2">
+                  {profile ? (
+                    !isEditingProfile ? (
+                      <button
+                        onClick={startEditingProfile}
+                        className="flex items-center px-3 py-1 text-sm font-medium text-primary-600 hover:text-primary-500"
+                      >
+                        <Edit3 className="h-4 w-4 mr-1" />
+                        Edit
+                      </button>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={saveProfileChanges}
+                          disabled={isProcessing}
+                          className="flex items-center px-3 py-1 text-sm font-medium text-green-600 hover:text-green-500 disabled:opacity-50"
+                        >
+                          <Save className="h-4 w-4 mr-1" />
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelEditing}
+                          className="flex items-center px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-500"
+                        >
+                          <XIcon className="h-4 w-4 mr-1" />
+                          Cancel
+                        </button>
+                      </div>
+                    )
+                  ) : (
+                    <p className="text-sm text-gray-500">No profile created yet</p>
+                  )}
                 </div>
-                <div className="flex items-center">
-                  <Shield className="h-4 w-4 text-gray-400 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500">Registration Number</p>
-                    <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.companyRegistrationNumber}</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <User className="h-4 w-4 text-gray-400 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500">Contact Person</p>
-                    <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.contactPerson}</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Phone className="h-4 w-4 text-gray-400 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500">Phone Number</p>
-                    <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.phoneNumber}</p>
-                  </div>
-                </div>
-                {currentUser.csrRep.industry && (
-                  <div className="flex items-center">
-                    <Building2 className="h-4 w-4 text-gray-400 mr-3" />
-                    <div>
-                      <p className="text-sm text-gray-500">Industry</p>
-                      <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.industry}</p>
-                    </div>
-                  </div>
-                )}
-                {currentUser.csrRep.companyAddress && (
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 text-gray-400 mr-3" />
-                    <div>
-                      <p className="text-sm text-gray-500">Company Address</p>
-                      <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.companyAddress}</p>
-                    </div>
-                  </div>
-                )}
               </div>
+
+              {/* Profile Content */}
+              {profile ? (
+                <div className="space-y-4">
+                  {/* Profile Status */}
+                  <div className="bg-purple-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(profileStatus)}`}>
+                          {profileStatus}
+                        </span>
+                        {getStatusIcon(profileStatus)}
+                      </div>
+                      {!isEditingProfile && (
+                        <div className="flex space-x-2">
+                          {profileStatus === 'ACTIVE' ? (
+                            <button
+                              onClick={() => handleProfileStatusChange('SUSPENDED')}
+                              disabled={isProcessing}
+                              className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white px-3 py-1 rounded-md text-sm font-medium"
+                            >
+                              Suspend Profile
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleProfileStatusChange('ACTIVE')}
+                              disabled={isProcessing}
+                              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-3 py-1 rounded-md text-sm font-medium"
+                            >
+                              Activate Profile
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* PIN Profile */}
+                  {currentUser.pin && (
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <h6 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+                        <User className="h-4 w-4 mr-2" />
+                        Person in Need Profile
+                      </h6>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Name</p>
+                          {isEditingProfile ? (
+                            <input
+                              type="text"
+                              value={editFormData.name || ''}
+                              onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.pin.name}</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Age</p>
+                          {isEditingProfile ? (
+                            <input
+                              type="number"
+                              value={editFormData.age || ''}
+                              onChange={(e) => setEditFormData({...editFormData, age: parseInt(e.target.value)})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.pin.age}</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Location</p>
+                          {isEditingProfile ? (
+                            <input
+                              type="text"
+                              value={editFormData.location || ''}
+                              onChange={(e) => setEditFormData({...editFormData, location: e.target.value})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.pin.location}</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Phone</p>
+                          {isEditingProfile ? (
+                            <input
+                              type="tel"
+                              value={editFormData.phoneNumber || ''}
+                              onChange={(e) => setEditFormData({...editFormData, phoneNumber: e.target.value})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.pin.phoneNumber}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-500">Accessibility Needs</p>
+                        {isEditingProfile ? (
+                          <textarea
+                            value={editFormData.accessibilityNeeds || ''}
+                            onChange={(e) => setEditFormData({...editFormData, accessibilityNeeds: e.target.value})}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            rows={3}
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{currentUser.pin.accessibilityNeeds}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CSR Rep Profile */}
+                  {currentUser.csrRep && (
+                    <div className="bg-purple-50 rounded-lg p-4">
+                      <h6 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+                        <Building2 className="h-4 w-4 mr-2" />
+                        CSR Representative Profile
+                      </h6>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Company Name</p>
+                          {isEditingProfile ? (
+                            <input
+                              type="text"
+                              value={editFormData.companyName || ''}
+                              onChange={(e) => setEditFormData({...editFormData, companyName: e.target.value})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.companyName}</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Registration Number</p>
+                          {isEditingProfile ? (
+                            <input
+                              type="text"
+                              value={editFormData.companyRegistrationNumber || ''}
+                              onChange={(e) => setEditFormData({...editFormData, companyRegistrationNumber: e.target.value})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.companyRegistrationNumber}</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Contact Person</p>
+                          {isEditingProfile ? (
+                            <input
+                              type="text"
+                              value={editFormData.contactPerson || ''}
+                              onChange={(e) => setEditFormData({...editFormData, contactPerson: e.target.value})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.contactPerson}</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Phone Number</p>
+                          {isEditingProfile ? (
+                            <input
+                              type="tel"
+                              value={editFormData.phoneNumber || ''}
+                              onChange={(e) => setEditFormData({...editFormData, phoneNumber: e.target.value})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.phoneNumber}</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Industry</p>
+                          {isEditingProfile ? (
+                            <input
+                              type="text"
+                              value={editFormData.industry || ''}
+                              onChange={(e) => setEditFormData({...editFormData, industry: e.target.value})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.industry}</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Company Address</p>
+                          {isEditingProfile ? (
+                            <textarea
+                              value={editFormData.companyAddress || ''}
+                              onChange={(e) => setEditFormData({...editFormData, companyAddress: e.target.value})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                              rows={2}
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.companyAddress}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Platform Manager Profile */}
+                  {currentUser.platformManager && (
+                    <div className="bg-indigo-50 rounded-lg p-4">
+                      <h6 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Platform Manager Profile
+                      </h6>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Full Name</p>
+                          {isEditingProfile ? (
+                            <input
+                              type="text"
+                              value={editFormData.fullName || ''}
+                              onChange={(e) => setEditFormData({...editFormData, fullName: e.target.value})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.platformManager.fullName}</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Department</p>
+                          {isEditingProfile ? (
+                            <input
+                              type="text"
+                              value={editFormData.department || ''}
+                              onChange={(e) => setEditFormData({...editFormData, department: e.target.value})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.platformManager.department}</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Phone</p>
+                          {isEditingProfile ? (
+                            <input
+                              type="tel"
+                              value={editFormData.phone || ''}
+                              onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{currentUser.platformManager.phone}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <UserCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-sm text-gray-600 mb-4">
+                    No profile has been created for this user yet.
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Create a profile to enable role-specific functionality.
+                  </p>
+                </div>
+              )}
             </div>
           )}
-
-          {/* Platform Manager Profile */}
-          {currentUser.platformManager && (
-            <div className="bg-indigo-50 rounded-lg p-4">
-              <h5 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
-                <Settings className="h-4 w-4 mr-2" />
-                Platform Manager Profile
-              </h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center">
-                  <User className="h-4 w-4 text-gray-400 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-500">Full Name</p>
-                    <p className="text-sm font-medium text-gray-900">{currentUser.platformManager.fullName}</p>
-                  </div>
-                </div>
-                {currentUser.platformManager.department && (
-                  <div className="flex items-center">
-                    <Building2 className="h-4 w-4 text-gray-400 mr-3" />
-                    <div>
-                      <p className="text-sm text-gray-500">Department</p>
-                      <p className="text-sm font-medium text-gray-900">{currentUser.platformManager.department}</p>
-                    </div>
-                  </div>
-                )}
-                {currentUser.platformManager.phone && (
-                  <div className="flex items-center">
-                    <Phone className="h-4 w-4 text-gray-400 mr-3" />
-                    <div>
-                      <p className="text-sm text-gray-500">Phone</p>
-                      <p className="text-sm font-medium text-gray-900">{currentUser.platformManager.phone}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
         </div>
 
         {/* Close Button */}
