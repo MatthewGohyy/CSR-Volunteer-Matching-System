@@ -1,14 +1,20 @@
-import React from 'react';
-import { X, User, Building2, Mail, Phone, MapPin, Calendar, Shield, CheckCircle, XCircle, AlertCircle, Settings } from 'lucide-react';
-import { AdminUser, UserType, UserStatus } from '../types';
+import React, { useState } from 'react';
+import { X, User, Building2, Mail, Phone, MapPin, Calendar, Shield, CheckCircle, XCircle, AlertCircle, Settings, Lock, UserCheck } from 'lucide-react';
+import { AdminUser, UserType, UserStatus, ProfileStatus } from '../types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../config/api';
 
 interface UserDetailsModalProps {
   user: AdminUser;
   onClose: () => void;
+  onUpdate?: () => void;
 }
 
-const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose }) => {
-  const getStatusColor = (status: UserStatus) => {
+const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUpdate }) => {
+  const queryClient = useQueryClient();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const getStatusColor = (status: UserStatus | ProfileStatus) => {
     switch (status) {
       case 'ACTIVE':
         return 'text-green-600 bg-green-100';
@@ -36,7 +42,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose }) =>
     }
   };
 
-  const getStatusIcon = (status: UserStatus) => {
+  const getStatusIcon = (status: UserStatus | ProfileStatus) => {
     switch (status) {
       case 'ACTIVE':
         return <CheckCircle className="h-5 w-5 text-green-600" />;
@@ -48,6 +54,60 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose }) =>
         return <AlertCircle className="h-5 w-5 text-gray-600" />;
     }
   };
+
+  // Suspend/Activate User Account
+  const handleAccountStatusChange = async (newStatus: UserStatus) => {
+    if (isProcessing) return;
+    
+    const action = newStatus === 'SUSPENDED' ? 'suspend' : 'activate';
+    const confirmMessage = newStatus === 'SUSPENDED' 
+      ? 'Are you sure you want to suspend this user account? The user will not be able to login.'
+      : 'Are you sure you want to activate this user account? The user will be able to login again.';
+    
+    if (!window.confirm(confirmMessage)) return;
+
+    setIsProcessing(true);
+    try {
+      await api.put(`/admin/users/${user.id}/${action}`);
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      if (onUpdate) onUpdate();
+      alert(`User account ${action}d successfully`);
+      onClose();
+    } catch (error: any) {
+      alert(error.response?.data?.error || `Failed to ${action} user account`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Suspend/Activate User Profile
+  const handleProfileStatusChange = async (newStatus: ProfileStatus) => {
+    if (isProcessing) return;
+    
+    const action = newStatus === 'SUSPENDED' ? 'suspend' : 'activate';
+    const confirmMessage = newStatus === 'SUSPENDED'
+      ? 'Are you sure you want to suspend this user profile? The user can still login but cannot perform role-specific tasks.'
+      : 'Are you sure you want to activate this user profile? The user will be able to perform role-specific tasks again.';
+    
+    if (!window.confirm(confirmMessage)) return;
+
+    setIsProcessing(true);
+    try {
+      await api.put(`/admin/profiles/${user.id}/${action}`);
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      if (onUpdate) onUpdate();
+      alert(`User profile ${action}d successfully`);
+      onClose();
+    } catch (error: any) {
+      alert(error.response?.data?.error || `Failed to ${action} user profile`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const getProfile = () => user.pin || user.csrRep || user.platformManager;
+  const profile = getProfile();
+  const profileStatus = profile?.status || 'ACTIVE';
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -96,18 +156,34 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose }) =>
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(user.userType)}`}>
                   {user.userType}
                 </span>
+              </div>
+            </div>
+          </div>
+
+          {/* === USER ACCOUNT SECTION === */}
+          <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
+            <div className="flex items-center justify-between mb-3">
+              <h5 className="text-base font-semibold text-gray-900 flex items-center">
+                <Lock className="h-5 w-5 mr-2 text-blue-600" />
+                User Account (Authentication)
+              </h5>
+              <div className="flex items-center space-x-2">
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.status)}`}>
                   {user.status}
                 </span>
                 {getStatusIcon(user.status)}
               </div>
             </div>
-          </div>
+            
+            <p className="text-sm text-gray-600 mb-4">
+              {user.status === 'SUSPENDED' 
+                ? '⚠️ User cannot login - Account is suspended' 
+                : user.status === 'ACTIVE'
+                ? '✓ User can login - Account is active'
+                : 'Account is deactivated'}
+            </p>
 
-          {/* Basic Information */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h5 className="text-sm font-medium text-gray-900 mb-3">Basic Information</h5>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="flex items-center">
                 <Mail className="h-4 w-4 text-gray-400 mr-3" />
                 <div>
@@ -118,12 +194,84 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose }) =>
               <div className="flex items-center">
                 <Calendar className="h-4 w-4 text-gray-400 mr-3" />
                 <div>
-                  <p className="text-sm text-gray-500">Joined</p>
+                  <p className="text-sm text-gray-500">Account Created</p>
                   <p className="text-sm font-medium text-gray-900">{formatDate(user.createdAt)}</p>
                 </div>
               </div>
             </div>
+
+            {/* Account Action Buttons */}
+            <div className="flex space-x-2 pt-2 border-t border-blue-200">
+              {user.status === 'ACTIVE' ? (
+                <button
+                  onClick={() => handleAccountStatusChange('SUSPENDED')}
+                  disabled={isProcessing}
+                  className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center"
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  Suspend Account (Block Login)
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleAccountStatusChange('ACTIVE')}
+                  disabled={isProcessing}
+                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Activate Account (Allow Login)
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* === USER PROFILE SECTION === */}
+          {user.userType !== 'ADMIN' && profile && (
+            <div className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
+              <div className="flex items-center justify-between mb-3">
+                <h5 className="text-base font-semibold text-gray-900 flex items-center">
+                  <UserCheck className="h-5 w-5 mr-2 text-purple-600" />
+                  User Profile (Role & Permissions)
+                </h5>
+                <div className="flex items-center space-x-2">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(profileStatus)}`}>
+                    {profileStatus}
+                  </span>
+                  {getStatusIcon(profileStatus)}
+                </div>
+              </div>
+              
+              <p className="text-sm text-gray-600 mb-4">
+                {profileStatus === 'SUSPENDED'
+                  ? '⚠️ User can login but cannot perform role-specific tasks - Profile is suspended'
+                  : profileStatus === 'ACTIVE'
+                  ? '✓ User can perform all role-specific tasks - Profile is active'
+                  : 'Profile is deactivated'}
+              </p>
+
+              {/* Profile Action Buttons */}
+              <div className="flex space-x-2 pt-2 border-t border-purple-200">
+                {profileStatus === 'ACTIVE' ? (
+                  <button
+                    onClick={() => handleProfileStatusChange('SUSPENDED')}
+                    disabled={isProcessing}
+                    className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Suspend Profile (Disable Tasks)
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleProfileStatusChange('ACTIVE')}
+                    disabled={isProcessing}
+                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Activate Profile (Enable Tasks)
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* PIN Profile */}
           {user.pin && (
@@ -272,26 +420,6 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose }) =>
             </div>
           )}
 
-          {/* Account Status */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h5 className="text-sm font-medium text-gray-900 mb-3">Account Status</h5>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center">
-                {getStatusIcon(user.status)}
-                <div className="ml-3">
-                  <p className="text-sm text-gray-500">Current Status</p>
-                  <p className="text-sm font-medium text-gray-900">{user.status}</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 text-gray-400" />
-                <div className="ml-3">
-                  <p className="text-sm text-gray-500">Last Updated</p>
-                  <p className="text-sm font-medium text-gray-900">{formatDate(user.updatedAt)}</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Close Button */}

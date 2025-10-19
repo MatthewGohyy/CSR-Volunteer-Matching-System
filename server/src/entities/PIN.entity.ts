@@ -1,4 +1,4 @@
-import { PIN as PrismaPIN } from '@prisma/client';
+import { PIN as PrismaPIN, ProfileStatus } from '@prisma/client';
 import { prisma } from '../config/database';
 
 /**
@@ -16,6 +16,7 @@ export class PINEntity implements PrismaPIN {
   phoneNumber: string | null;
   accessibilityNeeds: string | null;
   profilePhoto: string | null;
+  status: ProfileStatus;
 
   constructor(data: PrismaPIN) {
     this.id = data.id;
@@ -26,6 +27,7 @@ export class PINEntity implements PrismaPIN {
     this.phoneNumber = data.phoneNumber;
     this.accessibilityNeeds = data.accessibilityNeeds;
     this.profilePhoto = data.profilePhoto;
+    this.status = data.status;
   }
 
   /**
@@ -54,6 +56,20 @@ export class PINEntity implements PrismaPIN {
    */
   isSenior(): boolean {
     return this.age !== null && this.age >= 65;
+  }
+
+  /**
+   * Check if profile is active
+   */
+  isActive(): boolean {
+    return this.status === ProfileStatus.ACTIVE;
+  }
+
+  /**
+   * Check if profile is suspended
+   */
+  isSuspended(): boolean {
+    return this.status === ProfileStatus.SUSPENDED;
   }
 
   // ============================================
@@ -91,9 +107,13 @@ export class PINEntity implements PrismaPIN {
     phoneNumber?: string;
     accessibilityNeeds?: string;
     profilePhoto?: string;
+    status?: ProfileStatus;
   }) {
     const pin = await prisma.pIN.create({
-      data,
+      data: {
+        ...data,
+        status: data.status || ProfileStatus.ACTIVE,
+      },
     });
     return new PINEntity(pin);
   }
@@ -108,6 +128,7 @@ export class PINEntity implements PrismaPIN {
     phoneNumber: string;
     accessibilityNeeds: string;
     profilePhoto: string;
+    status: ProfileStatus;
   }>) {
     const pin = await prisma.pIN.update({
       where: { id },
@@ -126,12 +147,41 @@ export class PINEntity implements PrismaPIN {
     phoneNumber: string;
     accessibilityNeeds: string;
     profilePhoto: string;
+    status: ProfileStatus;
   }>) {
     const pin = await prisma.pIN.update({
       where: { userId },
       data,
     });
     return new PINEntity(pin);
+  }
+
+  /**
+   * Suspend PIN profile
+   */
+  static async suspend(id: string) {
+    return this.update(id, { status: ProfileStatus.SUSPENDED });
+  }
+
+  /**
+   * Suspend PIN profile by user ID
+   */
+  static async suspendByUserId(userId: string) {
+    return this.updateByUserId(userId, { status: ProfileStatus.SUSPENDED });
+  }
+
+  /**
+   * Activate PIN profile
+   */
+  static async activate(id: string) {
+    return this.update(id, { status: ProfileStatus.ACTIVE });
+  }
+
+  /**
+   * Activate PIN profile by user ID
+   */
+  static async activateByUserId(userId: string) {
+    return this.updateByUserId(userId, { status: ProfileStatus.ACTIVE });
   }
 
   /**

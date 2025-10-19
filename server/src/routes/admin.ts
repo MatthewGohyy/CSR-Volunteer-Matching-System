@@ -8,6 +8,7 @@ import { CreateUserProfileController } from '../controllers/userAdmin/createUser
 import { ViewUserProfilesController } from '../controllers/userAdmin/viewUserProfiles.controller';
 import { UpdateUserProfileController } from '../controllers/userAdmin/updateUserProfile.controller';
 import { SuspendUserProfileController } from '../controllers/userAdmin/suspendUserProfile.controller';
+import { ActivateUserProfileController } from '../controllers/userAdmin/activateUserProfile.controller';
 import { SearchUserProfilesController } from '../controllers/userAdmin/searchUserProfiles.controller';
 import { DeleteUserAccountController } from '../controllers/userAdmin/deleteUserAccount.controller';
 import { GetSystemStatsController } from '../controllers/userAdmin/getSystemStats.controller';
@@ -58,6 +59,9 @@ router.put('/profiles/:id', UpdateUserProfileController.handle);
 
 // Story #11: Suspend user profile
 router.put('/profiles/:id/suspend', SuspendUserProfileController.handle);
+
+// Activate user profile (utility)
+router.put('/profiles/:id/activate', ActivateUserProfileController.handle);
 
 // System statistics (utility - not a user story)
 router.get('/stats', GetSystemStatsController.handle);

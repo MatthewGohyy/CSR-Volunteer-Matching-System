@@ -1,4 +1,4 @@
-import { CSRRep as PrismaCSRRep } from '@prisma/client';
+import { CSRRep as PrismaCSRRep, ProfileStatus } from '@prisma/client';
 import { prisma } from '../config/database';
 
 /**
@@ -17,6 +17,7 @@ export class CSRRepEntity implements PrismaCSRRep {
   phoneNumber: string;
   companyAddress: string | null;
   companyLogo: string | null;
+  status: ProfileStatus;
 
   constructor(data: PrismaCSRRep) {
     this.id = data.id;
@@ -28,6 +29,7 @@ export class CSRRepEntity implements PrismaCSRRep {
     this.phoneNumber = data.phoneNumber;
     this.companyAddress = data.companyAddress;
     this.companyLogo = data.companyLogo;
+    this.status = data.status;
   }
 
   /**
@@ -54,6 +56,20 @@ export class CSRRepEntity implements PrismaCSRRep {
    */
   hasLogo(): boolean {
     return !!this.companyLogo;
+  }
+
+  /**
+   * Check if profile is active
+   */
+  isActive(): boolean {
+    return this.status === ProfileStatus.ACTIVE;
+  }
+
+  /**
+   * Check if profile is suspended
+   */
+  isSuspended(): boolean {
+    return this.status === ProfileStatus.SUSPENDED;
   }
 
   // ============================================
@@ -92,9 +108,13 @@ export class CSRRepEntity implements PrismaCSRRep {
     phoneNumber: string;
     companyAddress?: string;
     companyLogo?: string;
+    status?: ProfileStatus;
   }) {
     const csrRep = await prisma.cSRRep.create({
-      data,
+      data: {
+        ...data,
+        status: data.status || ProfileStatus.ACTIVE,
+      },
     });
     return new CSRRepEntity(csrRep);
   }
@@ -109,6 +129,7 @@ export class CSRRepEntity implements PrismaCSRRep {
     phoneNumber: string;
     companyAddress: string;
     companyLogo: string;
+    status: ProfileStatus;
   }>) {
     const csrRep = await prisma.cSRRep.update({
       where: { id },
@@ -127,12 +148,41 @@ export class CSRRepEntity implements PrismaCSRRep {
     phoneNumber: string;
     companyAddress: string;
     companyLogo: string;
+    status: ProfileStatus;
   }>) {
     const csrRep = await prisma.cSRRep.update({
       where: { userId },
       data,
     });
     return new CSRRepEntity(csrRep);
+  }
+
+  /**
+   * Suspend CSR Rep profile
+   */
+  static async suspend(id: string) {
+    return this.update(id, { status: ProfileStatus.SUSPENDED });
+  }
+
+  /**
+   * Suspend CSR Rep profile by user ID
+   */
+  static async suspendByUserId(userId: string) {
+    return this.updateByUserId(userId, { status: ProfileStatus.SUSPENDED });
+  }
+
+  /**
+   * Activate CSR Rep profile
+   */
+  static async activate(id: string) {
+    return this.update(id, { status: ProfileStatus.ACTIVE });
+  }
+
+  /**
+   * Activate CSR Rep profile by user ID
+   */
+  static async activateByUserId(userId: string) {
+    return this.updateByUserId(userId, { status: ProfileStatus.ACTIVE });
   }
 
   /**

@@ -12,13 +12,52 @@ Your main task is to create an application which satisfies all defined user stor
 - Adopt test-driven development i.e. test plans, test cases (include unit test cases)
 - The system should have 100 synthetic user data in total comprising of all user types
 
-Below are the 4 user types and their roles: 
-(1) CSR Representative: Connect with PINs to provide help
-(2) Person-In-Need (PIN): Connect with CSR Representatives to receive help
-(3) User Admin: Manage different types of users and user profiles (user account administration)
-(4) Platform Manager: Manage categories for volunteer services and get reports (daily,
-weekly, monthly)
+## Access & Security Concepts
 
+### **1. User Account (Identity)**
+
+- **Definition:**  
+  Represents a *unique digital identity* within the CSR Application, associated with a single person or organization.
+
+- **Contains:**  
+  Personal details (e.g. name, email, contact number), authentication credentials (username, password), and system metadata (account status, last login, creation date).
+
+- **Purpose:**  
+  Enables authentication (login) and identification of the user.
+
+> 🧩 Analogy: The *User Account* is the “who” — the identity in the system.
+
+---
+
+### **2. User Profile (Authorization Context)**
+
+- **Definition:**  
+  Defines the *role or set of roles* assigned to a user account, which determines their access rights and functional scope in the system.
+
+- **Contains:**
+  - Role(s) assigned (e.g., CSR Representative, Platform Manager)
+  - Associated permissions (e.g., View Reports, Manage Users)
+  - Organizational context (e.g., Company, Region, Project group)
+
+- **Purpose:**  
+  Translates *who the user is* into *what they are allowed to do*.
+
+> 🧩 Analogy: The *User Profile* is the “what” — the authorization layer.
+
+---
+
+### **3. Roles (Functional Roles in the System)**
+
+Each role groups related permissions and responsibilities.
+
+| **Role** | **Description** | **Key Permissions / Responsibilities** |
+|-----------|------------------|----------------------------------------|
+| **CSR Representative** | Acts as the main contact person from a corporate partner. Connects with Persons-In-Need (PINs) to coordinate volunteer activities and support delivery. | - View and manage assigned PINs |
+| **Person-In-Need (PIN)** | Recipient of assistance under CSR initiatives. Connects with CSR Representatives to request and receive help. | - Create and update personal requests<br>- View assigned CSR Representative<br>- Acknowledge receipt of assistance |
+| **User Administrator (User Admin)** | Responsible for managing user lifecycle and access privileges within the CSR system. | - Create, update, deactivate user accounts<br>- Assign roles and reset passwords<br>- Review user access reports |
+| **Platform Manager** | Oversees platform-level configuration, service categorization, and reporting. Ensures operational data integrity. | - Manage volunteer service categories<br>- View system-wide statistics and reports (daily, weekly, monthly)<br>- Configure system parameters and settings |
+
+---
 
 # User Stories
 
@@ -86,3 +125,4 @@ weekly, monthly)
 | 37 | As a Platform Manager, I want to update request categories so that I can keep them up to date with changing needs. | 1 |
 | 38 | As a Platform Manager, I want to delete request categories so that I can remove outdated or redundant categories. | 1 |
 | 39 | As a Platform Manager, I want to search request categories so that I can quickly locate a specific category to manage. | 1 |
+

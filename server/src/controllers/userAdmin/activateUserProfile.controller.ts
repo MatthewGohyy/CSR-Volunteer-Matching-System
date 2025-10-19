@@ -7,16 +7,11 @@ import { AppError } from '../../middleware/errorHandler';
 import { UserType } from '@prisma/client';
 
 /**
- * Suspend User Profile Controller
+ * Activate User Profile Controller
  * 
- * Story #11: As a User Admin, I want to suspend a user profile 
- * so that the associated role or permissions are temporarily disabled.
- * 
- * NOTE: This suspends the USER PROFILE (PIN, CSRRep, or PlatformManager),
- * NOT the user account. A suspended profile means the user can still login
- * but cannot perform role-specific tasks.
+ * Activates a suspended user profile, allowing the user to perform role-specific tasks again.
  */
-export class SuspendUserProfileController {
+export class ActivateUserProfileController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
@@ -27,47 +22,47 @@ export class SuspendUserProfileController {
         throw new AppError('User not found', 404);
       }
 
-      let suspendedProfile;
+      let activatedProfile;
 
-      // Suspend the appropriate profile based on user type
+      // Activate the appropriate profile based on user type
       switch (user.userType) {
         case UserType.PIN:
           if (!user.pin) {
             throw new AppError('PIN profile not found', 404);
           }
-          suspendedProfile = await PINEntity.suspendByUserId(id);
+          activatedProfile = await PINEntity.activateByUserId(id);
           break;
 
         case UserType.CSR_REP:
           if (!user.csrRep) {
             throw new AppError('CSR Rep profile not found', 404);
           }
-          suspendedProfile = await CSRRepEntity.suspendByUserId(id);
+          activatedProfile = await CSRRepEntity.activateByUserId(id);
           break;
 
         case UserType.PLATFORM_MANAGER:
           if (!user.platformManager) {
             throw new AppError('Platform Manager profile not found', 404);
           }
-          suspendedProfile = await PlatformManagerEntity.suspendByUserId(id);
+          activatedProfile = await PlatformManagerEntity.activateByUserId(id);
           break;
 
         case UserType.ADMIN:
-          throw new AppError('Cannot suspend admin profile', 400);
+          throw new AppError('Cannot activate admin profile', 400);
 
         default:
           throw new AppError('Invalid user type', 400);
       }
 
       res.json({
-        message: 'User profile suspended successfully. User can still login but cannot perform role-specific tasks.',
+        message: 'User profile activated successfully. User can now perform role-specific tasks.',
         user: {
           id: user.id,
           email: user.email,
           userType: user.userType,
-          status: user.status, // Account status remains unchanged
+          status: user.status,
         },
-        profile: suspendedProfile,
+        profile: activatedProfile,
       });
     } catch (error) {
       next(error);

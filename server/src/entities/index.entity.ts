@@ -9,6 +9,7 @@ export { UserEntity } from './User.entity';
 export { RequestEntity } from './Request.entity';
 export { PINEntity } from './PIN.entity';
 export { CSRRepEntity } from './CSRRep.entity';
+export { PlatformManagerEntity } from './PlatformManager.entity';
 export { NotificationEntity } from './Notification.entity';
 export { ServiceCategoryEntity } from './ServiceCategory.entity';
 export { MatchEntity } from './Match.entity';
@@ -29,6 +30,7 @@ export type {
   Notification,
   UserType,
   UserStatus,
+  ProfileStatus,
   RequestStatus,
   UrgencyLevel,
   OfferStatus,

@@ -391,6 +391,9 @@ const AdminDashboard: React.FC = () => {
             setShowUserModal(false);
             setSelectedUser(null);
           }}
+          onUpdate={() => {
+            queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+          }}
         />
       )}
     </div>

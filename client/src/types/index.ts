@@ -1,6 +1,7 @@
 // User Types
 export type UserType = 'PIN' | 'CSR_REP' | 'ADMIN' | 'PLATFORM_MANAGER';
 export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
+export type ProfileStatus = 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
 
 export interface User {
   id: string;
@@ -20,6 +21,7 @@ export interface PINProfile {
   phoneNumber?: string;
   accessibilityNeeds?: string;
   profilePhoto?: string;
+  status: ProfileStatus;
 }
 
 export interface CSRRepProfile {
@@ -32,6 +34,7 @@ export interface CSRRepProfile {
   phoneNumber: string;
   companyAddress?: string;
   companyLogo?: string;
+  status: ProfileStatus;
 }
 
 export interface PlatformManagerProfile {
@@ -40,6 +43,7 @@ export interface PlatformManagerProfile {
   fullName: string;
   department?: string;
   phone?: string;
+  status: ProfileStatus;
 }
 
 // Request/Opportunity Types
@@ -200,6 +204,7 @@ export interface AdminUser extends User {
     location?: string;
     phoneNumber?: string;
     accessibilityNeeds?: string;
+    status: ProfileStatus;
   };
   csrRep?: {
     id: string;
@@ -209,8 +214,16 @@ export interface AdminUser extends User {
     contactPerson: string;
     phoneNumber: string;
     companyAddress?: string;
+    status: ProfileStatus;
   };
-  platformManager?: PlatformManagerProfile;
+  platformManager?: {
+    id: string;
+    userId: string;
+    fullName: string;
+    department?: string;
+    phone?: string;
+    status: ProfileStatus;
+  };
 }
 
 export interface UsersResponse {
