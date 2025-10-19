@@ -3,6 +3,7 @@ import { X, User, Building2, Mail, Phone, MapPin, Calendar, Shield, CheckCircle,
 import { AdminUser, UserType, UserStatus, ProfileStatus } from '../types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../config/api';
+import Toast, { ToastType } from './Toast';
 
 interface UserDetailsModalProps {
   user: AdminUser;
@@ -13,6 +14,22 @@ interface UserDetailsModalProps {
 const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUpdate }) => {
   const queryClient = useQueryClient();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const [currentUser, setCurrentUser] = useState<AdminUser>(user);
+
+  const closeToast = () => {
+    setToast(null);
+  };
+
+  // Function to refresh user data
+  const refreshUserData = async () => {
+    try {
+      const response = await api.get<{ user: AdminUser }>(`/admin/users/${user.id}`);
+      setCurrentUser(response.data.user);
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+    }
+  };
 
   const getStatusColor = (status: UserStatus | ProfileStatus) => {
     switch (status) {
@@ -68,12 +85,28 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
 
     setIsProcessing(true);
     try {
-      await api.put(`/admin/users/${user.id}/${action}`);
+      if (newStatus === 'SUSPENDED') {
+        // Use the suspend route
+        await api.put(`/admin/users/${user.id}/suspend`);
+      } else {
+        // Use the dedicated activate route
+        await api.put(`/admin/users/${user.id}/activate`);
+      }
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       if (onUpdate) onUpdate();
-      alert(`User account ${action}d successfully`);
-      onClose();
+      
+      // Refresh user data to show updated status
+      await refreshUserData();
+      
+      // Show success toast instead of alert
+      setToast({
+        message: `User account ${action}ed successfully`,
+        type: 'success'
+      });
+      
+      // Don't close modal automatically
     } catch (error: any) {
+      // Keep error alerts as they are (non-disappearing)
       alert(error.response?.data?.error || `Failed to ${action} user account`);
     } finally {
       setIsProcessing(false);
@@ -96,16 +129,26 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
       await api.put(`/admin/profiles/${user.id}/${action}`);
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       if (onUpdate) onUpdate();
-      alert(`User profile ${action}d successfully`);
-      onClose();
+      
+      // Refresh user data to show updated status
+      await refreshUserData();
+      
+      // Show success toast instead of alert
+      setToast({
+        message: `User profile ${action}ed successfully`,
+        type: 'success'
+      });
+      
+      // Don't close modal automatically
     } catch (error: any) {
+      // Keep error alerts as they are (non-disappearing)
       alert(error.response?.data?.error || `Failed to ${action} user profile`);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const getProfile = () => user.pin || user.csrRep || user.platformManager;
+  const getProfile = () => currentUser.pin || currentUser.csrRep || currentUser.platformManager;
   const profile = getProfile();
   const profileStatus = profile?.status || 'ACTIVE';
 
@@ -150,11 +193,11 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
             </div>
             <div className="flex-1">
               <h4 className="text-xl font-semibold text-gray-900">
-                {user.pin?.name || user.csrRep?.companyName || user.platformManager?.fullName || user.email}
+                {currentUser.pin?.name || currentUser.csrRep?.companyName || currentUser.platformManager?.fullName || currentUser.email}
               </h4>
               <div className="flex items-center space-x-2 mt-2">
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(user.userType)}`}>
-                  {user.userType}
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(currentUser.userType)}`}>
+                  {currentUser.userType}
                 </span>
               </div>
             </div>
@@ -168,17 +211,17 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
                 User Account (Authentication)
               </h5>
               <div className="flex items-center space-x-2">
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.status)}`}>
-                  {user.status}
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(currentUser.status)}`}>
+                  {currentUser.status}
                 </span>
-                {getStatusIcon(user.status)}
+                {getStatusIcon(currentUser.status)}
               </div>
             </div>
             
             <p className="text-sm text-gray-600 mb-4">
-              {user.status === 'SUSPENDED' 
+              {currentUser.status === 'SUSPENDED' 
                 ? '⚠️ User cannot login - Account is suspended' 
-                : user.status === 'ACTIVE'
+                : currentUser.status === 'ACTIVE'
                 ? '✓ User can login - Account is active'
                 : 'Account is deactivated'}
             </p>
@@ -188,21 +231,21 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
                 <Mail className="h-4 w-4 text-gray-400 mr-3" />
                 <div>
                   <p className="text-sm text-gray-500">Email</p>
-                  <p className="text-sm font-medium text-gray-900">{user.email}</p>
+                  <p className="text-sm font-medium text-gray-900">{currentUser.email}</p>
                 </div>
               </div>
               <div className="flex items-center">
                 <Calendar className="h-4 w-4 text-gray-400 mr-3" />
                 <div>
                   <p className="text-sm text-gray-500">Account Created</p>
-                  <p className="text-sm font-medium text-gray-900">{formatDate(user.createdAt)}</p>
+                  <p className="text-sm font-medium text-gray-900">{formatDate(currentUser.createdAt)}</p>
                 </div>
               </div>
             </div>
 
             {/* Account Action Buttons */}
             <div className="flex space-x-2 pt-2 border-t border-blue-200">
-              {user.status === 'ACTIVE' ? (
+              {currentUser.status === 'ACTIVE' ? (
                 <button
                   onClick={() => handleAccountStatusChange('SUSPENDED')}
                   disabled={isProcessing}
@@ -225,7 +268,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
           </div>
 
           {/* === USER PROFILE SECTION === */}
-          {user.userType !== 'ADMIN' && profile && (
+          {currentUser.userType !== 'ADMIN' && profile && (
             <div className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
               <div className="flex items-center justify-between mb-3">
                 <h5 className="text-base font-semibold text-gray-900 flex items-center">
@@ -274,7 +317,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
           )}
 
           {/* PIN Profile */}
-          {user.pin && (
+          {currentUser.pin && (
             <div className="bg-blue-50 rounded-lg p-4">
               <h5 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
                 <User className="h-4 w-4 mr-2" />
@@ -285,48 +328,48 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
                   <User className="h-4 w-4 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-500">Name</p>
-                    <p className="text-sm font-medium text-gray-900">{user.pin.name}</p>
+                    <p className="text-sm font-medium text-gray-900">{currentUser.pin.name}</p>
                   </div>
                 </div>
-                {user.pin.age && (
+                {currentUser.pin.age && (
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Age</p>
-                      <p className="text-sm font-medium text-gray-900">{user.pin.age}</p>
+                      <p className="text-sm font-medium text-gray-900">{currentUser.pin.age}</p>
                     </div>
                   </div>
                 )}
-                {user.pin.location && (
+                {currentUser.pin.location && (
                   <div className="flex items-center">
                     <MapPin className="h-4 w-4 text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Location</p>
-                      <p className="text-sm font-medium text-gray-900">{user.pin.location}</p>
+                      <p className="text-sm font-medium text-gray-900">{currentUser.pin.location}</p>
                     </div>
                   </div>
                 )}
-                {user.pin.phoneNumber && (
+                {currentUser.pin.phoneNumber && (
                   <div className="flex items-center">
                     <Phone className="h-4 w-4 text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Phone</p>
-                      <p className="text-sm font-medium text-gray-900">{user.pin.phoneNumber}</p>
+                      <p className="text-sm font-medium text-gray-900">{currentUser.pin.phoneNumber}</p>
                     </div>
                   </div>
                 )}
               </div>
-              {user.pin.accessibilityNeeds && (
+              {currentUser.pin.accessibilityNeeds && (
                 <div className="mt-4">
                   <p className="text-sm text-gray-500 mb-1">Accessibility Needs</p>
-                  <p className="text-sm text-gray-900">{user.pin.accessibilityNeeds}</p>
+                  <p className="text-sm text-gray-900">{currentUser.pin.accessibilityNeeds}</p>
                 </div>
               )}
             </div>
           )}
 
           {/* CSR Rep Profile */}
-          {user.csrRep && (
+          {currentUser.csrRep && (
             <div className="bg-purple-50 rounded-lg p-4">
               <h5 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
                 <Building2 className="h-4 w-4 mr-2" />
@@ -337,45 +380,45 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
                   <Building2 className="h-4 w-4 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-500">Company Name</p>
-                    <p className="text-sm font-medium text-gray-900">{user.csrRep.companyName}</p>
+                    <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.companyName}</p>
                   </div>
                 </div>
                 <div className="flex items-center">
                   <Shield className="h-4 w-4 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-500">Registration Number</p>
-                    <p className="text-sm font-medium text-gray-900">{user.csrRep.companyRegistrationNumber}</p>
+                    <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.companyRegistrationNumber}</p>
                   </div>
                 </div>
                 <div className="flex items-center">
                   <User className="h-4 w-4 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-500">Contact Person</p>
-                    <p className="text-sm font-medium text-gray-900">{user.csrRep.contactPerson}</p>
+                    <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.contactPerson}</p>
                   </div>
                 </div>
                 <div className="flex items-center">
                   <Phone className="h-4 w-4 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-500">Phone Number</p>
-                    <p className="text-sm font-medium text-gray-900">{user.csrRep.phoneNumber}</p>
+                    <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.phoneNumber}</p>
                   </div>
                 </div>
-                {user.csrRep.industry && (
+                {currentUser.csrRep.industry && (
                   <div className="flex items-center">
                     <Building2 className="h-4 w-4 text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Industry</p>
-                      <p className="text-sm font-medium text-gray-900">{user.csrRep.industry}</p>
+                      <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.industry}</p>
                     </div>
                   </div>
                 )}
-                {user.csrRep.companyAddress && (
+                {currentUser.csrRep.companyAddress && (
                   <div className="flex items-center">
                     <MapPin className="h-4 w-4 text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Company Address</p>
-                      <p className="text-sm font-medium text-gray-900">{user.csrRep.companyAddress}</p>
+                      <p className="text-sm font-medium text-gray-900">{currentUser.csrRep.companyAddress}</p>
                     </div>
                   </div>
                 )}
@@ -384,7 +427,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
           )}
 
           {/* Platform Manager Profile */}
-          {user.platformManager && (
+          {currentUser.platformManager && (
             <div className="bg-indigo-50 rounded-lg p-4">
               <h5 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
                 <Settings className="h-4 w-4 mr-2" />
@@ -395,24 +438,24 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
                   <User className="h-4 w-4 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-500">Full Name</p>
-                    <p className="text-sm font-medium text-gray-900">{user.platformManager.fullName}</p>
+                    <p className="text-sm font-medium text-gray-900">{currentUser.platformManager.fullName}</p>
                   </div>
                 </div>
-                {user.platformManager.department && (
+                {currentUser.platformManager.department && (
                   <div className="flex items-center">
                     <Building2 className="h-4 w-4 text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Department</p>
-                      <p className="text-sm font-medium text-gray-900">{user.platformManager.department}</p>
+                      <p className="text-sm font-medium text-gray-900">{currentUser.platformManager.department}</p>
                     </div>
                   </div>
                 )}
-                {user.platformManager.phone && (
+                {currentUser.platformManager.phone && (
                   <div className="flex items-center">
                     <Phone className="h-4 w-4 text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Phone</p>
-                      <p className="text-sm font-medium text-gray-900">{user.platformManager.phone}</p>
+                      <p className="text-sm font-medium text-gray-900">{currentUser.platformManager.phone}</p>
                     </div>
                   </div>
                 )}
@@ -432,6 +475,15 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
           </button>
         </div>
       </div>
+      
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={closeToast}
+        />
+      )}
     </div>
   );
 };

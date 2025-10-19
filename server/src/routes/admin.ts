@@ -3,6 +3,7 @@ import { CreateUserAccountController } from '../controllers/userAdmin/createUser
 import { ViewUserAccountsController } from '../controllers/userAdmin/viewUserAccounts.controller';
 import { UpdateUserAccountController } from '../controllers/userAdmin/updateUserAccount.controller';
 import { SuspendUserAccountController } from '../controllers/userAdmin/suspendUserAccount.controller';
+import { ActivateUserAccountController } from '../controllers/userAdmin/activateUserAccount.controller';
 import { SearchUserAccountsController } from '../controllers/userAdmin/searchUserAccounts.controller';
 import { CreateUserProfileController } from '../controllers/userAdmin/createUserProfile.controller';
 import { ViewUserProfilesController } from '../controllers/userAdmin/viewUserProfiles.controller';
@@ -39,6 +40,9 @@ router.put('/users/:id/status', UpdateUserAccountController.handle);
 
 // Story #6: Suspend user account
 router.put('/users/:id/suspend', SuspendUserAccountController.handle);
+
+// Activate user account (utility)
+router.put('/users/:id/activate', ActivateUserAccountController.handle);
 
 // Delete user account (utility)
 router.delete('/users/:id', DeleteUserAccountController.handle);
