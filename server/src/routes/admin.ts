@@ -33,6 +33,9 @@ router.post('/users', CreateUserAccountController.handle);
 // Story #5: Update user account
 router.put('/users/:id', UpdateUserAccountController.handle);
 
+// Update user status (suspend/activate) - used by frontend
+router.put('/users/:id/status', UpdateUserAccountController.handle);
+
 // Story #6: Suspend user account
 router.put('/users/:id/suspend', SuspendUserAccountController.handle);
 

@@ -21,11 +21,7 @@ import { UserType, UserStatus, AdminUser, UsersResponse } from '../types';
 import CreateUserModal from './CreateUserModal';
 import UserDetailsModal from './UserDetailsModal';
 
-interface AdminDashboardProps {
-  userType: 'ADMIN';
-}
-
-const AdminDashboard: React.FC<AdminDashboardProps> = () => {
+const AdminDashboard: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'ALL'>('ALL');

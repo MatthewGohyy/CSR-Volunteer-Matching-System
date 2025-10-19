@@ -5,6 +5,9 @@ import { Heart, Users, Building2, Target } from 'lucide-react';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import AdminDashboard from './components/AdminDashboard';
+import PINDashboard from './components/PINDashboard';
+import CSRRepDashboard from './components/CSRRepDashboard';
+import PlatformManagerDashboard from './components/PlatformManagerDashboard';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -120,9 +123,10 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/pin/dashboard" element={<Dashboard userType="PIN" />} />
-          <Route path="/csr/dashboard" element={<Dashboard userType="CSR_REP" />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard userType="ADMIN" />} />
+          <Route path="/pin/dashboard" element={<PINDashboard />} />
+          <Route path="/csr/dashboard" element={<CSRRepDashboard />} />
+          <Route path="/platform-manager/dashboard" element={<PlatformManagerDashboard />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
         </Routes>
       </Router>
     </QueryClientProvider>

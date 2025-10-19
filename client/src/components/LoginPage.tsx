@@ -26,12 +26,21 @@ const LoginPage: React.FC = () => {
     },
     onSuccess: (data) => {
       // Redirect based on user type
-      if (data.user.userType === 'PIN') {
-        navigate('/pin/dashboard');
-      } else if (data.user.userType === 'CSR_REP') {
-        navigate('/csr/dashboard');
-      } else {
-        navigate('/admin/dashboard');
+      switch (data.user.userType) {
+        case 'PIN':
+          navigate('/pin/dashboard');
+          break;
+        case 'CSR_REP':
+          navigate('/csr/dashboard');
+          break;
+        case 'PLATFORM_MANAGER':
+          navigate('/platform-manager/dashboard');
+          break;
+        case 'ADMIN':
+          navigate('/admin/dashboard');
+          break;
+        default:
+          navigate('/');
       }
     },
     onError: (error: any) => {
