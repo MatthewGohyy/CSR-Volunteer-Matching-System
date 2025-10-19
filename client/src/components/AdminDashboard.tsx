@@ -1,19 +1,14 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   Users, 
   UserPlus, 
-  UserX, 
   Shield, 
-  CheckCircle, 
+  CheckCircle,
   XCircle, 
   AlertCircle,
   Search,
-  Filter,
-  MoreVertical,
   Eye,
-  Edit,
-  Trash2,
   LogOut
 } from 'lucide-react';
 import api from '../config/api';
@@ -40,27 +35,6 @@ const AdminDashboard: React.FC = () => {
     },
   });
 
-  // Suspend user mutation - Direct API call to controller (Boundary -> Controller)
-  const suspendUserMutation = useMutation({
-    mutationFn: async (id: string): Promise<AdminUser> => {
-      const response = await api.put<{ user: AdminUser; message: string }>(`/admin/users/${id}/status`, { status: 'SUSPENDED' });
-      return response.data.user;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-    },
-  });
-
-  // Activate user mutation - Direct API call to controller (Boundary -> Controller)
-  const activateUserMutation = useMutation({
-    mutationFn: async (id: string): Promise<AdminUser> => {
-      const response = await api.put<{ user: AdminUser; message: string }>(`/admin/users/${id}/status`, { status: 'ACTIVE' });
-      return response.data.user;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-    },
-  });
 
   // Filter users based on search and status
   const filteredUsers = usersData?.users.filter(user => {
@@ -73,17 +47,6 @@ const AdminDashboard: React.FC = () => {
     return matchesSearch && matchesStatus;
   }) || [];
 
-  const handleSuspendUser = (userId: string) => {
-    if (window.confirm('Are you sure you want to suspend this user?')) {
-      suspendUserMutation.mutate(userId);
-    }
-  };
-
-  const handleActivateUser = (userId: string) => {
-    if (window.confirm('Are you sure you want to activate this user?')) {
-      activateUserMutation.mutate(userId);
-    }
-  };
 
   const getStatusColor = (status: UserStatus) => {
     switch (status) {
@@ -260,7 +223,13 @@ const AdminDashboard: React.FC = () => {
           <ul className="divide-y divide-gray-200">
             {filteredUsers.map((user) => (
               <li key={user.id} className="px-4 py-4 sm:px-6">
-                <div className="flex items-center justify-between">
+                <div 
+                  className="flex items-center justify-between cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors duration-150"
+                  onClick={() => {
+                    setSelectedUser(user);
+                    setShowUserModal(true);
+                  }}
+                >
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
@@ -285,34 +254,8 @@ const AdminDashboard: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setShowUserModal(true);
-                      }}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    
-                    {user.status === 'ACTIVE' ? (
-                      <button
-                        onClick={() => handleSuspendUser(user.id)}
-                        className="text-red-400 hover:text-red-600"
-                        disabled={suspendUserMutation.isPending}
-                      >
-                        <UserX className="h-4 w-4" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleActivateUser(user.id)}
-                        className="text-green-400 hover:text-green-600"
-                        disabled={activateUserMutation.isPending}
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                      </button>
-                    )}
+                  <div className="flex items-center">
+                    <Eye className="h-4 w-4 text-gray-400" />
                   </div>
                 </div>
               </li>
