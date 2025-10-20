@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { X, User, Building2, Mail, Lock, Phone, MapPin, Calendar, Settings } from 'lucide-react';
 import api from '../config/api';
-import { UserType, CreateUserData, AdminUser } from '../types';
+import { CreateUserData, AdminUser } from '../types';
 
 interface CreateUserModalProps {
   onClose: () => void;
