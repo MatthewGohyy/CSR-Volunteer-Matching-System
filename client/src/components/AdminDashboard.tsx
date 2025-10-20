@@ -1,32 +1,22 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   Users, 
   UserPlus, 
-  UserX, 
   Shield, 
-  CheckCircle, 
+  CheckCircle,
   XCircle, 
   AlertCircle,
   Search,
-  Filter,
-  MoreVertical,
   Eye,
-  Edit,
-  Trash2,
   LogOut
 } from 'lucide-react';
-import { adminService, type AdminUser, type CreateUserData } from '../services/adminService';
-import { authService } from '../services/authService';
-import { UserType, UserStatus } from '../types';
+import api from '../config/api';
+import { UserType, UserStatus, AdminUser, UsersResponse } from '../types';
 import CreateUserModal from './CreateUserModal';
 import UserDetailsModal from './UserDetailsModal';
 
-interface AdminDashboardProps {
-  userType: 'ADMIN';
-}
-
-const AdminDashboard: React.FC<AdminDashboardProps> = () => {
+const AdminDashboard: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'ALL'>('ALL');
@@ -36,27 +26,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
   const queryClient = useQueryClient();
 
-  // Fetch users
+  // Fetch users - Direct API call to controller (Boundary -> Controller)
   const { data: usersData, isLoading, error } = useQuery({
     queryKey: ['admin-users', currentPage],
-    queryFn: () => adminService.getUsers(currentPage, 10),
-  });
-
-  // Suspend user mutation
-  const suspendUserMutation = useMutation({
-    mutationFn: adminService.suspendUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    queryFn: async (): Promise<UsersResponse> => {
+      const response = await api.get<UsersResponse>(`/admin/users?page=${currentPage}&limit=10`);
+      return response.data;
     },
   });
 
-  // Activate user mutation
-  const activateUserMutation = useMutation({
-    mutationFn: adminService.activateUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-    },
-  });
+
 
   // Filter users based on search and status
   const filteredUsers = usersData?.users.filter(user => {
@@ -69,17 +48,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     return matchesSearch && matchesStatus;
   }) || [];
 
-  const handleSuspendUser = (userId: string) => {
-    if (window.confirm('Are you sure you want to suspend this user?')) {
-      suspendUserMutation.mutate(userId);
-    }
-  };
-
-  const handleActivateUser = (userId: string) => {
-    if (window.confirm('Are you sure you want to activate this user?')) {
-      activateUserMutation.mutate(userId);
-    }
-  };
 
   const getStatusColor = (status: UserStatus) => {
     switch (status) {
@@ -148,7 +116,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 Create User
               </button>
               <button
-                onClick={() => authService.logout()}
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('user');
+                  window.location.href = '/';
+                }}
                 className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
               >
                 <LogOut className="h-4 w-4 mr-2" />
@@ -252,7 +224,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
           <ul className="divide-y divide-gray-200">
             {filteredUsers.map((user) => (
               <li key={user.id} className="px-4 py-4 sm:px-6">
-                <div className="flex items-center justify-between">
+                <div 
+                  className="flex items-center justify-between cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors duration-150"
+                  onClick={() => {
+                    setSelectedUser(user);
+                    setShowUserModal(true);
+                  }}
+                >
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
@@ -277,34 +255,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setShowUserModal(true);
-                      }}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    
-                    {user.status === 'ACTIVE' ? (
-                      <button
-                        onClick={() => handleSuspendUser(user.id)}
-                        className="text-red-400 hover:text-red-600"
-                        disabled={suspendUserMutation.isPending}
-                      >
-                        <UserX className="h-4 w-4" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleActivateUser(user.id)}
-                        className="text-green-400 hover:text-green-600"
-                        disabled={activateUserMutation.isPending}
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                      </button>
-                    )}
+                  <div className="flex items-center">
+                    <Eye className="h-4 w-4 text-gray-400" />
                   </div>
                 </div>
               </li>
@@ -382,6 +334,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
           onClose={() => {
             setShowUserModal(false);
             setSelectedUser(null);
+          }}
+          onUpdate={() => {
+            queryClient.invalidateQueries({ queryKey: ['admin-users'] });
           }}
         />
       )}

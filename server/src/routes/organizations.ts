@@ -1,5 +1,14 @@
 import { Router } from 'express';
-import { CSRRepController } from '../controllers/csrRep.controller';
+import { SaveRequestController } from '../controllers/csrRep/saveRequest.controller';
+import { SearchShortlistController } from '../controllers/csrRep/searchShortlist.controller';
+import { ViewShortlistController } from '../controllers/csrRep/viewShortlist.controller';
+import { SearchCompletedRequestsController } from '../controllers/csrRep/searchCompletedRequests.controller';
+import { ViewCompletedRequestsController } from '../controllers/csrRep/viewCompletedRequests.controller';
+import { RemoveShortlistController } from '../controllers/csrRep/removeShortlist.controller';
+import { SubmitOfferController } from '../controllers/csrRep/submitOffer.controller';
+import { ViewOffersController } from '../controllers/csrRep/viewOffers.controller';
+import { ViewMatchesController } from '../controllers/csrRep/viewMatches.controller';
+import { UpdateProfileController } from '../controllers/csrRep/updateProfile.controller';
 import { authenticate, authorize } from '../middleware/auth';
 import { UserType } from '@prisma/client';
 
@@ -8,19 +17,34 @@ const router = Router();
 // All routes require CSR Rep authentication
 router.use(authenticate, authorize(UserType.CSR_REP));
 
-// Shortlist management
-router.post('/shortlist', CSRRepController.shortlistRequest);
-router.delete('/shortlist/:requestId', CSRRepController.removeShortlist);
-router.get('/shortlists', CSRRepController.getShortlists);
+// Shortlist management (Stories #28-#30)
+// Story #29: Search shortlist
+router.get('/shortlist/search', SearchShortlistController.handle);
+
+// Story #30: View shortlist
+router.get('/shortlists', ViewShortlistController.handle);
+
+// Story #28: Save request (add to shortlist)
+router.post('/shortlist', SaveRequestController.handle);
+
+// Remove from shortlist
+router.delete('/shortlist/:requestId', RemoveShortlistController.handle);
+
+// Request history (Stories #31, #32)
+// Story #31: Search completed requests history
+router.get('/requests/history/search', SearchCompletedRequestsController.handle);
+
+// Story #32: View completed requests history
+router.get('/requests/history', ViewCompletedRequestsController.handle);
 
 // Volunteer offers
-router.post('/offers', CSRRepController.submitOffer);
-router.get('/offers', CSRRepController.getMyOffers);
+router.post('/offers', SubmitOfferController.handle);
+router.get('/offers', ViewOffersController.handle);
 
 // Matches
-router.get('/matches', CSRRepController.getMyMatches);
+router.get('/matches', ViewMatchesController.handle);
 
 // Profile
-router.put('/profile', CSRRepController.updateProfile);
+router.put('/profile', UpdateProfileController.handle);
 
 export default router;

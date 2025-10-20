@@ -1,6 +1,7 @@
 // User Types
 export type UserType = 'PIN' | 'CSR_REP' | 'ADMIN' | 'PLATFORM_MANAGER';
 export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
+export type ProfileStatus = 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
 
 export interface User {
   id: string;
@@ -20,6 +21,7 @@ export interface PINProfile {
   phoneNumber?: string;
   accessibilityNeeds?: string;
   profilePhoto?: string;
+  status: ProfileStatus;
 }
 
 export interface CSRRepProfile {
@@ -32,6 +34,7 @@ export interface CSRRepProfile {
   phoneNumber: string;
   companyAddress?: string;
   companyLogo?: string;
+  status: ProfileStatus;
 }
 
 export interface PlatformManagerProfile {
@@ -40,6 +43,7 @@ export interface PlatformManagerProfile {
   fullName: string;
   department?: string;
   phone?: string;
+  status: ProfileStatus;
 }
 
 // Request/Opportunity Types
@@ -164,8 +168,68 @@ export interface AuthResponse {
     id: string;
     email: string;
     userType: UserType;
-    profile: PINProfile | CSRRepProfile | PlatformManagerProfile;
+    profile: PINProfile | CSRRepProfile | PlatformManagerProfile | null;
   };
   token: string;
+}
+
+// Admin Types
+export interface CreateUserData {
+  email: string;
+  password: string;
+  userType: UserType;
+  // PIN specific fields
+  name?: string;
+  age?: number;
+  location?: string;
+  phoneNumber?: string;
+  accessibilityNeeds?: string;
+  // CSR Rep specific fields
+  companyName?: string;
+  companyRegistrationNumber?: string;
+  industry?: string;
+  contactPerson?: string;
+  companyAddress?: string;
+  // Platform Manager specific fields
+  fullName?: string;
+  department?: string;
+  phone?: string;
+}
+
+export interface AdminUser extends User {
+  pin?: {
+    id: string;
+    name: string;
+    age?: number;
+    location?: string;
+    phoneNumber?: string;
+    accessibilityNeeds?: string;
+    status: ProfileStatus;
+  };
+  csrRep?: {
+    id: string;
+    companyName: string;
+    companyRegistrationNumber: string;
+    industry?: string;
+    contactPerson: string;
+    phoneNumber: string;
+    companyAddress?: string;
+    status: ProfileStatus;
+  };
+  platformManager?: {
+    id: string;
+    userId: string;
+    fullName: string;
+    department?: string;
+    phone?: string;
+    status: ProfileStatus;
+  };
+}
+
+export interface UsersResponse {
+  users: AdminUser[];
+  total: number;
+  page: number;
+  limit: number;
 }
 

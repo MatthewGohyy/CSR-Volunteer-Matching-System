@@ -20,6 +20,12 @@ enum UserStatus {
   DEACTIVATED
 }
 
+enum ProfileStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
 enum RequestStatus {
   ACTIVE
   MATCHED
@@ -70,15 +76,16 @@ model User {
 }
 
 model PIN {
-  id                 String    @id @default(uuid())
-  userId             String    @unique
+  id                 String        @id @default(uuid())
+  userId             String        @unique
   name               String
   age                Int?
   location           String?
   phoneNumber        String?
   accessibilityNeeds String?
   profilePhoto       String?
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status             ProfileStatus @default(ACTIVE)
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   requests           Request[]
   matches            Match[]
   @@map("pins")
@@ -94,6 +101,7 @@ model CSRRep {
   phoneNumber               String
   companyAddress            String?
   companyLogo               String?
+  status                    ProfileStatus    @default(ACTIVE)
   user                      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   shortlists                Shortlist[]
   volunteerOffers           VolunteerOffer[]
@@ -102,12 +110,13 @@ model CSRRep {
 }
 
 model PlatformManager {
-  id          String    @id @default(uuid())
-  userId      String    @unique
+  id          String        @id @default(uuid())
+  userId      String        @unique
   fullName    String
   department  String?
   phone       String?
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      ProfileStatus @default(ACTIVE)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@map("platform_managers")
 }
 

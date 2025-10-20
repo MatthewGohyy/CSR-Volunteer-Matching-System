@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { AuthController } from '../controllers/auth.controller';
+import { LoginController } from '../controllers/auth/login.controller';
+import { LogoutController } from '../controllers/auth/logout.controller';
+import { RegisterPINController } from '../controllers/auth/registerPIN.controller';
+import { RegisterCSRRepController } from '../controllers/auth/registerCSRRep.controller';
+import { GetProfileController } from '../controllers/auth/getProfile.controller';
+import { UpdatePasswordController } from '../controllers/auth/updatePassword.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validation';
 import {
@@ -11,13 +16,18 @@ import {
 
 const router = Router();
 
-// Public routes
-router.post('/register/pin', validate(registerPINValidation), AuthController.registerPIN);
-router.post('/register/csr-rep', validate(registerCSRRepValidation), AuthController.registerCSRRep);
-router.post('/login', validate(loginValidation), AuthController.login);
+// Public routes - Registration
+router.post('/register/pin', validate(registerPINValidation), RegisterPINController.handle);
+router.post('/register/csr-rep', validate(registerCSRRepValidation), RegisterCSRRepController.handle);
 
-// Protected routes
-router.get('/profile', authenticate, AuthController.getProfile);
-router.put('/password', authenticate, validate(updatePasswordValidation), AuthController.updatePassword);
+// Story #1, #13, #24, #33: Login (all user types)
+router.post('/login', validate(loginValidation), LoginController.handle);
+
+// Story #2, #14, #25, #34: Logout (all user types)
+router.post('/logout', authenticate, LogoutController.handle);
+
+// Protected routes - Profile & Password
+router.get('/profile', authenticate, GetProfileController.handle);
+router.put('/password', authenticate, validate(updatePasswordValidation), UpdatePasswordController.handle);
 
 export default router;
