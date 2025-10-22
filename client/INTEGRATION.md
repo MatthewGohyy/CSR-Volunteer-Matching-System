@@ -2,31 +2,31 @@
 
 ## ✅ Integration Complete!
 
-Your React frontend is now fully connected to the backend API.
+Your React frontend is fully connected to the backend API.
 
 ---
 
-## 📁 New Files Created
+## 📁 Project Structure
 
-### API Configuration
+### Actual Files
 - **`src/config/api.ts`** - Axios instance with interceptors
+- **`src/types/index.ts`** - TypeScript types for API responses
+- **`src/components/`** - React components (make direct API calls)
 - **`.env`** - Environment variables (API URL)
 
-### Type Definitions
-- **`src/types/index.ts`** - TypeScript types for all API responses
+### How It Works
+Components make **DIRECT API calls** using:
+1. Import `api` from `../config/api`
+2. Use React Query (`useQuery`, `useMutation`)
+3. Make requests: `api.get()`, `api.post()`, etc.
 
-### Services (API Wrappers)
-- **`src/services/authService.ts`** - Authentication & user management
-- **`src/services/requestService.ts`** - Request/opportunity management
-- **`src/services/csrRepService.ts`** - CSR Representative actions
-- **`src/services/pinService.ts`** - PIN (Person In Need) actions
-- **`src/services/matchService.ts`** - Matching & offers
+**Note:** There is NO separate `services/` layer. Components handle API calls directly.
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Install Dependencies (if not done)
+### 1. Install Dependencies
 ```bash
 cd client
 npm install
@@ -54,75 +54,83 @@ npm run dev
 
 #### Login
 ```typescript
-import { authService } from './services/authService';
+import api from '../config/api';
+import { useMutation } from '@tanstack/react-query';
 
-const handleLogin = async () => {
-  try {
-    const response = await authService.login({
-      email: 'admin@csr.com',
-      password: 'admin123'
-    });
-    console.log('Logged in:', response.user);
-    // Token is automatically stored in localStorage
-  } catch (error) {
-    console.error('Login failed:', error);
-  }
+const LoginPage = () => {
+  const loginMutation = useMutation({
+    mutationFn: async (credentials) => {
+      const response = await api.post('/auth/login', credentials);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      // Navigate to dashboard
+    }
+  });
+
+  const handleLogin = (email, password) => {
+    loginMutation.mutate({ email, password });
+  };
+
+  return (
+    // JSX form
+  );
 };
 ```
 
 #### Register as PIN
 ```typescript
-import { authService } from './services/authService';
+import api from '../config/api';
+import { useMutation } from '@tanstack/react-query';
 
-const handleRegisterPIN = async () => {
-  try {
-    const response = await authService.registerPIN({
-      email: 'john@example.com',
-      password: 'Test1234',
-      name: 'John Doe',
-      age: 65,
-      location: 'Singapore',
-      phoneNumber: '+65 9123 4567'
+const RegisterPage = () => {
+  const registerMutation = useMutation({
+    mutationFn: async (data) => {
+      const response = await api.post('/auth/register/pin', data);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      // Navigate to dashboard
+    }
+  });
+
+  const handleRegister = (formData) => {
+    registerMutation.mutate({
+      email: formData.email,
+      password: formData.password,
+      name: formData.name,
+      age: formData.age,
+      location: formData.location,
+      phoneNumber: formData.phoneNumber
     });
-    console.log('Registered:', response.user);
-  } catch (error) {
-    console.error('Registration failed:', error);
-  }
+  };
+
+  return (
+    // JSX form
+  );
 };
 ```
 
-#### Register as CSR Rep
-```typescript
-import { authService } from './services/authService';
+---
 
-const handleRegisterCSR = async () => {
-  try {
-    const response = await authService.registerCSRRep({
-      email: 'company@example.com',
-      password: 'Test1234',
-      companyName: 'TechCorp Pte Ltd',
-      companyRegistrationNumber: '202012345A',
-      contactPerson: 'Jane Smith',
-      phoneNumber: '+65 6123 4567'
-    });
-    console.log('Registered:', response.user);
-  } catch (error) {
-    console.error('Registration failed:', error);
-  }
-};
-```
-
-### Using React Query
+### Using React Query for Data Fetching
 
 #### Fetch Categories
 ```typescript
+import api from '../config/api';
 import { useQuery } from '@tanstack/react-query';
-import { requestService } from './services/requestService';
 
 function CategoriesList() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['categories'],
-    queryFn: requestService.getCategories
+    queryFn: async () => {
+      const response = await api.get('/opportunities/categories');
+      return response.data.categories;
+    }
   });
 
   if (isLoading) return <div>Loading...</div>;
@@ -140,20 +148,25 @@ function CategoriesList() {
 
 #### Fetch Requests
 ```typescript
+import api from '../config/api';
 import { useQuery } from '@tanstack/react-query';
-import { requestService } from './services/requestService';
 
 function RequestsList() {
   const { data, isLoading } = useQuery({
-    queryKey: ['requests'],
-    queryFn: () => requestService.getRequests({ status: 'ACTIVE' })
+    queryKey: ['requests', { status: 'ACTIVE' }],
+    queryFn: async () => {
+      const response = await api.get('/opportunities', {
+        params: { status: 'ACTIVE' }
+      });
+      return response.data.requests;
+    }
   });
 
   if (isLoading) return <div>Loading...</div>;
 
   return (
     <div>
-      {data?.requests?.map(request => (
+      {data?.map(request => (
         <div key={request.id}>
           <h3>{request.title}</h3>
           <p>{request.description}</p>
@@ -166,14 +179,17 @@ function RequestsList() {
 
 #### Create Request (PIN only)
 ```typescript
+import api from '../config/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { requestService } from './services/requestService';
 
-function CreateRequest() {
+function CreateRequestForm() {
   const queryClient = useQueryClient();
   
   const createMutation = useMutation({
-    mutationFn: requestService.createRequest,
+    mutationFn: async (data) => {
+      const response = await api.post('/opportunities', data);
+      return response.data;
+    },
     onSuccess: () => {
       // Invalidate and refetch requests
       queryClient.invalidateQueries({ queryKey: ['requests'] });
@@ -201,72 +217,95 @@ function CreateRequest() {
 }
 ```
 
+---
+
 ### CSR Rep Actions
 
 #### Shortlist Request
 ```typescript
-import { useMutation } from '@tanstack/react-query';
-import { csrRepService } from './services/csrRepService';
+import api from '../config/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 function ShortlistButton({ requestId }) {
+  const queryClient = useQueryClient();
+  
   const shortlistMutation = useMutation({
-    mutationFn: () => csrRepService.shortlistRequest(requestId),
+    mutationFn: async () => {
+      const response = await api.post('/organizations/shortlist', {
+        requestId
+      });
+      return response.data;
+    },
     onSuccess: () => {
-      console.log('Request shortlisted!');
+      queryClient.invalidateQueries({ queryKey: ['shortlists'] });
     }
   });
 
   return (
     <button onClick={() => shortlistMutation.mutate()}>
-      {shortlistMutation.isPending ? 'Adding...' : 'Shortlist'}
+      {shortlistMutation.isPending ? 'Adding...' : 'Add to Shortlist'}
     </button>
   );
 }
 ```
 
-#### Submit Offer
+#### Submit Volunteer Offer
 ```typescript
+import api from '../config/api';
 import { useMutation } from '@tanstack/react-query';
-import { csrRepService } from './services/csrRepService';
 
-function SubmitOffer({ requestId }) {
+function SubmitOfferButton({ requestId, message }) {
   const offerMutation = useMutation({
-    mutationFn: ({ requestId, message }) => 
-      csrRepService.submitOffer(requestId, message),
+    mutationFn: async () => {
+      const response = await api.post('/organizations/offers', {
+        requestId,
+        message
+      });
+      return response.data;
+    },
     onSuccess: () => {
-      console.log('Offer submitted!');
+      alert('Offer submitted successfully!');
     }
   });
 
-  const handleSubmit = (message: string) => {
-    offerMutation.mutate({ requestId, message });
-  };
-
   return (
-    <button onClick={() => handleSubmit('We would love to help!')}>
+    <button onClick={() => offerMutation.mutate()}>
       Submit Offer
     </button>
   );
 }
 ```
 
-### Match Actions
+---
 
-#### Accept/Decline Offer (PIN only)
+### PIN Actions
+
+#### Accept/Decline Offer
 ```typescript
-import { useMutation } from '@tanstack/react-query';
-import { matchService } from './services/matchService';
+import api from '../config/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 function OfferCard({ offer }) {
+  const queryClient = useQueryClient();
+  
   const acceptMutation = useMutation({
-    mutationFn: () => matchService.acceptOffer(offer.id),
+    mutationFn: async () => {
+      const response = await api.post(`/matches/offers/${offer.id}/accept`);
+      return response.data;
+    },
     onSuccess: () => {
-      console.log('Offer accepted! Match created!');
+      queryClient.invalidateQueries({ queryKey: ['offers'] });
     }
   });
 
   const declineMutation = useMutation({
-    mutationFn: () => matchService.declineOffer(offer.id)
+    mutationFn: async () => {
+      const response = await api.post(`/matches/offers/${offer.id}/decline`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['offers'] });
+    }
   });
 
   return (
@@ -286,202 +325,195 @@ function OfferCard({ offer }) {
 ### Create Protected Route Component
 ```typescript
 import { Navigate } from 'react-router-dom';
-import { authService } from './services/authService';
 
 function ProtectedRoute({ children, allowedTypes }) {
-  const user = authService.getCurrentUser();
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const token = localStorage.getItem('token');
 
-  if (!authService.isAuthenticated()) {
+  if (!token || !user) {
     return <Navigate to="/login" />;
   }
 
-  if (allowedTypes && !allowedTypes.includes(user?.userType)) {
+  if (allowedTypes && !allowedTypes.includes(user.userType)) {
     return <Navigate to="/unauthorized" />;
   }
 
   return children;
 }
 
-// Usage in App.tsx
-<Route 
-  path="/dashboard" 
-  element={
-    <ProtectedRoute allowedTypes={['PIN', 'CSR_REP']}>
-      <Dashboard />
-    </ProtectedRoute>
-  } 
-/>
+// Usage
+<Route path="/admin/*" element={
+  <ProtectedRoute allowedTypes={['ADMIN']}>
+    <AdminDashboard />
+  </ProtectedRoute>
+} />
 ```
 
 ---
 
-## 🎨 Component Examples
+## 🌐 API Configuration
 
-### Login Form Component
-```typescript
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { authService } from './services/authService';
-
-function LoginForm() {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const loginMutation = useMutation({
-    mutationFn: authService.login,
-    onSuccess: (data) => {
-      // Redirect based on user type
-      if (data.user.userType === 'PIN') {
-        navigate('/pin/dashboard');
-      } else if (data.user.userType === 'CSR_REP') {
-        navigate('/csr/dashboard');
-      }
-    },
-    onError: (error) => {
-      console.error('Login failed:', error);
-    }
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    loginMutation.mutate({ email, password });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        className="w-full px-4 py-2 border rounded"
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
-        className="w-full px-4 py-2 border rounded"
-      />
-      <button
-        type="submit"
-        disabled={loginMutation.isPending}
-        className="w-full bg-primary-600 text-white py-2 rounded"
-      >
-        {loginMutation.isPending ? 'Logging in...' : 'Login'}
-      </button>
-      {loginMutation.isError && (
-        <p className="text-red-600">Login failed. Please try again.</p>
-      )}
-    </form>
-  );
-}
-```
-
----
-
-## 🔧 API Configuration
-
-### Environment Variables
-Create `.env` file in client folder:
+### Environment Variable
 ```env
+# .env file
 REACT_APP_API_URL=http://localhost:4000/api
 ```
 
-### Change API URL
-Update `.env` for different environments:
-```env
-# Development
-REACT_APP_API_URL=http://localhost:4000/api
-
-# Production
-REACT_APP_API_URL=https://your-api.com/api
-```
-
----
-
-## 🧪 Testing API Connection
-
-### Test Backend Connection
+### Axios Instance
 ```typescript
-import api from './config/api';
+// src/config/api.ts
+import axios from 'axios';
 
-// Test health endpoint
-const testConnection = async () => {
-  try {
-    const response = await api.get('/health');
-    console.log('Backend connected:', response.data);
-  } catch (error) {
-    console.error('Backend not reachable:', error);
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4000/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add token to all requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-};
-```
+  return config;
+});
 
-### Test in Browser Console
-```javascript
-// Open browser console (F12) and run:
-fetch('http://localhost:4000/health')
-  .then(r => r.json())
-  .then(console.log);
+// Handle 401 errors globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
 ```
 
 ---
 
-## 📊 Available Services
+## 📊 TypeScript Types
 
-| Service | Description | Available Methods |
-|---------|-------------|-------------------|
-| `authService` | Authentication | login, register, logout, getProfile |
-| `requestService` | Requests/Opportunities | getRequests, createRequest, updateRequest |
-| `csrRepService` | CSR Rep actions | shortlist, submitOffer, getMatches |
-| `pinService` | PIN actions | getProfile, updateProfile, getNotifications |
-| `matchService` | Matching | acceptOffer, declineOffer, completeMatch |
+```typescript
+// src/types/index.ts
+export interface User {
+  id: string;
+  email: string;
+  userType: 'PIN' | 'CSR_REP' | 'ADMIN' | 'PLATFORM_MANAGER';
+  status: 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
+  profile?: PIN | CSRRep | PlatformManager;
+}
+
+export interface PIN {
+  id: string;
+  name: string;
+  age?: number;
+  location?: string;
+  phoneNumber?: string;
+  accessibilityNeeds?: string;
+  profilePhoto?: string;
+  status: string;
+}
+
+export interface Request {
+  id: string;
+  title: string;
+  description: string;
+  urgency: 'LOW' | 'MEDIUM' | 'HIGH';
+  status: 'ACTIVE' | 'MATCHED' | 'COMPLETED' | 'CANCELLED';
+  location?: string;
+  dateNeeded?: string;
+  viewCount: number;
+  shortlistCount: number;
+  category: ServiceCategory;
+  pin: PIN;
+}
+
+// Add more types as needed
+```
 
 ---
 
 ## 🚨 Error Handling
 
-All services automatically handle:
-- **401 Unauthorized**: Redirects to login
-- **Network errors**: Throws error for handling in component
-- **Token management**: Automatically adds auth header
-
-Example error handling:
 ```typescript
-const { data, error, isError } = useQuery({
-  queryKey: ['requests'],
-  queryFn: requestService.getRequests
-});
+import api from '../config/api';
+import { useMutation } from '@tanstack/react-query';
 
-if (isError) {
-  console.error('Error:', error);
-  // Show error message to user
-}
+const MyComponent = () => {
+  const mutation = useMutation({
+    mutationFn: async (data) => {
+      const response = await api.post('/endpoint', data);
+      return response.data;
+    },
+    onError: (error) => {
+      if (error.response) {
+        // Server responded with error
+        console.error('Server error:', error.response.data.message);
+      } else if (error.request) {
+        // Request made but no response
+        console.error('Network error');
+      } else {
+        // Something else happened
+        console.error('Error:', error.message);
+      }
+    }
+  });
+
+  return (
+    <div>
+      {mutation.error && (
+        <div className="error">
+          {mutation.error.response?.data?.message || 'An error occurred'}
+        </div>
+      )}
+    </div>
+  );
+};
 ```
 
 ---
 
-## ✅ Next Steps
+## 📚 Key Patterns
 
-1. **Update App.tsx** - Add routes for login, dashboards, etc.
-2. **Create Login Page** - Use authService
-3. **Create Dashboard Pages** - For PIN and CSR Rep
-4. **Build Request Forms** - Use requestService
-5. **Add Matching UI** - Use matchService
+### Pattern 1: Query (Fetching Data)
+```typescript
+const { data, isLoading, error } = useQuery({
+  queryKey: ['key'],
+  queryFn: async () => {
+    const response = await api.get('/endpoint');
+    return response.data;
+  }
+});
+```
+
+### Pattern 2: Mutation (Changing Data)
+```typescript
+const mutation = useMutation({
+  mutationFn: async (data) => {
+    const response = await api.post('/endpoint', data);
+    return response.data;
+  },
+  onSuccess: () => {
+    // Refetch related data
+    queryClient.invalidateQueries({ queryKey: ['key'] });
+  }
+});
+```
+
+### Pattern 3: Authenticated Request
+```typescript
+// Token is automatically added by api interceptor
+const response = await api.get('/protected-endpoint');
+// No need to manually add Authorization header
+```
 
 ---
 
-## 📚 Resources
-
-- **Backend API Docs**: See `../API_DOCUMENTATION.md`
-- **Type Definitions**: See `src/types/index.ts`
-- **Example Components**: See above
-
----
-
-**Your frontend is now fully integrated with the backend! 🎉**
-
-Start building your UI components using the services provided.
-
+**Last Updated:** October 22, 2025

@@ -13,8 +13,8 @@
 └─────────────────────────────────────────────────────────┘
 
     🚪 BOUNDARY = Dining Area       📂 Where: client/src/
-    (Where customers interact)      ├── components/ (UI)
-                                   ├── services/ (API calls)
+    (Where customers interact)      ├── components/ (UI + API calls)
+                                   ├── config/ (axios setup)
                                    └── React frontend
 
     👨‍🍳 CONTROL = Kitchen            📂 Where: server/src/
@@ -36,7 +36,7 @@
 2. BOUNDARY (Frontend)          →  LoginPage.tsx
    ├── User enters email & password
    ├── Clicks login button
-   └── authService.login(email, pwd)
+   └── api.post('/auth/login', credentials)
                                    | HTTP POST
 3. CONTROL (Backend API)        →  POST /api/auth/login
    ├── routes/auth.ts receives request
@@ -54,8 +54,8 @@
                                    | Result
 6. CONTROL                      →  Format & send response
                                    | JSON
-7. BOUNDARY (Frontend)          →  authService receives response
-   ├── Store JWT token
+7. BOUNDARY (Frontend)          →  LoginPage.tsx receives response
+   ├── Store JWT token in localStorage
    ├── Update UI state
    └── Navigate to dashboard
                                    |
@@ -71,17 +71,20 @@ CSR-Volunteer-Matching-System/
 
     🚪 BOUNDARY LAYER (Frontend - User Interface)
     └── client/src/
-        ├── components/              → UI Components
+        ├── components/              → UI Components (with API calls)
         │   ├── LoginPage.tsx        → Login interface
-        │   ├── Dashboard.tsx        → User dashboard
         │   ├── AdminDashboard.tsx   → Admin interface
-        │   └── CreateUserModal.tsx  → User forms
+        │   ├── PINDashboard.tsx     → PIN dashboard
+        │   ├── CSRRepDashboard.tsx  → CSR Rep dashboard
+        │   ├── PlatformManagerDashboard.tsx → PM dashboard
+        │   ├── CreateUserModal.tsx  → User forms
+        │   └── UserDetailsModal.tsx → User details
         │
-        └── services/                → Backend communication
-            ├── authService.ts       → Auth API calls
-            ├── requestService.ts    → Request API calls
-            ├── adminService.ts      → Admin API calls
-            └── matchService.ts      → Match API calls
+        ├── config/                  → Configuration
+        │   └── api.ts               → Axios instance with interceptors
+        │
+        └── types/                   → TypeScript types
+            └── index.ts             → Type definitions
 
     ────────────────────────────────────────────────────
 

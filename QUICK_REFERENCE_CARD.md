@@ -9,10 +9,9 @@
 ### Frontend (Client)
 ```
 client/src/
-├── components/        → UI screens
-├── services/          → API calls
-├── types/            → Data types
-└── config/           → Settings
+├── components/        → UI screens (with API calls)
+├── config/            → API configuration
+└── types/             → TypeScript types
 ```
 
 ### Backend (Server)
@@ -55,7 +54,7 @@ Response back up
 
 | Layer | Frontend | Backend |
 |-------|----------|---------|
-| **BOUNDARY** | `components/`, `services/` | `routes/` |
+| **BOUNDARY** | `components/` (UI + API calls) | `routes/` |
 | **CONTROL** | - | `controllers/`, `middleware/` |
 | **ENTITY** | - | `prisma/schema.prisma` |
 
@@ -83,21 +82,23 @@ Headers: {
 
 ## 📝 Common Code Patterns
 
-### Frontend: API Call
+### Frontend: API Call (React Query)
 ```typescript
-// Service
-export const myService = {
-  getData: async () => {
-    const response = await api.get('/endpoint');
-    return response.data;
-  }
-};
+// Component with React Query
+import api from '../config/api';
+import { useQuery } from '@tanstack/react-query';
 
-// Component
-const { data } = useQuery({
-  queryKey: ['myData'],
-  queryFn: myService.getData
-});
+const Component = () => {
+  const { data, isLoading } = useQuery({
+    queryKey: ['myData'],
+    queryFn: async () => {
+      const response = await api.get('/endpoint');
+      return response.data;
+    }
+  });
+  
+  // Use data in JSX
+};
 ```
 
 ### Backend: Route + Controller
@@ -441,11 +442,12 @@ npx prisma studio
 
 ## 📚 Quick Documentation Links
 
-- **Start Learning:** [START_HERE.md](./START_HERE.md)
-- **Quick Summary:** [UNDERSTANDING_SUMMARY.md](./UNDERSTANDING_SUMMARY.md)
-- **Detailed Guide:** [COMPLETE_BEGINNER_GUIDE.md](./COMPLETE_BEGINNER_GUIDE.md)
-- **Hands-On:** [HANDS_ON_EXPLORATION.md](./HANDS_ON_EXPLORATION.md)
-- **API Docs:** [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
+- **All Documentation:** [DOCS_INDEX.md](./DOCS_INDEX.md)
+- **Beginner Guide:** [COMPLETE_BEGINNER_GUIDE.md](./COMPLETE_BEGINNER_GUIDE.md)
+- **BCE Architecture:** [BCE_SIMPLE_GUIDE.md](./BCE_SIMPLE_GUIDE.md)
+- **API Reference:** [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
+- **API Quick Lookup:** [API_QUICK_REFERENCE.md](./API_QUICK_REFERENCE.md)
+- **Database:** [DATABASE.md](./DATABASE.md)
 
 ---
 

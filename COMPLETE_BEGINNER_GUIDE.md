@@ -153,23 +153,20 @@ client/
 │
 ├── src/                      # Source code (your work area)
 │   │
-│   ├── components/           # 🎨 UI Components (Reusable pieces)
-│   │   ├── LoginPage.tsx     # Login screen
-│   │   ├── Dashboard.tsx     # Main dashboard
-│   │   ├── AdminDashboard.tsx# Admin panel
-│   │   └── CreateUserModal.tsx# User creation form
+│   ├── components/              # 🎨 User Interface Components (with API calls)
+│   │   ├── LoginPage.tsx       # Login screen (makes auth API calls)
+│   │   ├── AdminDashboard.tsx  # Admin panel (makes admin API calls)
+│   │   ├── PINDashboard.tsx    # PIN dashboard
+│   │   ├── CSRRepDashboard.tsx # CSR Rep dashboard
+│   │   ├── PlatformManagerDashboard.tsx # PM dashboard
+│   │   ├── CreateUserModal.tsx # User creation form
+│   │   └── UserDetailsModal.tsx# User details
 │   │
-│   ├── services/             # 🔌 API Communication (Talk to backend)
-│   │   ├── authService.ts    # Login, register, logout
-│   │   ├── requestService.ts # Create/view requests
-│   │   ├── adminService.ts   # Admin operations
-│   │   └── matchService.ts   # Matching operations
+│   ├── config/               # ⚙️ Configuration
+│   │   └── api.ts            # Axios instance with interceptors
 │   │
 │   ├── types/                # 📝 TypeScript Types (Data structures)
 │   │   └── index.ts          # Defines User, Request, etc.
-│   │
-│   ├── config/               # ⚙️ Configuration
-│   │   └── api.ts            # API setup (base URL, headers)
 │   │
 │   ├── App.tsx               # 🏠 Main App Component
 │   ├── index.tsx             # 🚀 Entry Point (starts everything)
@@ -202,30 +199,38 @@ const handleSubmit = (e: React.FormEvent) => {
 };
 ```
 
-#### 📂 `services/` - Backend Communication
+#### 📂 `config/api.ts` - API Configuration
 
-These files talk to your server (like a messenger):
+This file configures Axios for all API calls. Components import this and make direct API calls:
 
 ```typescript
-// authService.ts
-export const authService = {
-  login: async (credentials) => {
-    // Sends HTTP POST to: http://localhost:4000/api/auth/login
-    const response = await api.post('/auth/login', credentials);
-    
-    // Stores token in browser
-    localStorage.setItem('token', response.data.token);
-    
-    return response.data;
+// config/api.ts
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:4000/api',
+  headers: { 'Content-Type': 'application/json' }
+});
+
+// Add token to every request automatically
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-};
+  return config;
+});
+
+export default api;
 ```
 
-**What happens:**
-1. User enters email/password
-2. Service sends it to server
-3. Server responds with token
-4. Service stores token for future requests
+**How components use it:**
+```typescript
+// In LoginPage.tsx
+import api from '../config/api';
+
+const response = await api.post('/auth/login', { email, password });
+```
 
 #### 📂 `types/` - Data Blueprints
 
@@ -455,15 +460,17 @@ Let's trace a **complete login** from start to finish:
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ STEP 3: authService sends HTTP request                      │
-│ File: client/src/services/authService.ts                    │
+│ STEP 3: LoginPage makes API call with React Query           │
+│ File: client/src/components/LoginPage.tsx                   │
 │                                                             │
-│ login: async (credentials) => {                             │
-│   const response = await api.post('/auth/login', {         │
-│     email: 'user@example.com',                              │
-│     password: 'password123'                                 │
-│   });                                                       │
-│ }                                                           │
+│ import api from '../config/api';                            │
+│                                                             │
+│ const loginMutation = useMutation({                         │
+│   mutationFn: async (credentials) => {                      │
+│     const response = await api.post('/auth/login', credentials);│
+│     return response.data;                                   │
+│   }                                                         │
+│ });                                                         │
 │                                                             │
 │ Sends to: http://localhost:4000/api/auth/login              │
 └─────────────────────────────────────────────────────────────┘
@@ -515,11 +522,13 @@ Let's trace a **complete login** from start to finish:
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ STEP 9: authService receives response                       │
-│ File: client/src/services/authService.ts                    │
+│ STEP 9: LoginPage receives response and stores data        │
+│ File: client/src/components/LoginPage.tsx                   │
 │                                                             │
-│ localStorage.setItem('token', response.data.token);         │
-│ localStorage.setItem('user', JSON.stringify(user));         │
+│ onSuccess: (data) => {                                      │
+│   localStorage.setItem('token', data.token);                │
+│   localStorage.setItem('user', JSON.stringify(data.user));  │
+│ }                                                           │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -615,40 +624,33 @@ This creates: `GET /api/opportunities/:id`
 
 ---
 
-#### **Step 4: Create Service (BOUNDARY - Frontend)**
-
-```typescript
-// client/src/services/requestService.ts
-export const requestService = {
-  getRequestDetails: async (id: string) => {
-    const response = await api.get(`/opportunities/${id}`);
-    return response.data.request;
-  }
-};
-```
-
----
-
-#### **Step 5: Create UI Component (BOUNDARY - Frontend)**
+#### **Step 4: Create UI Component (BOUNDARY - Frontend)**
 
 ```typescript
 // client/src/components/RequestDetailsPage.tsx
 import { useQuery } from '@tanstack/react-query';
-import { requestService } from '../services/requestService';
+import api from '../config/api';
+import { useParams } from 'react-router-dom';
 
 export const RequestDetailsPage = () => {
   const { id } = useParams();
   
-  const { data: request } = useQuery({
+  // Direct API call with React Query
+  const { data: request, isLoading } = useQuery({
     queryKey: ['request', id],
-    queryFn: () => requestService.getRequestDetails(id)
+    queryFn: async () => {
+      const response = await api.get(`/opportunities/${id}`);
+      return response.data.request;
+    }
   });
+  
+  if (isLoading) return <div>Loading...</div>;
   
   return (
     <div>
       <h1>{request?.title}</h1>
       <p>{request?.description}</p>
-      <p>Views: {request?.views}</p>
+      <p>Views: {request?.viewCount}</p>
     </div>
   );
 };
@@ -675,7 +677,8 @@ export const RequestDetailsPage = () => {
 | I want to... | Look in... | File Example |
 |--------------|-----------|--------------|
 | **Change the UI** | `client/src/components/` | `LoginPage.tsx` |
-| **Add API call** | `client/src/services/` | `authService.ts` |
+| **Add API call to component** | `client/src/components/` | Use `api` from `config/api.ts` |
+| **Configure Axios** | `client/src/config/` | `api.ts` |
 | **Add new endpoint** | `server/src/routes/` | `auth.ts` |
 | **Add business logic** | `server/src/controllers/` | `auth.controller.ts` |
 | **Change database** | `server/prisma/` | `schema.prisma` |
@@ -749,18 +752,18 @@ npm start
 
 3. **Data Flow**
    ```
-   User → UI → Service → Route → Controller → Database
-                                    ↓
-   User ← UI ← Service ← Route ← Response
+   User → UI Component → API call → Route → Controller → Database
+                                              ↓
+   User ← UI Component ← Response ← Route ← Result
    ```
 
 4. **Folder Purposes**
-   - `components/` = UI pieces
-   - `services/` = API communication
-   - `routes/` = URL endpoints
-   - `controllers/` = Business logic
-   - `middleware/` = Security/validation
-   - `prisma/` = Database structure
+   - `components/` = UI pieces (with API calls)
+   - `config/` = API configuration (axios)
+   - `routes/` = URL endpoints (backend)
+   - `controllers/` = Business logic (backend)
+   - `middleware/` = Security/validation (backend)
+   - `prisma/` = Database structure (backend)
 
 ---
 
@@ -777,10 +780,10 @@ Try to trace this user story: **"As a PIN, I want to create a request"**
 <details>
 <summary>Click to see answer</summary>
 
-1. Component: `CreateRequestForm.tsx` (in `client/src/components/`)
-2. Service: `requestService.createRequest()` (in `client/src/services/requestService.ts`)
+1. Component: `PINDashboard.tsx` or request form component (in `client/src/components/`)
+2. API Call: Component uses `api.post('/opportunities', data)` with React Query
 3. Route: `POST /api/opportunities` (in `server/src/routes/opportunities.ts`)
-4. Controller: `RequestController.createRequest()` (in `server/src/controllers/request.controller.ts`)
+4. Controller: `RequestController.createRequest()` (in `server/src/controllers/`)
 5. Model: `Request` (in `server/prisma/schema.prisma`)
 
 </details>

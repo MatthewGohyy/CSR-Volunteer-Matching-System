@@ -59,9 +59,10 @@ A comprehensive admin dashboard has been implemented for the CSR Volunteer Match
 - **Formatted dates** and contact information
 - **Responsive layout** for different screen sizes
 
-#### 4. AdminService (`/services/adminService.ts`)
-- **API integration** for all admin operations
-- **TypeScript interfaces** for type safety
+#### 4. API Integration
+- **Direct API calls** from components using `api` instance from `config/api.ts`
+- **React Query** for state management and caching
+- **TypeScript interfaces** in `types/index.ts` for type safety
 - **Error handling** for API failures
 - **Pagination support** for user lists
 
