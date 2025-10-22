@@ -276,15 +276,31 @@ server/
 │   │   └── matches.ts        # /api/matches/*
 │   │
 │   ├── controllers/          # 🎮 Business Logic (What to do)
-│   │   ├── auth.controller.ts    # Login/register logic
-│   │   ├── request.controller.ts # Request management
-│   │   ├── admin.controller.ts   # Admin operations
-│   │   └── match.controller.ts   # Matching algorithm
+│   │   ├── auth/             # 6 auth-related controllers
+│   │   ├── pin/              # 15 PIN-related controllers
+│   │   ├── csrRep/           # 12 CSR Rep controllers
+│   │   ├── userAdmin/        # 14 admin controllers
+│   │   └── platformManager/  # 8 platform manager controllers
+│   │
+│   ├── entities/             # 💾 Domain Models + Data Access (Repository Pattern)
+│   │   ├── User.entity.ts    # User domain logic + CRUD
+│   │   ├── Request.entity.ts # Request domain logic + CRUD
+│   │   ├── PIN.entity.ts     # PIN domain logic + CRUD
+│   │   ├── CSRRep.entity.ts  # CSR Rep domain logic + CRUD
+│   │   ├── Match.entity.ts   # Match domain logic + CRUD
+│   │   └── ... 5 more entity classes
 │   │
 │   ├── middleware/           # 🛡️ Security & Validation
 │   │   ├── auth.ts           # Check if user is logged in
 │   │   ├── validation.ts     # Validate input data
 │   │   └── errorHandler.ts   # Handle errors gracefully
+│   │
+│   ├── validators/           # ✅ Input Validation Rules
+│   │   ├── auth.validator.ts # Auth validation rules
+│   │   └── request.validator.ts # Request validation rules
+│   │
+│   ├── dto/                  # 📦 Data Transfer Objects
+│   │   └── index.ts          # API request/response types
 │   │
 │   ├── utils/                # 🔧 Helper Functions
 │   │   ├── jwt.ts            # Create/verify tokens
@@ -326,26 +342,28 @@ export default router;
 
 #### 📂 `controllers/` - The Chef (Business Logic)
 
-Controllers contain the **HOW** - the actual logic:
+Controllers orchestrate the workflow by calling Entity classes:
 
 ```typescript
-// controllers/auth.controller.ts
-export class AuthController {
-  static async login(req: Request, res: Response) {
+// controllers/auth/login.controller.ts
+import { UserEntity } from '../../entities/User.entity';
+import { comparePassword } from '../../utils/password';
+import { generateToken } from '../../utils/jwt';
+
+export class LoginController {
+  static async handle(req: Request, res: Response) {
     const { email, password } = req.body;
     
-    // Step 1: Find user in database
-    const user = await prisma.user.findUnique({ 
-      where: { email } 
-    });
+    // Step 1: Find user using Entity class
+    const user = await UserEntity.findByEmail(email);
     
     // Step 2: Check if user exists
     if (!user) {
       throw new Error('Invalid email or password');
     }
     
-    // Step 3: Check if account is active
-    if (user.status !== 'ACTIVE') {
+    // Step 3: Check if account is active (using entity method)
+    if (!user.isActive()) {
       throw new Error('Account is not active');
     }
     
@@ -359,17 +377,114 @@ export class AuthController {
     const token = generateToken({ userId: user.id });
     
     // Step 6: Send response
-    res.json({ user, token });
+    res.json({ user: user.toJSON(), token });
   }
 }
 ```
 
 **What it does:**
 1. Receives email and password
-2. Checks database for user
-3. Verifies password
-4. Creates secure token
-5. Sends back to client
+2. Calls Entity to find user in database
+3. Uses entity business logic methods
+4. Verifies password
+5. Creates secure token
+6. Sends back to client
+
+#### 📂 `entities/` - Domain Models + Data Access (Repository Pattern)
+
+Entity classes combine **domain logic** with **database operations**:
+
+```typescript
+// entities/User.entity.ts
+export class UserEntity {
+  id: string;
+  email: string;
+  userType: UserType;
+  status: UserStatus;
+  // ... other properties
+  
+  // ✨ Instance methods: Business logic
+  isActive(): boolean {
+    return this.status === UserStatus.ACTIVE;
+  }
+  
+  isPIN(): boolean {
+    return this.userType === UserType.PIN;
+  }
+  
+  toJSON() {
+    const { password, ...userWithoutPassword } = this;
+    return userWithoutPassword;
+  }
+  
+  // 🗄️ Static methods: Data access (CRUD)
+  static async findByEmail(email: string) {
+    const user = await prisma.user.findUnique({ 
+      where: { email },
+      include: { pin: true, csrRep: true }
+    });
+    return user ? new UserEntity(user) : null;
+  }
+  
+  static async create(data) {
+    const user = await prisma.user.create({ data });
+    return new UserEntity(user);
+  }
+  
+  static async update(id: string, data) {
+    const user = await prisma.user.update({ where: { id }, data });
+    return new UserEntity(user);
+  }
+}
+```
+
+**What it provides:**
+- **Instance methods** → Business logic (isActive, isPIN, toJSON)
+- **Static methods** → Database operations (findByEmail, create, update)
+- **Encapsulation** → All user-related logic in one place
+- **Type safety** → TypeScript ensures correct usage
+
+#### 📂 `validators/` - Input Validation Rules
+
+Defines reusable validation rules for request data:
+
+```typescript
+// validators/auth.validator.ts
+import { body } from 'express-validator';
+
+export const loginValidation = [
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').notEmpty().withMessage('Password is required')
+];
+
+export const registerPINValidation = [
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 8 })
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
+  body('name').trim().notEmpty()
+];
+```
+
+#### 📂 `dto/` - Data Transfer Objects
+
+Defines the shape of data for API requests/responses:
+
+```typescript
+// dto/index.ts
+export interface LoginDTO {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponseDTO {
+  user: {
+    id: string;
+    email: string;
+    userType: string;
+  };
+  token: string;
+}
+```
 
 #### 📂 `middleware/` - Security Guards
 

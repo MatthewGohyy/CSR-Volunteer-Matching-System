@@ -1,18 +1,17 @@
-# Class Diagrams - CSR Volunteer Matching System
+# Class Diagrams - PlantUML Format
 
-This document contains UML class diagrams and Entity Relationship Diagrams (ERD) for the CSR Volunteer Matching System.
+This document contains UML class diagrams and Entity Relationship Diagrams (ERD) in PlantUML format for the CSR Volunteer Matching System.
 
 ## Table of Contents
 1. [Entity Relationship Diagram (ERD)](#1-entity-relationship-diagram-erd)
-2. [Entity Layer Class Diagram](#2-entity-layer-class-diagram)
-3. [Controller Layer Class Diagram](#3-controller-layer-class-diagram)
-4. [Service Layer Class Diagram](#4-service-layer-class-diagram)
+2. [Entity Class Diagram (Repository Pattern)](#2-entity-class-diagram-repository-pattern)
+3. [Controller Class Diagram](#3-controller-class-diagram)
 
 ---
 
 ## 1. Entity Relationship Diagram (ERD)
 
-This ERD shows the database schema and relationships between entities.
+**Database Schema:** Shows the relationships between all database tables in the PostgreSQL database.
 
 **Note:** User table has 4 user types (PIN, CSR_REP, ADMIN, PLATFORM_MANAGER), but ADMIN users have no separate profile table. Only PIN, CSRRep, and PlatformManager have profile tables.
 
@@ -28,11 +27,9 @@ table(User) {
   email: String {unique}
   password: String
   userType: Enum <<PIN|CSR_REP|ADMIN|PLATFORM_MANAGER>>
-  status: Enum
+  status: Enum <<ACTIVE|SUSPENDED|DEACTIVATED>>
   createdAt: DateTime
   updatedAt: DateTime
-  --
-  Note: ADMIN users have no profile table
 }
 
 table(PIN) {
@@ -44,6 +41,7 @@ table(PIN) {
   phoneNumber: String
   accessibilityNeeds: String
   profilePhoto: String
+  status: Enum
 }
 
 table(CSRRep) {
@@ -56,6 +54,7 @@ table(CSRRep) {
   phoneNumber: String
   companyAddress: String
   companyLogo: String
+  status: Enum
 }
 
 table(PlatformManager) {
@@ -82,10 +81,10 @@ table(Request) {
   foreign_key(categoryId: UUID)
   title: String
   description: String
-  urgency: Enum
+  urgency: Enum <<LOW|MEDIUM|HIGH>>
   dateNeeded: DateTime
   location: String
-  status: Enum
+  status: Enum <<ACTIVE|MATCHED|COMPLETED|CANCELLED>>
   viewCount: Integer
   shortlistCount: Integer
   createdAt: DateTime
@@ -104,7 +103,7 @@ table(VolunteerOffer) {
   foreign_key(csrRepId: UUID)
   foreign_key(requestId: UUID)
   message: String
-  status: Enum
+  status: Enum <<PENDING|ACCEPTED|DECLINED>>
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -114,7 +113,7 @@ table(Match) {
   foreign_key(requestId: UUID) {unique}
   foreign_key(csrRepId: UUID)
   foreign_key(pinId: UUID)
-  status: Enum
+  status: Enum <<ACTIVE|COMPLETED|CANCELLED>>
   matchedAt: DateTime
   completedAt: DateTime
   cancellationReason: String
@@ -130,460 +129,482 @@ table(Notification) {
   createdAt: DateTime
 }
 
-' Relationships
-User ||--o{ PIN : "1:0..1"
-User ||--o{ CSRRep : "1:0..1"
-User ||--o{ PlatformManager : "1:0..1"
-User ||--o{ Notification : "1:many"
+User ||--o| PIN : "has"
+User ||--o| CSRRep : "has"
+User ||--o| PlatformManager : "has"
+User ||--o{ Notification : "receives"
 
-PIN ||--o{ Request : "1:many"
-PIN ||--o{ Match : "1:many"
+PIN ||--o{ Request : "creates"
+PIN ||--o{ Match : "participates"
 
-CSRRep ||--o{ Shortlist : "1:many"
-CSRRep ||--o{ VolunteerOffer : "1:many"
-CSRRep ||--o{ Match : "1:many"
+CSRRep ||--o{ Shortlist : "creates"
+CSRRep ||--o{ VolunteerOffer : "submits"
+CSRRep ||--o{ Match : "participates"
 
-ServiceCategory ||--o{ Request : "1:many"
+ServiceCategory ||--o{ Request : "categorizes"
 
-Request ||--o{ Shortlist : "1:many"
-Request ||--o{ VolunteerOffer : "1:many"
-Request ||--|| Match : "1:0..1"
-
-@enduml
-```
-
----
-
-## 2. Entity Layer Class Diagram
-
-The Entity layer represents the core business objects and database models.
-
-```plantuml
-@startuml Entity_Layer
-
-' Enums
-enum UserType {
-  PIN
-  CSR_REP
-  ADMIN <<note: no profile table>>
-  PLATFORM_MANAGER
-}
-
-enum UserStatus {
-  ACTIVE
-  SUSPENDED
-  DEACTIVATED
-}
-
-enum RequestStatus {
-  ACTIVE
-  MATCHED
-  COMPLETED
-  CANCELLED
-}
-
-enum UrgencyLevel {
-  LOW
-  MEDIUM
-  HIGH
-}
-
-enum OfferStatus {
-  PENDING
-  ACCEPTED
-  DECLINED
-}
-
-enum MatchStatus {
-  ACTIVE
-  COMPLETED
-  CANCELLED
-}
-
-enum NotificationType {
-  VOLUNTEER_OFFER
-  OFFER_ACCEPTED
-  OFFER_DECLINED
-  MATCH_CONFIRMED
-  MATCH_CANCELLED
-  REQUEST_UPDATED
-}
-
-' Core Entity Classes
-class User {
-  - id: string
-  - email: string
-  - password: string
-  - userType: UserType
-  - status: UserStatus
-  - createdAt: DateTime
-  - updatedAt: DateTime
-  <<note: ADMIN users have no profile table>>
-  + getProfile(): PINProfile | CSRRepProfile | PlatformManagerProfile | null
-  + updateStatus(status: UserStatus): void
-  + validatePassword(password: string): boolean
-}
-
-class PIN {
-  - id: string
-  - userId: string
-  - name: string
-  - age: int
-  - location: string
-  - phoneNumber: string
-  - accessibilityNeeds: string
-  - profilePhoto: string
-  + createRequest(): Request
-  + getRequests(): Request[]
-  + getMatches(): Match[]
-}
-
-class CSRRep {
-  - id: string
-  - userId: string
-  - companyName: string
-  - companyRegistrationNumber: string
-  - industry: string
-  - contactPerson: string
-  - phoneNumber: string
-  - companyAddress: string
-  - companyLogo: string
-  + shortlistRequest(requestId: string): Shortlist
-  + submitOffer(requestId: string): VolunteerOffer
-  + getShortlists(): Shortlist[]
-  + getOffers(): VolunteerOffer[]
-}
-
-class PlatformManager {
-  - id: string
-  - userId: string
-  - fullName: string
-  - department: string
-  - phone: string
-  + createCategory(data: object): ServiceCategory
-  + updateCategory(id: string, data: object): void
-  + deleteCategory(id: string): void
-}
-
-class ServiceCategory {
-  - id: string
-  - name: string
-  - description: string
-  - iconUrl: string
-  - isActive: boolean
-  - createdAt: DateTime
-  - updatedAt: DateTime
-  + activate(): void
-  + deactivate(): void
-}
-
-class Request {
-  - id: string
-  - pinId: string
-  - categoryId: string
-  - title: string
-  - description: string
-  - urgency: UrgencyLevel
-  - dateNeeded: DateTime
-  - location: string
-  - status: RequestStatus
-  - viewCount: int
-  - shortlistCount: int
-  - createdAt: DateTime
-  - updatedAt: DateTime
-  + incrementViewCount(): void
-  + incrementShortlistCount(): void
-  + updateStatus(status: RequestStatus): void
-}
-
-class Shortlist {
-  - id: string
-  - csrRepId: string
-  - requestId: string
-  - createdAt: DateTime
-}
-
-class VolunteerOffer {
-  - id: string
-  - csrRepId: string
-  - requestId: string
-  - message: string
-  - status: OfferStatus
-  - createdAt: DateTime
-  - updatedAt: DateTime
-  + accept(): void
-  + decline(): void
-}
-
-class Match {
-  - id: string
-  - requestId: string
-  - csrRepId: string
-  - pinId: string
-  - status: MatchStatus
-  - matchedAt: DateTime
-  - completedAt: DateTime
-  - cancellationReason: string
-  - updatedAt: DateTime
-  + complete(): void
-  + cancel(reason: string): void
-}
-
-class Notification {
-  - id: string
-  - userId: string
-  - type: NotificationType
-  - message: string
-  - isRead: boolean
-  - createdAt: DateTime
-  + markAsRead(): void
-}
-
-' Relationships
-User "1" -- "0..1" PIN : has >
-User "1" -- "0..1" CSRRep : has >
-User "1" -- "0..1" PlatformManager : has >
-User "1" -- "0..*" Notification : receives >
-
-PIN "1" -- "0..*" Request : creates >
-PIN "1" -- "0..*" Match : participates in >
-
-CSRRep "1" -- "0..*" Shortlist : creates >
-CSRRep "1" -- "0..*" VolunteerOffer : submits >
-CSRRep "1" -- "0..*" Match : participates in >
-
-ServiceCategory "1" -- "0..*" Request : categorizes >
-
-Request "1" -- "0..*" Shortlist : has >
-Request "1" -- "0..*" VolunteerOffer : receives >
-Request "1" -- "0..1" Match : becomes >
+Request ||--o{ Shortlist : "has"
+Request ||--o{ VolunteerOffer : "receives"
+Request ||--o| Match : "becomes"
 
 @enduml
 ```
 
 ---
 
-## 3. Controller Layer Class Diagram
+## 2. Entity Class Diagram (Repository Pattern)
 
-The Controller layer handles HTTP requests and orchestrates business logic.
+**Entity Classes:** Located in `server/src/entities/`. These classes combine domain business logic (instance methods) with data access operations (static methods) following the Repository Pattern.
 
 ```plantuml
-@startuml Controller_Layer
+@startuml Entity_Classes
 
-interface Request
-interface Response
-interface NextFunction
-
-abstract class BaseController {
-  # handleError(error: Error, next: NextFunction): void
+class UserEntity {
+  +id: String
+  +email: String
+  +password: String
+  +userType: UserType
+  +status: UserStatus
+  +createdAt: DateTime
+  +updatedAt: DateTime
+  +pin: PIN
+  +csrRep: CSRRep
+  +platformManager: PlatformManager
+  __Instance Methods (Business Logic)__
+  +isActive(): boolean
+  +isSuspended(): boolean
+  +isAdmin(): boolean
+  +isPIN(): boolean
+  +isCSRRep(): boolean
+  +isPlatformManager(): boolean
+  +getProfile(): PIN | CSRRep | PlatformManager
+  +toJSON(): Object
+  __Static Methods (CRUD - Repository)__
+  +{static} findAll(page, limit): Promise<UserEntity[]>
+  +{static} findById(id): Promise<UserEntity>
+  +{static} findByEmail(email): Promise<UserEntity>
+  +{static} findByType(type, page, limit): Promise<UserEntity[]>
+  +{static} findByStatus(status, page, limit): Promise<UserEntity[]>
+  +{static} create(data): Promise<UserEntity>
+  +{static} update(id, data): Promise<UserEntity>
+  +{static} delete(id): Promise<boolean>
+  +{static} suspend(id): Promise<UserEntity>
+  +{static} activate(id): Promise<UserEntity>
 }
 
-class AuthController extends BaseController {
-  + {static} registerPIN(req: Request, res: Response, next: NextFunction): Promise<void>
-  + {static} registerCSRRep(req: Request, res: Response, next: NextFunction): Promise<void>
-  + {static} login(req: Request, res: Response, next: NextFunction): Promise<void>
-  + {static} getProfile(req: Request, res: Response, next: NextFunction): Promise<void>
-  + {static} updatePassword(req: Request, res: Response, next: NextFunction): Promise<void>
-  - {static} generateToken(payload: object): string
-  - {static} validateCredentials(email: string, password: string): Promise<User>
+class RequestEntity {
+  +id: String
+  +pinId: String
+  +categoryId: String
+  +title: String
+  +description: String
+  +urgency: UrgencyLevel
+  +dateNeeded: DateTime
+  +location: String
+  +status: RequestStatus
+  +viewCount: number
+  +shortlistCount: number
+  +createdAt: DateTime
+  +updatedAt: DateTime
+  __Instance Methods__
+  +isActive(): boolean
+  +isMatched(): boolean
+  +isCompleted(): boolean
+  +isUrgent(): boolean
+  +isOverdue(): boolean
+  +incrementViewCount(): number
+  +incrementShortlistCount(): number
+  __Static Methods__
+  +{static} findAll(page, limit): Promise<RequestEntity[]>
+  +{static} findById(id): Promise<RequestEntity>
+  +{static} findByPIN(pinId, page, limit): Promise<RequestEntity[]>
+  +{static} findByCategory(categoryId, page, limit): Promise<RequestEntity[]>
+  +{static} findByStatus(status, page, limit): Promise<RequestEntity[]>
+  +{static} findByUrgency(urgency, page, limit): Promise<RequestEntity[]>
+  +{static} create(data): Promise<RequestEntity>
+  +{static} update(id, data): Promise<RequestEntity>
+  +{static} delete(id): Promise<boolean>
+  +{static} incrementViewCountDB(id): Promise<RequestEntity>
+  +{static} incrementShortlistCountDB(id): Promise<RequestEntity>
 }
 
-class AdminController extends BaseController {
-  + {static} getUsers(req: Request, res: Response, next: NextFunction): Promise<void>
-  + {static} getUserById(req: Request, res: Response, next: NextFunction): Promise<void>
-  + {static} createUser(req: Request, res: Response, next: NextFunction): Promise<void>
-  + {static} updateUserStatus(req: Request, res: Response, next: NextFunction): Promise<void>
-  + {static} deleteUser(req: Request, res: Response, next: NextFunction): Promise<void>
-  + {static} getSystemStats(req: Request, res: Response, next: NextFunction): Promise<void>
-  - {static} validateUserType(userType: string): boolean
-  - {static} checkDuplicateEmail(email: string): Promise<boolean>
+class PINEntity {
+  +id: String
+  +userId: String
+  +name: String
+  +age: number
+  +location: String
+  +phoneNumber: String
+  +accessibilityNeeds: String
+  +status: ProfileStatus
+  __Instance Methods__
+  +isActive(): boolean
+  +isPending(): boolean
+  +toJSON(): Object
+  __Static Methods__
+  +{static} findAll(page, limit): Promise<PINEntity[]>
+  +{static} findById(id): Promise<PINEntity>
+  +{static} findByUserId(userId): Promise<PINEntity>
+  +{static} create(data): Promise<PINEntity>
+  +{static} update(id, data): Promise<PINEntity>
+  +{static} delete(id): Promise<boolean>
 }
 
-class PINController extends BaseController {
-  + {static} getProfile(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} updateProfile(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} getMyMatches(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} getNotifications(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} markNotificationRead(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} markAllNotificationsRead(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
+class CSRRepEntity {
+  +id: String
+  +userId: String
+  +companyName: String
+  +companyRegistrationNumber: String
+  +industry: String
+  +contactPerson: String
+  +phoneNumber: String
+  +status: ProfileStatus
+  __Instance Methods__
+  +isActive(): boolean
+  +isPending(): boolean
+  +toJSON(): Object
+  __Static Methods__
+  +{static} findAll(page, limit): Promise<CSRRepEntity[]>
+  +{static} findById(id): Promise<CSRRepEntity>
+  +{static} findByUserId(userId): Promise<CSRRepEntity>
+  +{static} create(data): Promise<CSRRepEntity>
+  +{static} update(id, data): Promise<CSRRepEntity>
+  +{static} delete(id): Promise<boolean>
 }
 
-class CSRRepController extends BaseController {
-  + {static} shortlistRequest(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} removeShortlist(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} getShortlists(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} submitOffer(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} getMyOffers(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} getMyMatches(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} updateProfile(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  - {static} validateOfferEligibility(csrRepId: string, requestId: string): Promise<boolean>
+class PlatformManagerEntity {
+  +id: String
+  +userId: String
+  +fullName: String
+  +department: String
+  +phone: String
+  __Instance Methods__
+  +toJSON(): Object
+  __Static Methods__
+  +{static} findAll(page, limit): Promise<PlatformManagerEntity[]>
+  +{static} findById(id): Promise<PlatformManagerEntity>
+  +{static} findByUserId(userId): Promise<PlatformManagerEntity>
+  +{static} create(data): Promise<PlatformManagerEntity>
+  +{static} update(id, data): Promise<PlatformManagerEntity>
 }
 
-class RequestController extends BaseController {
-  + {static} createRequest(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} getRequests(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} getRequest(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} getMyRequests(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} updateRequest(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} deleteRequest(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} getCategories(req: Request, res: Response, next: NextFunction): Promise<void>
-  - {static} validateRequestOwnership(userId: string, requestId: string): Promise<boolean>
-  - {static} applyFilters(query: object): object
+class MatchEntity {
+  +id: String
+  +requestId: String
+  +csrRepId: String
+  +pinId: String
+  +status: MatchStatus
+  +matchedAt: DateTime
+  +completedAt: DateTime
+  +cancellationReason: String
+  __Instance Methods__
+  +isActive(): boolean
+  +isCompleted(): boolean
+  +isCancelled(): boolean
+  +toJSON(): Object
+  __Static Methods__
+  +{static} findAll(page, limit): Promise<MatchEntity[]>
+  +{static} findById(id): Promise<MatchEntity>
+  +{static} findByPIN(pinId): Promise<MatchEntity[]>
+  +{static} findByCSRRep(csrRepId): Promise<MatchEntity[]>
+  +{static} findByRequest(requestId): Promise<MatchEntity>
+  +{static} create(data): Promise<MatchEntity>
+  +{static} complete(id): Promise<MatchEntity>
+  +{static} cancel(id, reason): Promise<MatchEntity>
 }
 
-class MatchController extends BaseController {
-  + {static} createMatch(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} getMatches(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} completeMatch(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  + {static} cancelMatch(req: AuthRequest, res: Response, next: NextFunction): Promise<void>
-  - {static} notifyParticipants(matchId: string, type: string): Promise<void>
+class ServiceCategoryEntity {
+  +id: String
+  +name: String
+  +description: String
+  +iconUrl: String
+  +isActive: boolean
+  +createdAt: DateTime
+  __Instance Methods__
+  +toJSON(): Object
+  __Static Methods__
+  +{static} findAll(): Promise<ServiceCategoryEntity[]>
+  +{static} findActive(): Promise<ServiceCategoryEntity[]>
+  +{static} findById(id): Promise<ServiceCategoryEntity>
+  +{static} create(data): Promise<ServiceCategoryEntity>
+  +{static} update(id, data): Promise<ServiceCategoryEntity>
+  +{static} delete(id): Promise<boolean>
 }
+
+class ShortlistEntity {
+  +id: String
+  +csrRepId: String
+  +requestId: String
+  +createdAt: DateTime
+  __Static Methods__
+  +{static} findAll(): Promise<ShortlistEntity[]>
+  +{static} findByCSRRep(csrRepId): Promise<ShortlistEntity[]>
+  +{static} findByRequest(requestId): Promise<ShortlistEntity[]>
+  +{static} exists(csrRepId, requestId): Promise<boolean>
+  +{static} create(data): Promise<ShortlistEntity>
+  +{static} deleteByCSRRepAndRequest(csrRepId, requestId): Promise<boolean>
+}
+
+class VolunteerOfferEntity {
+  +id: String
+  +csrRepId: String
+  +requestId: String
+  +message: String
+  +status: OfferStatus
+  +createdAt: DateTime
+  __Instance Methods__
+  +isPending(): boolean
+  +isAccepted(): boolean
+  +isDeclined(): boolean
+  __Static Methods__
+  +{static} findAll(): Promise<VolunteerOfferEntity[]>
+  +{static} findByCSRRep(csrRepId): Promise<VolunteerOfferEntity[]>
+  +{static} findByRequest(requestId): Promise<VolunteerOfferEntity[]>
+  +{static} create(data): Promise<VolunteerOfferEntity>
+  +{static} accept(id): Promise<VolunteerOfferEntity>
+  +{static} decline(id): Promise<VolunteerOfferEntity>
+}
+
+class NotificationEntity {
+  +id: String
+  +userId: String
+  +type: NotificationType
+  +message: String
+  +isRead: boolean
+  +createdAt: DateTime
+  __Static Methods__
+  +{static} findByUser(userId): Promise<NotificationEntity[]>
+  +{static} findUnreadByUser(userId): Promise<NotificationEntity[]>
+  +{static} create(data): Promise<NotificationEntity>
+  +{static} markAsRead(id): Promise<NotificationEntity>
+  +{static} deleteByUser(userId): Promise<boolean>
+}
+
+UserEntity "1" -- "0..1" PINEntity
+UserEntity "1" -- "0..1" CSRRepEntity
+UserEntity "1" -- "0..1" PlatformManagerEntity
+UserEntity "1" -- "*" NotificationEntity
+
+PINEntity "1" -- "*" RequestEntity
+PINEntity "1" -- "*" MatchEntity
+
+CSRRepEntity "1" -- "*" ShortlistEntity
+CSRRepEntity "1" -- "*" VolunteerOfferEntity
+CSRRepEntity "1" -- "*" MatchEntity
+
+ServiceCategoryEntity "1" -- "*" RequestEntity
+
+RequestEntity "1" -- "*" ShortlistEntity
+RequestEntity "1" -- "*" VolunteerOfferEntity
+RequestEntity "1" -- "0..1" MatchEntity
+
+note right of UserEntity
+  Entity classes implement
+  Repository Pattern:
+  - Instance methods: Business logic
+  - Static methods: Data access (CRUD)
+  - Uses Prisma ORM internally
+end note
+
+note right of RequestEntity
+  All entities follow same pattern:
+  - Encapsulate domain logic
+  - Provide CRUD operations
+  - Return entity instances
+  - Type-safe operations
+end note
 
 @enduml
 ```
 
 ---
 
-## 4. Service Layer Class Diagram
+## 3. Controller Class Diagram
 
-The Service layer contains business logic and repository interfaces for data access.
+**Controllers:** Located in `server/src/controllers/`. Organized by feature/user type (58 controller files). Controllers orchestrate business logic by calling Entity classes.
 
 ```plantuml
-@startuml Service_Repository_Layer
+@startuml Controllers
 
-' Repository Interfaces
-interface UserRepository {
-  + findById(id: string): Promise<User | null>
-  + findByEmail(email: string): Promise<User | null>
-  + create(user: Partial<User>): Promise<User>
-  + update(id: string, updates: Partial<User>): Promise<User | null>
-  + delete(id: string): Promise<boolean>
-  + findAll(limit?: number, offset?: number): Promise<User[]>
+package "Auth Controllers" {
+  class LoginController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class RegisterPINController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class RegisterCSRRepController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class GetProfileController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class UpdatePasswordController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class LogoutController {
+    +{static} handle(req, res, next): Promise<void>
+  }
 }
 
-interface VolunteerRepository {
-  + findById(id: string): Promise<Volunteer | null>
-  + findByEmail(email: string): Promise<Volunteer | null>
-  + create(volunteer: Partial<Volunteer>): Promise<Volunteer>
-  + update(id: string, updates: Partial<Volunteer>): Promise<Volunteer | null>
-  + delete(id: string): Promise<boolean>
-  + findBySkills(skills: string[]): Promise<Volunteer[]>
-  + findByLocation(location: string): Promise<Volunteer[]>
+package "User Admin Controllers" {
+  class CreateUserController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class GetUsersController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class GetUserDetailsController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class UpdateUserStatusController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class DeleteUserController {
+    +{static} handle(req, res, next): Promise<void>
+  }
 }
 
-interface OrganizationRepository {
-  + findById(id: string): Promise<Organization | null>
-  + create(org: Partial<Organization>): Promise<Organization>
-  + update(id: string, updates: Partial<Organization>): Promise<Organization | null>
-  + findVerified(): Promise<Organization[]>
+package "PIN Controllers" {
+  class CreateRequestController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class ViewRequestsController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class UpdateRequestController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class DeleteRequestController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class SearchMyRequestsController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class ViewRequestOffersController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class AcceptOfferController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class DeclineOfferController {
+    +{static} handle(req, res, next): Promise<void>
+  }
 }
 
-interface CSROpportunityRepository {
-  + findById(id: string): Promise<CSROpportunity | null>
-  + create(opportunity: Partial<CSROpportunity>): Promise<CSROpportunity>
-  + update(id: string, updates: Partial<CSROpportunity>): Promise<CSROpportunity | null>
-  + findByOrganization(orgId: string): Promise<CSROpportunity[]>
-  + findBySkills(skills: string[]): Promise<CSROpportunity[]>
-  + findActive(): Promise<CSROpportunity[]>
+package "CSR Rep Controllers" {
+  class SearchRequestsController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class SaveRequestController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class RemoveShortlistController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class SubmitOfferController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class ViewMyOffersController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class ViewMyMatchesController {
+    +{static} handle(req, res, next): Promise<void>
+  }
 }
 
-interface MatchingRepository {
-  + findById(id: string): Promise<Matching | null>
-  + create(matching: Partial<Matching>): Promise<Matching>
-  + findByVolunteer(volunteerId: string): Promise<Matching[]>
-  + findByOpportunity(opportunityId: string): Promise<Matching[]>
-  + findTopMatches(volunteerId: string, limit?: number): Promise<Matching[]>
+package "Platform Manager Controllers" {
+  class CreateCategoryController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class GetCategoriesController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class UpdateCategoryController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class DeleteCategoryController {
+    +{static} handle(req, res, next): Promise<void>
+  }
+  
+  class GetPlatformStatsController {
+    +{static} handle(req, res, next): Promise<void>
+  }
 }
 
-' Service Classes
-class UserService {
-  - userRepository: UserRepository
-  + constructor(userRepository: UserRepository)
-  + createUser(userData: CreateUserDTO): Promise<ApiResponse<User>>
-  + getUserById(id: string): Promise<ApiResponse<User>>
-  + updateUser(id: string, updates: UpdateUserDTO): Promise<ApiResponse<User>>
-  + deleteUser(id: string): Promise<ApiResponse<boolean>>
-  + getAllUsers(limit?: number, offset?: number): Promise<ApiResponse<User[]>>
-  - validateUserData(data: object): boolean
+class MatchController {
+  +{static} createMatch(req, res, next): Promise<void>
+  +{static} getMatches(req, res, next): Promise<void>
+  +{static} completeMatch(req, res, next): Promise<void>
+  +{static} cancelMatch(req, res, next): Promise<void>
 }
 
-class VolunteerService {
-  - volunteerRepository: VolunteerRepository
-  + constructor(volunteerRepository: VolunteerRepository)
-  + createVolunteer(data: CreateVolunteerDTO): Promise<ApiResponse<Volunteer>>
-  + getVolunteerById(id: string): Promise<ApiResponse<Volunteer>>
-  + updateVolunteer(id: string, updates: UpdateVolunteerDTO): Promise<ApiResponse<Volunteer>>
-  + findVolunteersBySkills(skills: string[]): Promise<ApiResponse<Volunteer[]>>
-}
+' Dependencies on Entities
+LoginController ..> UserEntity
+RegisterPINController ..> UserEntity
+RegisterPINController ..> PINEntity
+RegisterCSRRepController ..> UserEntity
+RegisterCSRRepController ..> CSRRepEntity
 
-class OrganizationService {
-  - organizationRepository: OrganizationRepository
-  + constructor(organizationRepository: OrganizationRepository)
-  + createOrganization(data: CreateOrganizationDTO): Promise<ApiResponse<Organization>>
-  + getOrganizationById(id: string): Promise<ApiResponse<Organization>>
-  + updateOrganization(id: string, updates: UpdateOrganizationDTO): Promise<ApiResponse<Organization>>
-  + getVerifiedOrganizations(): Promise<ApiResponse<Organization[]>>
-  - verifyOrganization(id: string): Promise<void>
-}
+CreateUserController ..> UserEntity
+GetUsersController ..> UserEntity
+UpdateUserStatusController ..> UserEntity
+DeleteUserController ..> UserEntity
 
-class CSROpportunityService {
-  - opportunityRepository: CSROpportunityRepository
-  - organizationRepository: OrganizationRepository
-  + constructor(opportunityRepo: CSROpportunityRepository, orgRepo: OrganizationRepository)
-  + createOpportunity(data: CreateCSROpportunityDTO): Promise<ApiResponse<CSROpportunity>>
-  + getOpportunityById(id: string): Promise<ApiResponse<CSROpportunity>>
-  + updateOpportunity(id: string, updates: UpdateCSROpportunityDTO): Promise<ApiResponse<CSROpportunity>>
-  + getActiveOpportunities(): Promise<ApiResponse<CSROpportunity[]>>
-  - validateOpportunityDates(startDate: Date, endDate: Date): boolean
-}
+CreateRequestController ..> PINEntity
+CreateRequestController ..> RequestEntity
+ViewRequestsController ..> RequestEntity
+UpdateRequestController ..> RequestEntity
+DeleteRequestController ..> RequestEntity
+SearchMyRequestsController ..> RequestEntity
 
-class MatchingService {
-  - matchingRepository: MatchingRepository
-  - volunteerRepository: VolunteerRepository
-  - opportunityRepository: CSROpportunityRepository
-  + constructor(matchingRepo: MatchingRepository, volunteerRepo: VolunteerRepository, opportunityRepo: CSROpportunityRepository)
-  + findMatchesForVolunteer(volunteerId: string): Promise<ApiResponse<Matching[]>>
-  - calculateMatchScore(volunteer: Volunteer, opportunity: CSROpportunity): number
-  - calculateLocationMatch(volunteerLoc: Location, oppLoc: Location): number
-  - calculateAvailabilityMatch(availability: Availability[], opportunity: CSROpportunity): number
-  - generateMatchReasons(volunteer: Volunteer, opportunity: CSROpportunity): string[]
-}
+SearchRequestsController ..> RequestEntity
+SaveRequestController ..> CSRRepEntity
+SaveRequestController ..> RequestEntity
+SaveRequestController ..> ShortlistEntity
+SubmitOfferController ..> CSRRepEntity
+SubmitOfferController ..> RequestEntity
+SubmitOfferController ..> VolunteerOfferEntity
 
-' DTO Classes
-class CreateUserDTO {
-  + email: string
-  + password: string
-  + role: UserRole
-  + name: string
-  + phone?: string
-}
+AcceptOfferController ..> VolunteerOfferEntity
+DeclineOfferController ..> VolunteerOfferEntity
 
-class UpdateUserDTO {
-  + name?: string
-  + phone?: string
-  + email?: string
-}
+CreateCategoryController ..> ServiceCategoryEntity
+GetCategoriesController ..> ServiceCategoryEntity
+UpdateCategoryController ..> ServiceCategoryEntity
+GetPlatformStatsController ..> ServiceCategoryEntity
+GetPlatformStatsController ..> RequestEntity
+GetPlatformStatsController ..> MatchEntity
 
-class ApiResponse<T> {
-  + success: boolean
-  + data?: T
-  + error?: string
-  + message?: string
-}
+MatchController ..> MatchEntity
+MatchController ..> RequestEntity
+MatchController ..> NotificationEntity
 
-' Relationships
-UserService --> UserRepository : uses
-VolunteerService --> VolunteerRepository : uses
-OrganizationService --> OrganizationRepository : uses
-CSROpportunityService --> CSROpportunityRepository : uses
-CSROpportunityService --> OrganizationRepository : uses
-MatchingService --> MatchingRepository : uses
-MatchingService --> VolunteerRepository : uses
-MatchingService --> CSROpportunityRepository : uses
-
-UserService ..> CreateUserDTO : uses
-UserService ..> UpdateUserDTO : uses
-UserService ..> ApiResponse : returns
+note "Controllers orchestrate business\nlogic by calling Entity class\nmethods (Repository Pattern)" as N1
 
 @enduml
 ```
@@ -592,56 +613,64 @@ UserService ..> ApiResponse : returns
 
 ## How to Use These Diagrams
 
-### Online Rendering
-1. **PlantUML Online Editor**: Copy diagram code and paste into [PlantText](https://www.planttext.com/) or [PlantUML Web Server](http://www.plantuml.com/plantuml/uml/)
-2. **VS Code Extension**: Install "PlantUML" extension in VS Code to preview diagrams directly
+### View Online
+1. **PlantText:** https://www.planttext.com/
+   - Copy the PlantUML code (between ```plantuml``` markers)
+   - Paste and view
+   
+2. **PlantUML Web Server:** http://www.plantuml.com/plantuml/uml/
+   - Copy the code
+   - View rendered diagram
 
 ### Generate Images
+
 ```bash
-# Install PlantUML
-brew install plantuml  # macOS
-# or
-sudo apt-get install plantuml  # Linux
+# Install PlantUML (macOS)
+brew install plantuml
+
+# Install PlantUML (Linux)
+sudo apt-get install plantuml
 
 # Generate PNG images
 plantuml CLASS_DIAGRAMS.md
 
-# Generate SVG images (scalable)
+# Generate SVG (better quality for reports)
 plantuml -tsvg CLASS_DIAGRAMS.md
+```
+
+### VS Code
+Install PlantUML extension:
+```bash
+code --install-extension jebbs.plantuml
 ```
 
 ---
 
-## Diagram Descriptions
+## Legend
 
-### 1. ERD (Entity Relationship Diagram)
-- Shows database schema and table relationships
-- Includes primary keys (underlined) and foreign keys (italicized)
-- Demonstrates cardinality (1:1, 1:many, many:many)
+### Symbols
+- **PK** = Primary Key
+- **FK** = Foreign Key  
+- **UK** = Unique Key
+- `+` = Public
+- `-` = Private
+- `#` = Protected
+- `{static}` = Static method
 
-### 2. Entity Layer
-- Shows all entity classes and their relationships
-- Includes enums for type safety (Note: UserType has 4 values but only 3 profile tables)
-- Demonstrates one-to-one, one-to-many relationships
-- **Important:** ADMIN is a valid user type but has no separate profile table
-
-### 3. Controller Layer  
-- Shows all HTTP request handlers
-- Demonstrates API endpoints and methods
-- Includes authentication and authorization logic
-
-### 4. Service Layer
-- Repository interfaces for data access abstraction
-- Service classes containing business logic
-- Shows dependency injection pattern
+### Method Naming Convention
+- **Instance methods**: Business logic (e.g., `isActive()`, `isPIN()`)
+- **Static methods**: Data access (e.g., `findById()`, `create()`)
 
 ---
 
 ## Notes
-- All diagrams follow UML 2.0 standards
-- Primary keys are underlined in ERD
-- Foreign keys are italicized in ERD
-- Private methods/fields marked with `-`
-- Public methods/fields marked with `+`
-- Static methods marked with `{static}`
 
+- All diagrams reflect the **actual implementation** as of October 2025
+- Entity classes use **Repository Pattern** (domain logic + data access)
+- Controllers call Entity classes (not Prisma directly)
+- No service layer exists in this architecture
+- For Mermaid diagrams (auto-render on GitHub), see [CLASS_DIAGRAMS_MERMAID.md](./CLASS_DIAGRAMS_MERMAID.md)
+
+---
+
+**Last Updated:** October 22, 2025

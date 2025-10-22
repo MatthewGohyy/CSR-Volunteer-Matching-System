@@ -4,13 +4,15 @@ This document contains class diagrams and ERD in Mermaid format that render auto
 
 ## Table of Contents
 1. [Entity Relationship Diagram (ERD)](#1-entity-relationship-diagram-erd)
-2. [Entity Class Diagram](#2-entity-class-diagram)
+2. [Entity Class Diagram (Repository Pattern)](#2-entity-class-diagram-repository-pattern)
 3. [Controller Class Diagram](#3-controller-class-diagram)
-4. [Service Layer Diagram](#4-service-layer-diagram)
+4. [BCE Architecture Diagram](#4-bce-architecture-diagram)
 
 ---
 
 ## 1. Entity Relationship Diagram (ERD)
+
+**Database Schema:** Shows the relationships between all database tables in the PostgreSQL database.
 
 **Note:** User table has 4 user types (PIN, CSR_REP, ADMIN, PLATFORM_MANAGER), but ADMIN users have no separate profile table. Only PIN, CSRRep, and PlatformManager have profile tables.
 
@@ -39,10 +41,9 @@ erDiagram
         string email UK
         string password
         enum userType "PIN, CSR_REP, ADMIN, PLATFORM_MANAGER"
-        enum status
+        enum status "ACTIVE, SUSPENDED, DEACTIVATED"
         datetime createdAt
         datetime updatedAt
-        string note "ADMIN users have no profile table"
     }
     
     PIN {
@@ -54,6 +55,7 @@ erDiagram
         string phoneNumber
         string accessibilityNeeds
         string profilePhoto
+        enum status
     }
     
     CSRRep {
@@ -66,6 +68,7 @@ erDiagram
         string phoneNumber
         string companyAddress
         string companyLogo
+        enum status
     }
     
     PlatformManager {
@@ -92,10 +95,10 @@ erDiagram
         uuid categoryId FK
         string title
         string description
-        enum urgency
+        enum urgency "LOW, MEDIUM, HIGH"
         datetime dateNeeded
         string location
-        enum status
+        enum status "ACTIVE, MATCHED, COMPLETED, CANCELLED"
         int viewCount
         int shortlistCount
         datetime createdAt
@@ -114,7 +117,7 @@ erDiagram
         uuid csrRepId FK
         uuid requestId FK
         string message
-        enum status
+        enum status "PENDING, ACCEPTED, DECLINED"
         datetime createdAt
         datetime updatedAt
     }
@@ -124,7 +127,7 @@ erDiagram
         uuid requestId FK,UK
         uuid csrRepId FK
         uuid pinId FK
-        enum status
+        enum status "ACTIVE, COMPLETED, CANCELLED"
         datetime matchedAt
         datetime completedAt
         string cancellationReason
@@ -134,7 +137,7 @@ erDiagram
     Notification {
         uuid id PK
         uuid userId FK
-        enum type
+        enum type "OFFER_RECEIVED, MATCH_CREATED, MATCH_COMPLETED, etc"
         string message
         boolean isRead
         datetime createdAt
@@ -143,13 +146,13 @@ erDiagram
 
 ---
 
-## 2. Entity Class Diagram
+## 2. Entity Class Diagram (Repository Pattern)
 
-**Note:** UserType includes PIN, CSR_REP, ADMIN, and PLATFORM_MANAGER, but ADMIN users have no profile table.
+**Entity Classes:** Located in `server/src/entities/`. These classes combine domain business logic (instance methods) with data access operations (static methods) following the Repository Pattern.
 
 ```mermaid
 classDiagram
-    class User {
+    class UserEntity {
         +String id
         +String email
         +String password
@@ -157,11 +160,68 @@ classDiagram
         +UserStatus status
         +DateTime createdAt
         +DateTime updatedAt
-        +getProfile() PINProfile or CSRRepProfile or PlatformManagerProfile or null
-        +updateStatus()
+        +PIN pin
+        +CSRRep csrRep
+        +PlatformManager platformManager
+        
+        +isActive() boolean
+        +isSuspended() boolean
+        +isAdmin() boolean
+        +isPIN() boolean
+        +isCSRRep() boolean
+        +isPlatformManager() boolean
+        +getProfile() PIN or CSRRep or PlatformManager
+        +toJSON() Object
+        
+        +findAll(page, limit)$ Promise~UserEntity[]~
+        +findById(id)$ Promise~UserEntity~
+        +findByEmail(email)$ Promise~UserEntity~
+        +findByType(type, page, limit)$ Promise~UserEntity[]~
+        +findByStatus(status, page, limit)$ Promise~UserEntity[]~
+        +create(data)$ Promise~UserEntity~
+        +update(id, data)$ Promise~UserEntity~
+        +delete(id)$ Promise~boolean~
+        +suspend(id)$ Promise~UserEntity~
+        +activate(id)$ Promise~UserEntity~
     }
 
-    class PIN {
+    class RequestEntity {
+        +String id
+        +String pinId
+        +String categoryId
+        +String title
+        +String description
+        +UrgencyLevel urgency
+        +DateTime dateNeeded
+        +String location
+        +RequestStatus status
+        +Int viewCount
+        +Int shortlistCount
+        +DateTime createdAt
+        +DateTime updatedAt
+        
+        +isActive() boolean
+        +isMatched() boolean
+        +isCompleted() boolean
+        +isUrgent() boolean
+        +isOverdue() boolean
+        +incrementViewCount() number
+        +incrementShortlistCount() number
+        
+        +findAll(page, limit)$ Promise~RequestEntity[]~
+        +findById(id)$ Promise~RequestEntity~
+        +findByPIN(pinId, page, limit)$ Promise~RequestEntity[]~
+        +findByCategory(categoryId, page, limit)$ Promise~RequestEntity[]~
+        +findByStatus(status, page, limit)$ Promise~RequestEntity[]~
+        +findByUrgency(urgency, page, limit)$ Promise~RequestEntity[]~
+        +create(data)$ Promise~RequestEntity~
+        +update(id, data)$ Promise~RequestEntity~
+        +delete(id)$ Promise~boolean~
+        +incrementViewCountDB(id)$ Promise~RequestEntity~
+        +incrementShortlistCountDB(id)$ Promise~RequestEntity~
+    }
+
+    class PINEntity {
         +String id
         +String userId
         +String name
@@ -169,11 +229,21 @@ classDiagram
         +String location
         +String phoneNumber
         +String accessibilityNeeds
-        +createRequest()
-        +getRequests()
+        +ProfileStatus status
+        
+        +isActive() boolean
+        +isPending() boolean
+        +toJSON() Object
+        
+        +findAll(page, limit)$ Promise~PINEntity[]~
+        +findById(id)$ Promise~PINEntity~
+        +findByUserId(userId)$ Promise~PINEntity~
+        +create(data)$ Promise~PINEntity~
+        +update(id, data)$ Promise~PINEntity~
+        +delete(id)$ Promise~boolean~
     }
 
-    class CSRRep {
+    class CSRRepEntity {
         +String id
         +String userId
         +String companyName
@@ -181,254 +251,417 @@ classDiagram
         +String industry
         +String contactPerson
         +String phoneNumber
-        +shortlistRequest()
-        +submitOffer()
+        +ProfileStatus status
+        
+        +isActive() boolean
+        +isPending() boolean
+        +toJSON() Object
+        
+        +findAll(page, limit)$ Promise~CSRRepEntity[]~
+        +findById(id)$ Promise~CSRRepEntity~
+        +findByUserId(userId)$ Promise~CSRRepEntity~
+        +create(data)$ Promise~CSRRepEntity~
+        +update(id, data)$ Promise~CSRRepEntity~
+        +delete(id)$ Promise~boolean~
     }
 
-    class PlatformManager {
+    class PlatformManagerEntity {
         +String id
         +String userId
         +String fullName
         +String department
         +String phone
-        +createCategory()
-        +manageReports()
+        
+        +toJSON() Object
+        
+        +findAll(page, limit)$ Promise~PlatformManagerEntity[]~
+        +findById(id)$ Promise~PlatformManagerEntity~
+        +findByUserId(userId)$ Promise~PlatformManagerEntity~
+        +create(data)$ Promise~PlatformManagerEntity~
+        +update(id, data)$ Promise~PlatformManagerEntity~
     }
 
-    class Request {
-        +String id
-        +String pinId
-        +String categoryId
-        +String title
-        +String description
-        +UrgencyLevel urgency
-        +RequestStatus status
-        +Int viewCount
-        +Int shortlistCount
-        +incrementViewCount()
-        +updateStatus()
-    }
-
-    class ServiceCategory {
-        +String id
-        +String name
-        +String description
-        +Boolean isActive
-        +DateTime createdAt
-    }
-
-    class Shortlist {
-        +String id
-        +String csrRepId
-        +String requestId
-        +DateTime createdAt
-    }
-
-    class VolunteerOffer {
-        +String id
-        +String csrRepId
-        +String requestId
-        +String message
-        +OfferStatus status
-        +accept()
-        +decline()
-    }
-
-    class Match {
+    class MatchEntity {
         +String id
         +String requestId
         +String csrRepId
         +String pinId
         +MatchStatus status
         +DateTime matchedAt
-        +complete()
-        +cancel()
+        +DateTime completedAt
+        +String cancellationReason
+        
+        +isActive() boolean
+        +isCompleted() boolean
+        +isCancelled() boolean
+        +toJSON() Object
+        
+        +findAll(page, limit)$ Promise~MatchEntity[]~
+        +findById(id)$ Promise~MatchEntity~
+        +findByPIN(pinId)$ Promise~MatchEntity[]~
+        +findByCSRRep(csrRepId)$ Promise~MatchEntity[]~
+        +findByRequest(requestId)$ Promise~MatchEntity~
+        +create(data)$ Promise~MatchEntity~
+        +complete(id)$ Promise~MatchEntity~
+        +cancel(id, reason)$ Promise~MatchEntity~
     }
 
-    class Notification {
+    class ServiceCategoryEntity {
+        +String id
+        +String name
+        +String description
+        +String iconUrl
+        +Boolean isActive
+        +DateTime createdAt
+        
+        +toJSON() Object
+        
+        +findAll()$ Promise~ServiceCategoryEntity[]~
+        +findActive()$ Promise~ServiceCategoryEntity[]~
+        +findById(id)$ Promise~ServiceCategoryEntity~
+        +create(data)$ Promise~ServiceCategoryEntity~
+        +update(id, data)$ Promise~ServiceCategoryEntity~
+        +delete(id)$ Promise~boolean~
+    }
+
+    class ShortlistEntity {
+        +String id
+        +String csrRepId
+        +String requestId
+        +DateTime createdAt
+        
+        +findAll()$ Promise~ShortlistEntity[]~
+        +findByCSRRep(csrRepId)$ Promise~ShortlistEntity[]~
+        +findByRequest(requestId)$ Promise~ShortlistEntity[]~
+        +exists(csrRepId, requestId)$ Promise~boolean~
+        +create(data)$ Promise~ShortlistEntity~
+        +deleteByCSRRepAndRequest(csrRepId, requestId)$ Promise~boolean~
+    }
+
+    class VolunteerOfferEntity {
+        +String id
+        +String csrRepId
+        +String requestId
+        +String message
+        +OfferStatus status
+        +DateTime createdAt
+        
+        +isPending() boolean
+        +isAccepted() boolean
+        +isDeclined() boolean
+        
+        +findAll()$ Promise~VolunteerOfferEntity[]~
+        +findByCSRRep(csrRepId)$ Promise~VolunteerOfferEntity[]~
+        +findByRequest(requestId)$ Promise~VolunteerOfferEntity[]~
+        +create(data)$ Promise~VolunteerOfferEntity~
+        +accept(id)$ Promise~VolunteerOfferEntity~
+        +decline(id)$ Promise~VolunteerOfferEntity~
+    }
+
+    class NotificationEntity {
         +String id
         +String userId
         +NotificationType type
         +String message
         +Boolean isRead
-        +markAsRead()
+        +DateTime createdAt
+        
+        +markAsRead()$ Promise~NotificationEntity~
+        
+        +findByUser(userId)$ Promise~NotificationEntity[]~
+        +findUnreadByUser(userId)$ Promise~NotificationEntity[]~
+        +create(data)$ Promise~NotificationEntity~
+        +markAsRead(id)$ Promise~NotificationEntity~
+        +deleteByUser(userId)$ Promise~boolean~
     }
 
-    User "1" -- "0..1" PIN
-    User "1" -- "0..1" CSRRep
-    User "1" -- "0..1" PlatformManager
-    User "1" -- "*" Notification
+    UserEntity "1" -- "0..1" PINEntity : has
+    UserEntity "1" -- "0..1" CSRRepEntity : has
+    UserEntity "1" -- "0..1" PlatformManagerEntity : has
+    UserEntity "1" -- "*" NotificationEntity : receives
     
-    PIN "1" -- "*" Request
-    PIN "1" -- "*" Match
+    PINEntity "1" -- "*" RequestEntity : creates
+    PINEntity "1" -- "*" MatchEntity : participates
     
-    CSRRep "1" -- "*" Shortlist
-    CSRRep "1" -- "*" VolunteerOffer
-    CSRRep "1" -- "*" Match
+    CSRRepEntity "1" -- "*" ShortlistEntity : creates
+    CSRRepEntity "1" -- "*" VolunteerOfferEntity : submits
+    CSRRepEntity "1" -- "*" MatchEntity : participates
     
-    ServiceCategory "1" -- "*" Request
+    ServiceCategoryEntity "1" -- "*" RequestEntity : categorizes
     
-    Request "1" -- "*" Shortlist
-    Request "1" -- "*" VolunteerOffer
-    Request "1" -- "0..1" Match
+    RequestEntity "1" -- "*" ShortlistEntity : has
+    RequestEntity "1" -- "*" VolunteerOfferEntity : receives
+    RequestEntity "1" -- "0..1" MatchEntity : becomes
+
+    note for UserEntity "Instance methods: Business logic\nStatic methods: CRUD operations\nUses Prisma ORM internally"
+    note for RequestEntity "Implements Repository Pattern\nEncapsulates all data access"
 ```
 
 ---
 
 ## 3. Controller Class Diagram
 
+**Controllers:** Located in `server/src/controllers/`. Organized by feature/user type. Controllers orchestrate business logic by calling Entity classes.
+
 ```mermaid
 classDiagram
-    class AuthController {
+    class LoginController {
         <<static>>
-        +registerPIN(req, res, next)
-        +registerCSRRep(req, res, next)
-        +login(req, res, next)
-        +getProfile(req, res, next)
-        +updatePassword(req, res, next)
-        -generateToken(payload)
-        -validateCredentials(email, password)
+        +handle(req, res, next) Promise~void~
     }
 
-    class AdminController {
+    class RegisterPINController {
         <<static>>
-        +getUsers(req, res, next)
-        +getUserById(req, res, next)
-        +createUser(req, res, next)
-        +updateUserStatus(req, res, next)
-        +deleteUser(req, res, next)
-        +getSystemStats(req, res, next)
-        -validateUserType(userType)
+        +handle(req, res, next) Promise~void~
     }
 
-    class PINController {
+    class RegisterCSRRepController {
         <<static>>
-        +getProfile(req, res, next)
-        +updateProfile(req, res, next)
-        +getMyMatches(req, res, next)
-        +getNotifications(req, res, next)
-        +markNotificationRead(req, res, next)
+        +handle(req, res, next) Promise~void~
     }
 
-    class CSRRepController {
+    class GetProfileController {
         <<static>>
-        +shortlistRequest(req, res, next)
-        +removeShortlist(req, res, next)
-        +getShortlists(req, res, next)
-        +submitOffer(req, res, next)
-        +getMyOffers(req, res, next)
-        +getMyMatches(req, res, next)
-        +updateProfile(req, res, next)
+        +handle(req, res, next) Promise~void~
     }
 
-    class RequestController {
+    class UpdatePasswordController {
         <<static>>
-        +createRequest(req, res, next)
-        +getRequests(req, res, next)
-        +getRequest(req, res, next)
-        +getMyRequests(req, res, next)
-        +updateRequest(req, res, next)
-        +deleteRequest(req, res, next)
-        +getCategories(req, res, next)
+        +handle(req, res, next) Promise~void~
+    }
+
+    class CreateUserController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class GetUsersController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class UpdateUserStatusController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class DeleteUserController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class CreateRequestController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class ViewRequestsController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class UpdateRequestController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class DeleteRequestController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class SearchRequestsController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class ShortlistRequestController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class RemoveShortlistController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class SubmitOfferController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class ViewOffersController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class AcceptOfferController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class DeclineOfferController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
     }
 
     class MatchController {
         <<static>>
-        +createMatch(req, res, next)
-        +getMatches(req, res, next)
-        +completeMatch(req, res, next)
-        +cancelMatch(req, res, next)
-        -notifyParticipants(matchId, type)
+        +createMatch(req, res, next) Promise~void~
+        +getMatches(req, res, next) Promise~void~
+        +completeMatch(req, res, next) Promise~void~
+        +cancelMatch(req, res, next) Promise~void~
     }
 
-    AuthController --> PrismaClient : uses
-    AdminController --> PrismaClient : uses
-    PINController --> PrismaClient : uses
-    CSRRepController --> PrismaClient : uses
-    RequestController --> PrismaClient : uses
-    MatchController --> PrismaClient : uses
+    class CreateCategoryController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class GetCategoriesController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    class GetPlatformStatsController {
+        <<static>>
+        +handle(req, res, next) Promise~void~
+    }
+
+    LoginController ..> UserEntity : uses
+    RegisterPINController ..> UserEntity : uses
+    RegisterPINController ..> PINEntity : uses
+    RegisterCSRRepController ..> UserEntity : uses
+    RegisterCSRRepController ..> CSRRepEntity : uses
+    GetProfileController ..> UserEntity : uses
+    
+    CreateUserController ..> UserEntity : uses
+    GetUsersController ..> UserEntity : uses
+    UpdateUserStatusController ..> UserEntity : uses
+    DeleteUserController ..> UserEntity : uses
+    
+    CreateRequestController ..> PINEntity : uses
+    CreateRequestController ..> RequestEntity : uses
+    ViewRequestsController ..> RequestEntity : uses
+    UpdateRequestController ..> RequestEntity : uses
+    DeleteRequestController ..> RequestEntity : uses
+    SearchRequestsController ..> RequestEntity : uses
+    
+    ShortlistRequestController ..> CSRRepEntity : uses
+    ShortlistRequestController ..> RequestEntity : uses
+    ShortlistRequestController ..> ShortlistEntity : uses
+    RemoveShortlistController ..> ShortlistEntity : uses
+    
+    SubmitOfferController ..> CSRRepEntity : uses
+    SubmitOfferController ..> RequestEntity : uses
+    SubmitOfferController ..> VolunteerOfferEntity : uses
+    ViewOffersController ..> VolunteerOfferEntity : uses
+    AcceptOfferController ..> VolunteerOfferEntity : uses
+    DeclineOfferController ..> VolunteerOfferEntity : uses
+    
+    MatchController ..> MatchEntity : uses
+    MatchController ..> RequestEntity : uses
+    MatchController ..> NotificationEntity : uses
+    
+    CreateCategoryController ..> ServiceCategoryEntity : uses
+    GetCategoriesController ..> ServiceCategoryEntity : uses
+    GetPlatformStatsController ..> ServiceCategoryEntity : uses
+    GetPlatformStatsController ..> RequestEntity : uses
+    GetPlatformStatsController ..> MatchEntity : uses
+
+    note for LoginController "Controllers use Entity classes\nfor all data operations"
+    note for CreateRequestController "Entity classes implement\nRepository Pattern"
 ```
 
 ---
 
-## 4. Service Layer Diagram
+## 4. BCE Architecture Diagram
+
+**BCE Pattern:** Shows how Boundary, Control, and Entity layers interact.
 
 ```mermaid
 classDiagram
-    class UserService {
-        -UserRepository userRepository
-        +createUser(userData) ApiResponse~User~
-        +getUserById(id) ApiResponse~User~
-        +updateUser(id, updates) ApiResponse~User~
-        +deleteUser(id) ApiResponse~boolean~
-        +getAllUsers(limit, offset) ApiResponse~User[]~
+    class Route_Boundary {
+        <<routes>>
+        +POST /api/auth/login
+        +POST /api/opportunities
+        +GET /api/opportunities
+        +POST /api/shortlist
+        +POST /api/offers
     }
 
-    class VolunteerService {
-        -VolunteerRepository volunteerRepository
-        +createVolunteer(data) ApiResponse~Volunteer~
-        +getVolunteerById(id) ApiResponse~Volunteer~
-        +updateVolunteer(id, updates) ApiResponse~Volunteer~
-        +findVolunteersBySkills(skills) ApiResponse~Volunteer[]~
+    class Middleware_Boundary {
+        <<middleware>>
+        +authenticate(req, res, next)
+        +authorize(roles)
+        +validateRequest(schema)
+        +errorHandler(err, req, res, next)
     }
 
-    class CSROpportunityService {
-        -CSROpportunityRepository opportunityRepository
-        -OrganizationRepository organizationRepository
-        +createOpportunity(data) ApiResponse~CSROpportunity~
-        +getOpportunityById(id) ApiResponse~CSROpportunity~
-        +updateOpportunity(id, updates) ApiResponse~CSROpportunity~
-        +getActiveOpportunities() ApiResponse~CSROpportunity[]~
+    class Validator_Boundary {
+        <<validators>>
+        +loginValidation
+        +registerPINValidation
+        +registerCSRRepValidation
+        +createRequestValidation
     }
 
-    class MatchingService {
-        -MatchingRepository matchingRepository
-        -VolunteerRepository volunteerRepository
-        -CSROpportunityRepository opportunityRepository
-        +findMatchesForVolunteer(volunteerId) ApiResponse~Matching[]~
-        -calculateMatchScore(volunteer, opportunity) number
-        -generateMatchReasons(volunteer, opportunity) string[]
+    class Controller_Control {
+        <<controllers>>
+        +LoginController
+        +CreateRequestController
+        +ShortlistRequestController
+        +SubmitOfferController
+        +AcceptOfferController
+        +MatchController
     }
 
-    class UserRepository {
-        <<interface>>
-        +findById(id) Promise~User~
-        +findByEmail(email) Promise~User~
-        +create(user) Promise~User~
-        +update(id, updates) Promise~User~
-        +delete(id) Promise~boolean~
+    class Entity_Entity {
+        <<entities>>
+        +UserEntity
+        +RequestEntity
+        +PINEntity
+        +CSRRepEntity
+        +MatchEntity
+        +ShortlistEntity
+        +VolunteerOfferEntity
+        +ServiceCategoryEntity
+        +NotificationEntity
     }
 
-    class VolunteerRepository {
-        <<interface>>
-        +findById(id) Promise~Volunteer~
-        +create(volunteer) Promise~Volunteer~
-        +update(id, updates) Promise~Volunteer~
-        +findBySkills(skills) Promise~Volunteer[]~
+    class PrismaSchema_Entity {
+        <<prisma>>
+        +User model
+        +Request model
+        +PIN model
+        +CSRRep model
+        +Match model
+        +Shortlist model
+        +VolunteerOffer model
+        +ServiceCategory model
+        +Notification model
     }
 
-    class CSROpportunityRepository {
-        <<interface>>
-        +findById(id) Promise~CSROpportunity~
-        +create(opportunity) Promise~CSROpportunity~
-        +update(id, updates) Promise~CSROpportunity~
-        +findActive() Promise~CSROpportunity[]~
+    class DTO_Entity {
+        <<dto>>
+        +LoginDTO
+        +CreateUserDTO
+        +CreateRequestDTO
+        +AuthResponseDTO
+        +ApiResponseDTO
     }
 
-    class MatchingRepository {
-        <<interface>>
-        +findById(id) Promise~Matching~
-        +create(matching) Promise~Matching~
-        +findByVolunteer(volunteerId) Promise~Matching[]~
-    }
+    Route_Boundary --> Middleware_Boundary : "uses"
+    Route_Boundary --> Validator_Boundary : "uses"
+    Middleware_Boundary --> Controller_Control : "forwards to"
+    Validator_Boundary --> Controller_Control : "validates for"
+    Controller_Control --> Entity_Entity : "calls methods"
+    Entity_Entity --> PrismaSchema_Entity : "uses ORM"
+    Controller_Control --> DTO_Entity : "uses types"
 
-    UserService --> UserRepository : uses
-    VolunteerService --> VolunteerRepository : uses
-    CSROpportunityService --> CSROpportunityRepository : uses
-    CSROpportunityService --> OrganizationRepository : uses
-    MatchingService --> MatchingRepository : uses
-    MatchingService --> VolunteerRepository : uses
-    MatchingService --> CSROpportunityRepository : uses
+    note for Route_Boundary "BOUNDARY Layer:\nHTTP endpoints,\nmiddleware,\nvalidators"
+    note for Controller_Control "CONTROL Layer:\nBusiness logic\norchestration"
+    note for Entity_Entity "ENTITY Layer:\nDomain logic +\nData access\n(Repository Pattern)"
 ```
 
 ---
@@ -440,7 +673,7 @@ Mermaid diagrams render automatically on GitHub. Just view this file in your rep
 
 ### VS Code
 1. Install "Markdown Preview Mermaid Support" extension
-2. Open this file and click the preview button
+2. Open this file and click the preview button (Ctrl+Shift+V or Cmd+Shift+V)
 
 ### Online Viewers
 - [Mermaid Live Editor](https://mermaid.live/)
@@ -448,10 +681,30 @@ Mermaid diagrams render automatically on GitHub. Just view this file in your rep
 
 ---
 
-## Notes
-- **PK** = Primary Key
-- **FK** = Foreign Key
-- **UK** = Unique Key
-- Diagrams render automatically on GitHub
-- For PlantUML diagrams, see [CLASS_DIAGRAMS.md](./CLASS_DIAGRAMS.md)
+## Legend
 
+### Symbols
+- **PK** = Primary Key
+- **FK** = Foreign Key  
+- **UK** = Unique Key
+- **$** = Static method
+- **+** = Public method/property
+- **-** = Private method/property
+
+### Method Naming Convention
+- **Instance methods** (lowercase start): Business logic - `isActive()`, `isPIN()`
+- **Static methods** (with $): Data access - `findById()$`, `create()$`
+
+---
+
+## Notes
+
+- All diagrams reflect the **actual implementation** as of October 2025
+- Entity classes use **Repository Pattern** (domain logic + data access)
+- Controllers call Entity classes (not Prisma directly)
+- No service layer exists in this architecture
+- For PlantUML diagrams, see [CLASS_DIAGRAMS_PLANTUML.md](./CLASS_DIAGRAMS_PLANTUML.md)
+
+---
+
+**Last Updated:** October 22, 2025
