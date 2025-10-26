@@ -1,9 +1,21 @@
 import { UserAccount as PrismaUserAccount, UserProfileRole, UserStatus, UserProfile, ProfileStatus } from '@prisma/client';
 import { prisma } from '../config/database';
+import { comparePassword } from '../utils/password';
+import { generateToken } from '../utils/jwt';
 
 type UserAccountWithProfile = PrismaUserAccount & {
   userProfile?: UserProfile | null;
 };
+
+/**
+ * Login Result Interface
+ * Returns user account, token, and role after successful login
+ */
+export interface LoginResult {
+  user: UserAccountEntity;
+  token: string;
+  role: UserProfileRole;
+}
 
 /**
  * UserAccount Entity Class
@@ -245,6 +257,59 @@ export class UserAccountEntity implements PrismaUserAccount {
       },
     });
     return user ? new UserAccountEntity(user) : null;
+  }
+
+  /**
+   * Login method - Handles complete login logic
+   * Checks user existence, active status, password, and generates token
+   * Returns user object with token and role
+   */
+  static async login(email: string, password: string): Promise<LoginResult> {
+    // Find user by email
+    const userData = await prisma.userAccount.findUnique({
+      where: { email },
+      include: {
+        userProfile: true,
+      },
+    });
+
+    // Check if user exists
+    if (!userData) {
+      throw new Error('Invalid email or password');
+    }
+
+    const user = new UserAccountEntity(userData);
+
+    // Check if user is active
+    if (!user.isActive()) {
+      throw new Error('Account is not active');
+    }
+
+    // Verify password
+    const isPasswordValid = await comparePassword(password, user.password);
+    if (!isPasswordValid) {
+      throw new Error('Invalid email or password');
+    }
+
+    // Get user role
+    const role = user.getRole();
+    if (!role) {
+      throw new Error('User profile not found');
+    }
+
+    // Generate token
+    const token = generateToken({
+      userId: user.id,
+      email: user.email,
+      role,
+    });
+
+    // Return user object with token and role
+    return {
+      user,
+      token,
+      role,
+    };
   }
 
   /**

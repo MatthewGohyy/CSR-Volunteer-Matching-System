@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserAccountEntity } from '../../entities/UserAccount.entity';
-import { comparePassword } from '../../utils/password';
-import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -13,56 +11,34 @@ import { AppError } from '../../middleware/errorHandler';
  * - Story #24: As a CSR Rep, I want to log in to my account
  * - Story #33: As a Platform Manager, I want to log in to my account
  * 
- * Architecture: BCE framework - Controller calls Entity methods directly
+ * Architecture: BCE framework - Controller calls Entity login method (contains all login logic)
  */
 export class LoginController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password } = req.body;
 
-      // Find user via Entity (direct database access)
-      const user = await UserAccountEntity.findByEmail(email);
+      // Call Entity login method (contains all login logic)
+      const result = await UserAccountEntity.login(email, password);
 
-      if (!user) {
-        throw new AppError('Invalid email or password', 401);
-      }
-
-      // Check if user is active using entity method
-      if (!user.isActive()) {
-        throw new AppError('Account is not active', 403);
-      }
-
-      // Verify password
-      const isPasswordValid = await comparePassword(password, user.password);
-      if (!isPasswordValid) {
-        throw new AppError('Invalid email or password', 401);
-      }
-
-      // Get user role
-      const role = user.getRole();
-      if (!role) {
-        throw new AppError('User profile not found', 404);
-      }
-
-      // Generate token
-      const token = generateToken({
-        userId: user.id,
-        email: user.email,
-        role,
-      });
-
+      // Return success response
       res.json({
         message: 'Login successful',
         user: {
-          id: user.id,
-          email: user.email,
-          role,
-          name: user.name,
+          id: result.user.id,
+          email: result.user.email,
+          role: result.role,
+          name: result.user.name,
         },
-        token,
+        token: result.token,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message) {
+        next(new AppError(error.message, 401));
+      } else {
+        next(error);
+      }
     }
   }
 }
