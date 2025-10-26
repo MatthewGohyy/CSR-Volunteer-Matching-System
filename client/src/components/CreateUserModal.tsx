@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { X, User, Building2, Mail, Lock, Phone, MapPin, Calendar, Settings } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { X, User, Building2, Mail, Lock, Phone, MapPin, Calendar, Settings, Shield } from 'lucide-react';
 import api from '../config/api';
-import { CreateUserData, AdminUser } from '../types';
+import { CreateUserData, AdminUser, UserProfile } from '../types';
 
 interface CreateUserModalProps {
   onClose: () => void;
@@ -13,10 +13,9 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
   const [formData, setFormData] = useState<any>({
     email: '',
     password: '',
-    role: 'PIN',
     userProfileId: '',
-    // PIN fields
     name: '',
+    // PIN fields
     age: undefined,
     location: '',
     phoneNumber: '',
@@ -34,6 +33,17 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // Fetch available profiles
+  const { data: profilesData } = useQuery({
+    queryKey: ['admin-profiles'],
+    queryFn: async () => {
+      const response = await api.get<{ profiles: UserProfile[] }>('/admin/profiles');
+      return response.data;
+    },
+  });
+  
+  const profiles = profilesData?.profiles || [];
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: CreateUserData): Promise<AdminUser> => {
@@ -75,35 +85,13 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
-
-    // PIN specific validation
-    if (formData.role === 'PIN') {
-      if (!formData.name?.trim()) {
-        newErrors.name = 'Name is required';
-      }
+    
+    if (!formData.userProfileId) {
+      newErrors.userProfileId = 'Please select a user profile';
     }
 
-    // CSR Rep specific validation
-    if (formData.role === 'CSR_REP') {
-      if (!formData.companyName?.trim()) {
-        newErrors.companyName = 'Company name is required';
-      }
-      if (!formData.companyRegistrationNumber?.trim()) {
-        newErrors.companyRegistrationNumber = 'Company registration number is required';
-      }
-      if (!formData.contactPerson?.trim()) {
-        newErrors.contactPerson = 'Contact person is required';
-      }
-      if (!formData.phoneNumber?.trim()) {
-        newErrors.phoneNumber = 'Phone number is required';
-      }
-    }
-
-    // Platform Manager specific validation
-    if (formData.role === 'PLATFORM_MANAGER') {
-      if (!formData.fullName?.trim()) {
-        newErrors.fullName = 'Full name is required';
-      }
+    if (!formData.name?.trim()) {
+      newErrors.name = 'Name is required';
     }
 
     setErrors(newErrors);
@@ -119,31 +107,25 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
 
     setErrors({});
     
-    // Prepare data based on user type
-    const submitData: CreateUserData = {
+    // Prepare data - send all form data
+    const submitData: any = {
       email: formData.email,
       password: formData.password,
+      userProfileId: formData.userProfileId,
       name: formData.name,
+      ...(formData.age && { age: parseInt(formData.age.toString()) }),
+      ...(formData.location && { location: formData.location }),
+      ...(formData.phoneNumber && { phoneNumber: formData.phoneNumber }),
+      ...(formData.accessibilityNeeds && { accessibilityNeeds: formData.accessibilityNeeds }),
+      ...(formData.companyName && { companyName: formData.companyName }),
+      ...(formData.companyRegistrationNumber && { companyRegistrationNumber: formData.companyRegistrationNumber }),
+      ...(formData.industry && { industry: formData.industry }),
+      ...(formData.contactPerson && { contactPerson: formData.contactPerson }),
+      ...(formData.companyAddress && { companyAddress: formData.companyAddress }),
+      ...(formData.fullName && { fullName: formData.fullName }),
+      ...(formData.department && { department: formData.department }),
+      ...(formData.phone && { phone: formData.phone }),
     };
-
-    if (formData.role === 'PIN') {
-      submitData.name = formData.name;
-      submitData.age = formData.age ? parseInt(formData.age.toString()) : undefined;
-      submitData.location = formData.location;
-      submitData.phoneNumber = formData.phoneNumber;
-      submitData.accessibilityNeeds = formData.accessibilityNeeds;
-    } else if (formData.role === 'CSR_REP') {
-      submitData.companyName = formData.companyName;
-      submitData.companyRegistrationNumber = formData.companyRegistrationNumber;
-      submitData.industry = formData.industry;
-      submitData.contactPerson = formData.contactPerson;
-      submitData.phoneNumber = formData.phoneNumber;
-      submitData.companyAddress = formData.companyAddress;
-    } else if (formData.role === 'PLATFORM_MANAGER') {
-      submitData.fullName = formData.fullName;
-      submitData.department = formData.department;
-      submitData.phone = formData.phone;
-    }
 
     createUserMutation.mutate(submitData);
   };
@@ -169,66 +151,57 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
             </div>
           )}
 
-          {/* User Type Selection */}
+          {/* User Profile Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              User Type
+              User Profile *
             </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <label className={`relative flex items-center p-4 border rounded-lg cursor-pointer ${
-                formData.userType === 'PIN' ? 'border-primary-500 bg-primary-50' : 'border-gray-300'
-              }`}>
-                <input
-                  type="radio"
-                  name="userType"
-                  value="PIN"
-                  checked={formData.userType === 'PIN'}
-                  onChange={handleInputChange}
-                  className="sr-only"
-                />
-                <User className="h-5 w-5 text-primary-600 mr-3" />
-                <div>
-                  <div className="text-sm font-medium text-gray-900">Person in Need</div>
-                  <div className="text-sm text-gray-500">Individual seeking help</div>
-                </div>
-              </label>
+            <select
+              name="userProfileId"
+              value={formData.userProfileId}
+              onChange={handleInputChange}
+              className={`block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 sm:text-sm ${
+                errors.userProfileId
+                  ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                  : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
+              }`}
+            >
+              <option value="">Select a profile</option>
+              {profiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.name}
+                </option>
+              ))}
+            </select>
+            {errors.userProfileId && (
+              <p className="mt-2 text-sm text-red-600">{errors.userProfileId}</p>
+            )}
+          </div>
 
-              <label className={`relative flex items-center p-4 border rounded-lg cursor-pointer ${
-                formData.userType === 'CSR_REP' ? 'border-primary-500 bg-primary-50' : 'border-gray-300'
-              }`}>
-                <input
-                  type="radio"
-                  name="userType"
-                  value="CSR_REP"
-                  checked={formData.userType === 'CSR_REP'}
-                  onChange={handleInputChange}
-                  className="sr-only"
-                />
-                <Building2 className="h-5 w-5 text-primary-600 mr-3" />
-                <div>
-                  <div className="text-sm font-medium text-gray-900">CSR Representative</div>
-                  <div className="text-sm text-gray-500">Corporate volunteer</div>
-                </div>
-              </label>
-
-              <label className={`relative flex items-center p-4 border rounded-lg cursor-pointer ${
-                formData.userType === 'PLATFORM_MANAGER' ? 'border-primary-500 bg-primary-50' : 'border-gray-300'
-              }`}>
-                <input
-                  type="radio"
-                  name="userType"
-                  value="PLATFORM_MANAGER"
-                  checked={formData.userType === 'PLATFORM_MANAGER'}
-                  onChange={handleInputChange}
-                  className="sr-only"
-                />
-                <Settings className="h-5 w-5 text-primary-600 mr-3" />
-                <div>
-                  <div className="text-sm font-medium text-gray-900">Platform Manager</div>
-                  <div className="text-sm text-gray-500">Platform administrator</div>
-                </div>
-              </label>
+          {/* Name Field */}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              Full Name *
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                id="name"
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={handleInputChange}
+                className={`block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 sm:text-sm ${
+                  errors.name
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
+                }`}
+                placeholder="Enter full name"
+              />
             </div>
+            {errors.name && (
+              <p className="mt-2 text-sm text-red-600">{errors.name}</p>
+            )}
           </div>
 
           {/* Common Fields */}
@@ -284,9 +257,11 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
             </div>
           </div>
 
-          {/* PIN Specific Fields */}
-          {formData.userType === 'PIN' && (
-            <>
+          {/* Optional Additional Fields - These are now just optional fields that can be used by any profile */}
+          <div className="border-t pt-4 mt-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Additional Information (Optional)</h4>
+            {/* Show all optional fields instead of conditional blocks */}
+            <div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -386,12 +361,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
                   placeholder="Describe any accessibility needs"
                 />
               </div>
-            </>
-          )}
-
-          {/* CSR Rep Specific Fields */}
-          {formData.userType === 'CSR_REP' && (
-            <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -527,12 +496,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
                   </div>
                 </div>
               </div>
-            </>
-          )}
-
-          {/* Platform Manager Specific Fields */}
-          {formData.userType === 'PLATFORM_MANAGER' && (
-            <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -592,8 +555,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
                   />
                 </div>
               </div>
-            </>
-          )}
+            </div>
+          </div>
 
           {/* Submit Buttons */}
           <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">

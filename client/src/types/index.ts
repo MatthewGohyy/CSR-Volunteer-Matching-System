@@ -1,5 +1,5 @@
 // User Types
-export type UserRole = 'PIN' | 'CSR_REP' | 'USER_ADMIN' | 'PLATFORM_MANAGER';
+export type UserRole = 'Person in Need' | 'CSR Representative' | 'User Administrator' | 'Platform Manager';
 export type UserType = UserRole; // Legacy alias
 export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'DELETED';
 export type ProfileStatus = 'ACTIVE' | 'SUSPENDED';
@@ -234,5 +234,20 @@ export interface UsersResponse {
   total: number;
   page: number;
   limit: number;
+}
+
+// UserProfile types (dynamically created profiles)
+export interface UserProfile {
+  id: string;
+  name: string; // Unique identifier
+  description: string | null;
+  permissions: any; // JSON type
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserProfilesResponse {
+  profiles: UserProfile[];
 }
 

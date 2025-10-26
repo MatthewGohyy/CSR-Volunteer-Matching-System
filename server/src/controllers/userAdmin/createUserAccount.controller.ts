@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { hashPassword } from '../../utils/password';
 import { AppError } from '../../middleware/errorHandler';
-import { UserProfileRole, UserStatus } from '@prisma/client';
+import { UserStatus } from '@prisma/client';
 import { prisma } from '../../config/database';
 
 /**

@@ -1,35 +1,35 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserProfileEntity } from '../../entities/UserProfile.entity';
 import { AppError } from '../../middleware/errorHandler';
-import { UserProfileRole } from '@prisma/client';
 
 /**
  * Create User Profile Controller
  * Story #8: As a User Admin, I want to create user profiles so that new roles can be assigned.
  * 
- * NOTE: With the new consolidated structure, profiles are created as part of user accounts.
- * This endpoint now updates existing user accounts with profile data.
+ * Creates a new role/profile definition in the system.
  */
 export class CreateUserProfileController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userId, profileData } = req.body;
+      const { name, description, isActive, permissions } = req.body;
 
-      const user = await UserAccountEntity.findById(userId);
-      if (!user) {
-        throw new AppError('User not found', 404);
+      // Check if profile with this name already exists
+      const existingProfile = await UserProfileEntity.findByName(name);
+      if (existingProfile) {
+        throw new AppError('Profile with this name already exists', 409);
       }
 
-      // Update user with profile data
-      const updatedUser = await UserAccountEntity.update(userId, profileData);
+      // Create new profile
+      const profile = await UserProfileEntity.create({
+        name,
+        description,
+        isActive: isActive !== undefined ? isActive : true,
+        permissions,
+      });
 
       res.status(201).json({
-        message: 'User profile updated successfully',
-        user: {
-          id: updatedUser.id,
-          name: updatedUser.name,
-          role: updatedUser.getRole(),
-        },
+        message: 'User profile created successfully',
+        profile: profile,
       });
     } catch (error) {
       next(error);

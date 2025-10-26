@@ -1,4 +1,4 @@
-import { UserAccount as PrismaUserAccount, UserProfileRole, UserStatus, UserProfile, ProfileStatus } from '@prisma/client';
+import { UserAccount as PrismaUserAccount, UserStatus, UserProfile, ProfileStatus } from '@prisma/client';
 import { prisma } from '../config/database';
 import { comparePassword } from '../utils/password';
 import { generateToken } from '../utils/jwt';
@@ -14,7 +14,7 @@ type UserAccountWithProfile = PrismaUserAccount & {
 export interface LoginResult {
   user: UserAccountEntity;
   token: string;
-  role: UserProfileRole;
+  role: string; // Profile name (was UserProfileRole)
 }
 
 /**
@@ -111,38 +111,45 @@ export class UserAccountEntity implements PrismaUserAccount {
   }
 
   /**
-   * Get user role from profile
+   * Get user profile name (now serves as the identifier)
    */
-  getRole(): UserProfileRole | null {
-    return this.userProfile?.role || null;
+  getProfileName(): string | null {
+    return this.userProfile?.name || null;
   }
 
   /**
-   * Check if user is admin based on profile role
+   * Get user role - returns profile name (for backward compatibility)
+   */
+  getRole(): string | null {
+    return this.userProfile?.name || null;
+  }
+
+  /**
+   * Check if user is admin based on profile name
    */
   isAdmin(): boolean {
-    return this.userProfile?.role === UserProfileRole.USER_ADMIN;
+    return this.userProfile?.name === 'User Administrator' || this.userProfile?.name === 'USER_ADMIN';
   }
 
   /**
    * Check if user is PIN (Person In Need)
    */
   isPIN(): boolean {
-    return this.userProfile?.role === UserProfileRole.PIN;
+    return this.userProfile?.name === 'Person in Need' || this.userProfile?.name === 'PIN' || this.userProfile?.name === 'CSR_REP';
   }
 
   /**
    * Check if user is CSR Representative
    */
   isCSRRep(): boolean {
-    return this.userProfile?.role === UserProfileRole.CSR_REP;
+    return this.userProfile?.name === 'CSR Representative' || this.userProfile?.name === 'CSR_REP';
   }
 
   /**
    * Check if user is Platform Manager
    */
   isPlatformManager(): boolean {
-    return this.userProfile?.role === UserProfileRole.PLATFORM_MANAGER;
+    return this.userProfile?.name === 'Platform Manager' || this.userProfile?.name === 'PLATFORM_MANAGER';
   }
 
   /**
@@ -313,28 +320,36 @@ export class UserAccountEntity implements PrismaUserAccount {
   }
 
   /**
-   * Find user by user ID with role check
+   * Find user by user ID with profile name check
    * Used for PIN/CSR Rep operations
    */
-  static async findByUserIdWithRole(userId: string, role: UserProfileRole) {
+  static async findByUserIdWithProfileName(userId: string, profileName: string) {
     const user = await prisma.userAccount.findUnique({
       where: { id: userId },
       include: {
         userProfile: true,
       },
     });
-    if (!user || user.userProfile?.role !== role) return null;
+    if (!user || user.userProfile?.name !== profileName) return null;
     return new UserAccountEntity(user);
   }
 
   /**
-   * Find users by profile role
+   * Find user by user ID with role check (deprecated - use findByUserIdWithProfileName)
+   * @deprecated Use findByUserIdWithProfileName instead
    */
-  static async findByProfileRole(role: UserProfileRole, page: number = 1, limit: number = 10) {
+  static async findByUserIdWithRole(userId: string, profileName: string) {
+    return this.findByUserIdWithProfileName(userId, profileName);
+  }
+
+  /**
+   * Find users by profile name (replacing findByProfileRole)
+   */
+  static async findByProfileName(profileName: string, page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
     const users = await prisma.userAccount.findMany({
       where: { 
-        userProfile: { role } 
+        userProfile: { name: profileName } 
       },
       skip,
       take: limit,
@@ -346,6 +361,14 @@ export class UserAccountEntity implements PrismaUserAccount {
       },
     });
     return users.map(user => new UserAccountEntity(user));
+  }
+
+  /**
+   * Find users by profile role (deprecated - use findByProfileName)
+   * @deprecated Use findByProfileName instead
+   */
+  static async findByProfileRole(roleName: string, page: number = 1, limit: number = 10) {
+    return this.findByProfileName(roleName, page, limit);
   }
 
   /**
@@ -472,14 +495,22 @@ export class UserAccountEntity implements PrismaUserAccount {
   }
 
   /**
-   * Count users by profile role
+   * Count users by profile name
    */
-  static async countByProfileRole(role: UserProfileRole): Promise<number> {
+  static async countByProfileName(profileName: string): Promise<number> {
     return prisma.userAccount.count({
       where: { 
-        userProfile: { role } 
+        userProfile: { name: profileName } 
       },
     });
+  }
+
+  /**
+   * Count users by profile role (deprecated - use countByProfileName)
+   * @deprecated Use countByProfileName instead
+   */
+  static async countByProfileRole(roleName: string): Promise<number> {
+    return this.countByProfileName(roleName);
   }
 
   /**

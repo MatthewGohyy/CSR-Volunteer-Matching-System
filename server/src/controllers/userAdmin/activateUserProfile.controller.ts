@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
-import { UserProfileRole } from '@prisma/client';
 
 /**
  * Activate User Profile Controller

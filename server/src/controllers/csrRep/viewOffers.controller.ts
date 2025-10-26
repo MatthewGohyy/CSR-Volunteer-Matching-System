@@ -1,5 +1,4 @@
 import { Response, NextFunction } from 'express';
-import { UserProfileRole } from '@prisma/client';
 import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { VolunteerOfferEntity } from '../../entities/VolunteerOffer.entity';
 import { AppError } from '../../middleware/errorHandler';
@@ -16,7 +15,7 @@ export class ViewOffersController {
 
       // Get CSR Rep profile
 
-      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.CSR_REP);
+      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'CSR Representative');
       if (!user) {
         throw new AppError('CSR Rep profile not found', 404);
       }

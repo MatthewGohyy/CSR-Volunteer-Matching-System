@@ -2,7 +2,6 @@ import { Response, NextFunction } from 'express';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 import { UserAccountEntity } from '../../entities/UserAccount.entity';
-import { UserProfileRole } from '@prisma/client';
 
 /**
  * Update Platform Manager Profile Controller
@@ -16,7 +15,7 @@ export class UpdateProfileController {
       const { fullName, department, phone } = req.body;
 
       // Get Platform Manager profile
-      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.PLATFORM_MANAGER);
+      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'Platform Manager');
       if (!user) {
         throw new AppError('Platform Manager profile not found', 404);
       }

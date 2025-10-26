@@ -3,7 +3,7 @@ import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { hashPassword } from '../../utils/password';
 import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
-import { UserProfileRole, UserStatus } from '@prisma/client';
+import { UserStatus } from '@prisma/client';
 import { prisma } from '../../config/database';
 
 /**
@@ -27,7 +27,7 @@ export class RegisterPINController {
 
       // Get PIN profile
       const pinProfile = await prisma.userProfile.findUnique({
-        where: { role: UserProfileRole.PIN }
+        where: { name: 'Person in Need' }
       });
 
       if (!pinProfile) {

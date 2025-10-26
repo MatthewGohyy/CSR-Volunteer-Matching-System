@@ -1,17 +1,16 @@
-import { UserProfile as PrismaUserProfile, UserProfileRole } from '@prisma/client';
+import { UserProfile as PrismaUserProfile } from '@prisma/client';
 import { prisma } from '../config/database';
 
 /**
  * UserProfile Entity Class
  * 
- * Represents a user profile/role in the system.
- * Expected to have exactly 4 records (one for each role).
+ * Represents a user profile in the system.
+ * Profiles are dynamically created - name serves as the unique identifier.
  * 
  * Follows the BCE framework - Entity handles all database operations.
  */
 export class UserProfileEntity implements PrismaUserProfile {
   id: string;
-  role: UserProfileRole;
   name: string;
   description: string | null;
   permissions: any; // Json type
@@ -21,7 +20,6 @@ export class UserProfileEntity implements PrismaUserProfile {
 
   constructor(data: PrismaUserProfile) {
     this.id = data.id;
-    this.role = data.role;
     this.name = data.name;
     this.description = data.description;
     this.permissions = data.permissions;
@@ -37,34 +35,6 @@ export class UserProfileEntity implements PrismaUserProfile {
     return this.isActive;
   }
 
-  /**
-   * Check if this is CSR Rep profile
-   */
-  isCSRRep(): boolean {
-    return this.role === UserProfileRole.CSR_REP;
-  }
-
-  /**
-   * Check if this is PIN profile
-   */
-  isPIN(): boolean {
-    return this.role === UserProfileRole.PIN;
-  }
-
-  /**
-   * Check if this is User Admin profile
-   */
-  isUserAdmin(): boolean {
-    return this.role === UserProfileRole.USER_ADMIN;
-  }
-
-  /**
-   * Check if this is Platform Manager profile
-   */
-  isPlatformManager(): boolean {
-    return this.role === UserProfileRole.PLATFORM_MANAGER;
-  }
-
   // ============================================
   // CRUD Methods (Static) - Database Operations
   // ============================================
@@ -75,7 +45,7 @@ export class UserProfileEntity implements PrismaUserProfile {
   static async findAll() {
     const profiles = await prisma.userProfile.findMany({
       orderBy: {
-        role: 'asc',
+        name: 'asc',
       },
     });
     return profiles.map(profile => new UserProfileEntity(profile));
@@ -92,11 +62,11 @@ export class UserProfileEntity implements PrismaUserProfile {
   }
 
   /**
-   * Find profile by role
+   * Find profile by name (name is now the unique identifier)
    */
-  static async findByRole(role: UserProfileRole) {
+  static async findByName(name: string) {
     const profile = await prisma.userProfile.findUnique({
-      where: { role },
+      where: { name },
     });
     return profile ? new UserProfileEntity(profile) : null;
   }
@@ -108,7 +78,7 @@ export class UserProfileEntity implements PrismaUserProfile {
     const profiles = await prisma.userProfile.findMany({
       where: { isActive: true },
       orderBy: {
-        role: 'asc',
+        name: 'asc',
       },
     });
     return profiles.map(profile => new UserProfileEntity(profile));
@@ -118,7 +88,6 @@ export class UserProfileEntity implements PrismaUserProfile {
    * Create a new profile
    */
   static async create(data: {
-    role: UserProfileRole;
     name: string;
     description?: string;
     permissions?: any;

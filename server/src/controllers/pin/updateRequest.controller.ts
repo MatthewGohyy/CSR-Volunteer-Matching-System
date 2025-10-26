@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserAccountEntity } from '../../entities/UserAccount.entity';
-import { UserProfileRole } from '@prisma/client';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 
@@ -16,7 +15,7 @@ export class UpdateRequestController {
       const { id } = req.params;
       const { title, description, urgency, dateNeeded, location, status } = req.body;
 
-      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.PIN);
+      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'Person in Need');
       if (!user) {
         throw new AppError('PIN profile not found', 404);
       }

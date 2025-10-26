@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserProfileRole } from "@prisma/client";
 import { RequestEntity } from '../../entities/Request.entity';
 import { RequestStatus } from '@prisma/client';
 

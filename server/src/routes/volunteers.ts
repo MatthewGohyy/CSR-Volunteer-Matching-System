@@ -8,12 +8,11 @@ import { MarkAllNotificationsReadController } from '../controllers/pin/markAllNo
 import { SearchCompletedRequestsController } from '../controllers/pin/searchCompletedRequests.controller';
 import { ViewCompletedRequestsController } from '../controllers/pin/viewCompletedRequests.controller';
 import { authenticate, authorize } from '../middleware/auth';
-import { UserProfileRole } from '@prisma/client';
 
 const router = Router();
 
 // All routes require PIN authentication
-router.use(authenticate, authorize(UserProfileRole.PIN));
+router.use(authenticate, authorize('Person in Need'));
 
 // Profile management
 router.get('/profile', GetProfileController.handle);

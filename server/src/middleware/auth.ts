@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { UserProfileRole, UserStatus } from '@prisma/client';
+import { UserStatus } from '@prisma/client';
 import { UserAccountEntity } from '../entities/UserAccount.entity';
 
 export interface AuthRequest extends Request {
   user?: {
     userId: string;
     email: string;
-    role: UserProfileRole;
+    role: string; // Profile name (was UserProfileRole)
   };
 }
 
@@ -32,7 +32,7 @@ export const authenticate = async (
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
       userId: string;
       email: string;
-      role: UserProfileRole;
+      role: string;
     };
 
     // Check if user account exists and is active
@@ -71,7 +71,7 @@ export const authenticate = async (
  * This only checks the USER TYPE, not the profile status
  * For profile-specific actions, use requireActiveProfile middleware
  */
-export const authorize = (...allowedRoles: UserProfileRole[]) => {
+export const authorize = (...allowedRoles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Authentication required' });

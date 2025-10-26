@@ -31,16 +31,16 @@ const LoginPage: React.FC = () => {
       console.log('User role:', role);
       
       switch (role) {
-        case 'PIN':
+        case 'Person in Need':
           navigate('/pin/dashboard');
           break;
-        case 'CSR_REP':
+        case 'CSR Representative':
           navigate('/csr/dashboard');
           break;
-        case 'PLATFORM_MANAGER':
+        case 'Platform Manager':
           navigate('/platform-manager/dashboard');
           break;
-        case 'USER_ADMIN':
+        case 'User Administrator':
           navigate('/admin/dashboard');
           break;
         default:

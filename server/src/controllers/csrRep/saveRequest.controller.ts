@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserProfileRole } from '@prisma/client';
 import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { ShortlistEntity } from '../../entities/Shortlist.entity';
@@ -16,7 +15,7 @@ export class SaveRequestController {
       const { requestId } = req.body;
 
 
-      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.CSR_REP);
+      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'CSR Representative');
       if (!user) throw new AppError('CSR Rep profile not found', 404);
 
       const request = await RequestEntity.findById(requestId);

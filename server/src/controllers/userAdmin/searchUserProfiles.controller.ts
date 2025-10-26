@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserAccountEntity } from '../../entities/UserAccount.entity';
-import { UserProfileRole } from '@prisma/client';
 
 /**
  * Search User Profiles Controller
@@ -17,7 +16,7 @@ export class SearchUserProfilesController {
       if (query && typeof query === 'string') {
         users = await UserAccountEntity.search(query, 1, 1000);
       } else if (userType) {
-        users = await UserAccountEntity.findByProfileRole(userType as UserProfileRole, 1, 1000);
+        users = await UserAccountEntity.findByProfileRole(userType as string, 1, 1000);
       } else {
         users = await UserAccountEntity.findAll(1, 1000);
       }

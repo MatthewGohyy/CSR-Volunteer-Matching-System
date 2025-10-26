@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserAccountEntity } from '../../entities/UserAccount.entity';
-import { UserProfileRole, UserStatus } from '@prisma/client';
+import { UserStatus } from '@prisma/client';
 
 /**
  * Search User Accounts Controller
@@ -26,10 +26,10 @@ export class SearchUserAccountsController {
         const allMatches = await UserAccountEntity.search(query, 1, 9999);
         total = allMatches.length;
       }
-      // Filter by user role
+      // Filter by user profile name
       else if (userType) {
-        users = await UserAccountEntity.findByProfileRole(userType as UserProfileRole, page, limit);
-        total = await UserAccountEntity.countByProfileRole(userType as UserProfileRole);
+        users = await UserAccountEntity.findByProfileRole(userType as string, page, limit);
+        total = await UserAccountEntity.countByProfileRole(userType as string);
       }
       // Filter by status
       else if (status) {

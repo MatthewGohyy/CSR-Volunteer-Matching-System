@@ -3,7 +3,7 @@ import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { hashPassword } from '../../utils/password';
 import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
-import { UserProfileRole, UserStatus } from '@prisma/client';
+import { UserStatus } from '@prisma/client';
 import { prisma } from '../../config/database';
 
 /**
@@ -34,7 +34,7 @@ export class RegisterCSRRepController {
 
       // Get CSR Rep profile
       const csrRepProfile = await prisma.userProfile.findUnique({
-        where: { role: UserProfileRole.CSR_REP }
+        where: { name: 'CSR Representative' }
       });
 
       if (!csrRepProfile) {

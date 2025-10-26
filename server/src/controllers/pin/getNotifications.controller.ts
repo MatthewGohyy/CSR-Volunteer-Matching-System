@@ -1,5 +1,4 @@
 import { Response, NextFunction } from 'express';
-import { UserProfileRole } from "@prisma/client";
 import { NotificationEntity } from '../../entities/Notification.entity';
 import { AuthRequest } from '../../middleware/auth';
 

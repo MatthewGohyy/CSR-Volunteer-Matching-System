@@ -16,7 +16,6 @@ import {
   updateRequestValidation,
   requestIdValidation,
 } from '../validators/request.validator';
-import { UserProfileRole } from '@prisma/client';
 
 const router = Router();
 
@@ -27,19 +26,19 @@ router.get('/categories', GetCategoriesController.handle);
 router.get(
   '/search',
   authenticate,
-  authorize(UserProfileRole.CSR_REP),
+  authorize('CSR Representative'),
   CSRSearchRequestsController.handle
 );
 router.get(
   '/',
   authenticate,
-  authorize(UserProfileRole.CSR_REP),
+  authorize('CSR Representative'),
   CSRViewRequestsController.handle
 );
 router.get(
   '/:id',
   authenticate,
-  authorize(UserProfileRole.CSR_REP),
+  authorize('CSR Representative'),
   validate(requestIdValidation),
   CSRViewRequestsController.handle
 );
@@ -49,7 +48,7 @@ router.get(
 router.get(
   '/my/search',
   authenticate,
-  authorize(UserProfileRole.PIN),
+  authorize('Person in Need'),
   SearchMyRequestsController.handle
 );
 
@@ -57,7 +56,7 @@ router.get(
 router.get(
   '/my/requests',
   authenticate,
-  authorize(UserProfileRole.PIN),
+  authorize('Person in Need'),
   ViewMyRequestsController.handle
 );
 
@@ -65,7 +64,7 @@ router.get(
 router.get(
   '/my/:id/views',
   authenticate,
-  authorize(UserProfileRole.PIN),
+  authorize('Person in Need'),
   validate(requestIdValidation),
   ViewRequestViewsController.handle
 );
@@ -74,7 +73,7 @@ router.get(
 router.get(
   '/my/:id/shortlists',
   authenticate,
-  authorize(UserProfileRole.PIN),
+  authorize('Person in Need'),
   validate(requestIdValidation),
   ViewRequestShortlistsController.handle
 );
@@ -83,7 +82,7 @@ router.get(
 router.post(
   '/',
   authenticate,
-  authorize(UserProfileRole.PIN),
+  authorize('Person in Need'),
   validate(createRequestValidation),
   CreateRequestController.handle
 );
@@ -92,7 +91,7 @@ router.post(
 router.put(
   '/:id',
   authenticate,
-  authorize(UserProfileRole.PIN),
+  authorize('Person in Need'),
   validate(updateRequestValidation),
   UpdateRequestController.handle
 );
@@ -101,7 +100,7 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  authorize(UserProfileRole.PIN),
+  authorize('Person in Need'),
   validate(requestIdValidation),
   DeleteRequestController.handle
 );

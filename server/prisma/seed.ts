@@ -1,4 +1,4 @@
-import { PrismaClient, UserProfileRole, UserStatus } from '@prisma/client';
+import { PrismaClient, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -9,13 +9,12 @@ async function main() {
   // Hash password once (all test accounts use 'password123')
   const hashedPassword = await bcrypt.hash('password123', 10);
 
-  // 1. CREATE USER PROFILES (4 roles) - Expected to have only 4 records
+  // 1. CREATE USER PROFILES - name is now the unique identifier
   const userProfiles = await Promise.all([
     prisma.userProfile.upsert({
-      where: { role: UserProfileRole.USER_ADMIN },
+      where: { name: 'User Administrator' },
       update: {},
       create: {
-        role: UserProfileRole.USER_ADMIN,
         name: 'User Administrator',
         description: 'Manages user accounts and profiles',
         permissions: { manageUsers: true, manageProfiles: true },
@@ -23,10 +22,9 @@ async function main() {
       },
     }),
     prisma.userProfile.upsert({
-      where: { role: UserProfileRole.PIN },
+      where: { name: 'Person in Need' },
       update: {},
       create: {
-        role: UserProfileRole.PIN,
         name: 'Person in Need',
         description: 'Recipient of volunteer assistance',
         permissions: { createRequests: true, viewMatches: true },
@@ -34,10 +32,9 @@ async function main() {
       },
     }),
     prisma.userProfile.upsert({
-      where: { role: UserProfileRole.CSR_REP },
+      where: { name: 'CSR Representative' },
       update: {},
       create: {
-        role: UserProfileRole.CSR_REP,
         name: 'CSR Representative',
         description: 'Corporate volunteer representative',
         permissions: { shortlistRequests: true, submitOffers: true },
@@ -45,10 +42,9 @@ async function main() {
       },
     }),
     prisma.userProfile.upsert({
-      where: { role: UserProfileRole.PLATFORM_MANAGER },
+      where: { name: 'Platform Manager' },
       update: {},
       create: {
-        role: UserProfileRole.PLATFORM_MANAGER,
         name: 'Platform Manager',
         description: 'Manages platform categories and reports',
         permissions: { manageCategories: true, viewReports: true },

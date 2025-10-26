@@ -10,12 +10,11 @@ import { ViewOffersController } from '../controllers/csrRep/viewOffers.controlle
 import { ViewMatchesController } from '../controllers/csrRep/viewMatches.controller';
 import { UpdateProfileController } from '../controllers/csrRep/updateProfile.controller';
 import { authenticate, authorize } from '../middleware/auth';
-import { UserProfileRole } from '@prisma/client';
 
 const router = Router();
 
 // All routes require CSR Rep authentication
-router.use(authenticate, authorize(UserProfileRole.CSR_REP));
+router.use(authenticate, authorize('CSR Representative'));
 
 // Shortlist management (Stories #28-#30)
 // Story #29: Search shortlist

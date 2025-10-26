@@ -1,40 +1,31 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserProfileEntity } from '../../entities/UserProfile.entity';
 import { AppError } from '../../middleware/errorHandler';
-import { UserProfileRole } from '@prisma/client';
 
 /**
  * View User Profiles Controller
  * 
  * Story #9: As a User Admin, I want to view user profiles so that I can update the details.
+ * 
+ * Note: This endpoint returns UserProfile entities (role definitions), not individual user accounts.
  */
 export class ViewUserProfilesController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const { userType } = req.query;
 
       if (id) {
-        const user = await UserAccountEntity.findById(id);
-        if (!user) {
-          throw new AppError('User not found', 404);
+        const profile = await UserProfileEntity.findById(id);
+        if (!profile) {
+          throw new AppError('Profile not found', 404);
         }
 
-        res.json({ 
-          user: user.toJSON(),
-          role: user.getRole(),
-        });
+        res.json({ profile });
         return;
       }
 
-      const users = userType 
-        ? await UserAccountEntity.findByProfileRole(userType as UserProfileRole, 1, 1000)
-        : await UserAccountEntity.findAll(1, 1000);
-
-      const profiles = users.map((user: UserAccountEntity) => ({
-        user: user.toJSON(),
-        role: user.getRole(),
-      }));
+      // Get all role profile definitions
+      const profiles = await UserProfileEntity.findAll();
 
       res.json({ profiles });
     } catch (error) {
