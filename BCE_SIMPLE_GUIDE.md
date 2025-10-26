@@ -13,8 +13,8 @@
 └─────────────────────────────────────────────────────────┘
 
     🚪 BOUNDARY = Dining Area       📂 Where: client/src/
-    (Where customers interact)      ├── components/ (UI)
-                                   ├── services/ (API calls)
+    (Where customers interact)      ├── components/ (UI + API calls)
+                                   ├── config/ (axios setup)
                                    └── React frontend
 
     👨‍🍳 CONTROL = Kitchen            📂 Where: server/src/
@@ -22,8 +22,9 @@
                                    ├── controllers/ (logic)
                                    └── Node.js backend
 
-    📦 ENTITY = Storage Room        📂 Where: server/prisma/
-    (Where ingredients are stored) └── schema.prisma
+    📦 ENTITY = Storage Room        📂 Where: server/src/entities/ + prisma/
+    (Where ingredients are stored) ├── entities/ (10 classes with logic)
+                                   └── schema.prisma (database structure)
 ```
 
 ---
@@ -36,7 +37,7 @@
 2. BOUNDARY (Frontend)          →  LoginPage.tsx
    ├── User enters email & password
    ├── Clicks login button
-   └── authService.login(email, pwd)
+   └── api.post('/auth/login', credentials)
                                    | HTTP POST
 3. CONTROL (Backend API)        →  POST /api/auth/login
    ├── routes/auth.ts receives request
@@ -54,8 +55,8 @@
                                    | Result
 6. CONTROL                      →  Format & send response
                                    | JSON
-7. BOUNDARY (Frontend)          →  authService receives response
-   ├── Store JWT token
+7. BOUNDARY (Frontend)          →  LoginPage.tsx receives response
+   ├── Store JWT token in localStorage
    ├── Update UI state
    └── Navigate to dashboard
                                    |
@@ -71,17 +72,20 @@ CSR-Volunteer-Matching-System/
 
     🚪 BOUNDARY LAYER (Frontend - User Interface)
     └── client/src/
-        ├── components/              → UI Components
+        ├── components/              → UI Components (with API calls)
         │   ├── LoginPage.tsx        → Login interface
-        │   ├── Dashboard.tsx        → User dashboard
         │   ├── AdminDashboard.tsx   → Admin interface
-        │   └── CreateUserModal.tsx  → User forms
+        │   ├── PINDashboard.tsx     → PIN dashboard
+        │   ├── CSRRepDashboard.tsx  → CSR Rep dashboard
+        │   ├── PlatformManagerDashboard.tsx → PM dashboard
+        │   ├── CreateUserModal.tsx  → User forms
+        │   └── UserDetailsModal.tsx → User details
         │
-        └── services/                → Backend communication
-            ├── authService.ts       → Auth API calls
-            ├── requestService.ts    → Request API calls
-            ├── adminService.ts      → Admin API calls
-            └── matchService.ts      → Match API calls
+        ├── config/                  → Configuration
+        │   └── api.ts               → Axios instance with interceptors
+        │
+        └── types/                   → TypeScript types
+            └── index.ts             → Type definitions
 
     ────────────────────────────────────────────────────
 
@@ -110,15 +114,24 @@ CSR-Volunteer-Matching-System/
 
     ────────────────────────────────────────────────────
 
-    📦 ENTITY LAYER (Backend - Data Persistence)
+    📦 ENTITY LAYER (Backend - Data + Domain Logic)
+    ├── server/src/entities/         → Entity Classes (Repository Pattern)
+    │   ├── User.entity.ts           → User domain + CRUD methods
+    │   ├── Request.entity.ts        → Request domain + CRUD methods
+    │   ├── PIN.entity.ts            → PIN domain + CRUD methods
+    │   ├── CSRRep.entity.ts         → CSR Rep domain + CRUD methods
+    │   ├── Match.entity.ts          → Match domain + CRUD methods
+    │   └── ... 5 more entity classes
+    │
+    ├── server/src/dto/              → Data Transfer Objects
+    │
     └── server/prisma/
-        └── schema.prisma            → Data models
-            ├── User
-            ├── PIN
-            ├── CSRRep
-            ├── Request
-            ├── VolunteerOffer
-            └── Match
+        └── schema.prisma            → Database Schema (structure only)
+            ├── User model
+            ├── PIN model  
+            ├── CSRRep model
+            ├── Request model
+            └── Match model
 ```
 
 ---
@@ -136,30 +149,62 @@ router.post('/',
 );
 ```
 
-### 2️⃣ CONTROL: Business logic
+### 2️⃣ CONTROL: Business logic (Controller)
 ```typescript
-// controllers/request.controller.ts
-static async createRequest(req, res) {
+// controllers/pin/createRequest.controller.ts
+import { RequestEntity } from '../../entities/Request.entity';
+import { PINEntity } from '../../entities/PIN.entity';
+
+static async handle(req, res) {
   const { categoryId, title, description, urgency } = req.body;
-  const pinId = req.user.pinId;
+  const userId = req.user.userId;
   
-  // 🧠 Business logic
-  const request = await prisma.request.create({
-    data: {
-      pinId,
-      categoryId,
-      title,
-      description,
-      urgency,
-      status: 'ACTIVE'
-    }
+  // Find PIN profile using Entity
+  const pin = await PINEntity.findByUserId(userId);
+  
+  // Create request using Entity (calls database)
+  const request = await RequestEntity.create({
+    pinId: pin.id,
+    categoryId,
+    title,
+    description,
+    urgency,
+    status: 'ACTIVE'
   });
   
   res.status(201).json({ request });
 }
 ```
 
-### 3️⃣ ENTITY: Database structure
+### 3️⃣ ENTITY: Domain + Data Access
+
+**A) Entity Class (Repository Pattern):**
+```typescript
+// entities/Request.entity.ts
+export class RequestEntity {
+  // Instance methods: Business logic
+  isActive(): boolean {
+    return this.status === RequestStatus.ACTIVE;
+  }
+  
+  isUrgent(): boolean {
+    return this.urgency === UrgencyLevel.HIGH;
+  }
+  
+  // Static methods: Data access (CRUD)
+  static async create(data) {
+    const request = await prisma.request.create({ data });
+    return new RequestEntity(request);
+  }
+  
+  static async findById(id: string) {
+    const request = await prisma.request.findUnique({ where: { id } });
+    return request ? new RequestEntity(request) : null;
+  }
+}
+```
+
+**B) Database Schema:**
 ```prisma
 // prisma/schema.prisma
 model Request {
@@ -196,22 +241,37 @@ model Request {
 ### When adding a new feature:
 
 ```
-STEP 1: ENTITY (Define data)
-└── Add to prisma/schema.prisma
-    model NewFeature {
-      id    String @id
-      name  String
+STEP 1: ENTITY (Define data & logic)
+├── A) Add to prisma/schema.prisma (database structure)
+│   model NewFeature {
+│     id    String @id
+│     name  String
+│   }
+│
+└── B) Create entities/NewFeature.entity.ts (domain + data access)
+    export class NewFeatureEntity {
+      // Instance: business logic
+      isValid(): boolean { ... }
+      
+      // Static: CRUD operations
+      static async create(data) { ... }
+      static async findById(id) { ... }
     }
 
-STEP 2: CONTROL (Write logic)
+STEP 2: CONTROL (Write business logic)
 └── Add to controllers/newFeature.controller.ts
+    import { NewFeatureEntity } from '../entities/NewFeature.entity';
+    
     static async create(req, res) {
-      // Business logic here
+      const feature = await NewFeatureEntity.create(req.body);
+      res.json({ feature });
     }
 
 STEP 3: BOUNDARY (Expose API)
 └── Add to routes/newFeature.ts
     router.post('/features',
+      authenticate,
+      validate(rules),
       NewFeatureController.create
     );
 ```

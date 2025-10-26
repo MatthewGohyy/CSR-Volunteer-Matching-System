@@ -59,22 +59,24 @@ BCE (Boundary-Control-Entity) or ECB (Entity-Control-Boundary) can be interprete
 └─────────────────────────────────────────────────────┘
 
 🚪 BOUNDARY (API Layer)
-   Location: server/src/routes/
-   └── HTTP endpoint definitions
-   └── Request routing
-   └── Input validation & middleware
+   Location: server/src/
+   ├── routes/ - HTTP endpoint definitions
+   ├── middleware/ - Authentication, validation, error handling
+   └── validators/ - Input validation rules
 
 🧠 CONTROL (Business Logic Layer)
    Location: server/src/controllers/
-   └── Use case implementation
-   └── Business rules
-   └── Data processing
+   └── 58 controller files organized by feature
+   └── Use case orchestration
+   └── Business workflow coordination
 
-💾 ENTITY (Data Layer)
-   Location: server/prisma/schema.prisma
-   └── Database models
-   └── Domain objects
-   └── Data relationships
+💾 ENTITY (Data + Domain Layer)
+   Location: server/src/ + server/prisma/
+   ├── entities/ - 10 Entity classes (Repository Pattern)
+   │   ├── Domain business logic (instance methods)
+   │   └── Data access CRUD (static methods)
+   ├── dto/ - Data Transfer Objects
+   └── prisma/schema.prisma - Database schema definition
 ```
 
 **When to Use This View:**
@@ -104,13 +106,15 @@ In academic discussions, our full system maps to classical BCE as:
 Classical BCE          →  Our Implementation
 ─────────────────────────────────────────────────────
 🚪 BOUNDARY (Frontend)  →  client/src/components/
-                          client/src/services/
+                          client/src/config/api.ts
 
-🧠 CONTROL (Backend)    →  server/src/routes/
-                          server/src/controllers/
+🧠 CONTROL (Backend)    →  server/src/controllers/ (58 files)
+                          server/src/routes/
                           server/src/middleware/
 
-💾 ENTITY (Backend)     →  server/prisma/schema.prisma
+💾 ENTITY (Backend)     →  server/src/entities/ (10 Entity classes)
+                          server/prisma/schema.prisma
+                          server/src/dto/ (Data Transfer Objects)
 ```
 
 ---
@@ -140,28 +144,32 @@ Classical BCE          →  Our Implementation
                 ↓
 ┌───────────────────────────────────────────────┐
 │  🚪 BOUNDARY                                  │
-│  ├─ LoginPage.tsx (UI)                        │
-│  ├─ RegisterPage.tsx (UI)                     │
-│  └─ authService.ts (API calls)                │
+│  ├─ LoginPage.tsx (UI + API calls)            │
+│  ├─ AdminDashboard.tsx (UI + API calls)       │
+│  └─ config/api.ts (Axios configuration)       │
 └───────────────┬───────────────────────────────┘
                 │ HTTP Request
                 ↓
 ┌───────────────────────────────────────────────┐
 │  🧠 CONTROL                                   │
-│  ├─ auth.routes.ts (routing)                  │
-│  ├─ auth.controller.ts (logic)                │
-│  └─ auth.middleware.ts (validation)           │
+│  ├─ routes/auth.ts (routing)                  │
+│  ├─ middleware/auth.ts (authentication)       │
+│  ├─ validators/auth.validator.ts (validation) │
+│  └─ controllers/auth/login.controller.ts      │
 └───────────────┬───────────────────────────────┘
-                │ Database Query
+                │ Calls Entity methods
                 ↓
 ┌───────────────────────────────────────────────┐
-│  💾 ENTITY                                    │
-│  ├─ User model (schema.prisma)                │
-│  ├─ PIN model (schema.prisma)                 │
-│  └─ CSRRep model (schema.prisma)              │
+│  💾 ENTITY (Repository Pattern)               │
+│  ├─ UserEntity.findByEmail() (CRUD)           │
+│  ├─ user.isActive() (business logic)          │
+│  └─ user.getProfile() (business logic)        │
+│                                               │
+│  Entity uses Prisma:                          │
+│  └─ schema.prisma (User, PIN, CSRRep models)  │
 └───────────────┬───────────────────────────────┘
                 ↓
-            DATABASE
+            DATABASE (PostgreSQL)
 ```
 
 ### Backend BCE (API-Centric View)
@@ -178,24 +186,39 @@ Classical BCE          →  Our Implementation
     ╚═══════════════════════════════════════╝
 ┌───────────────────────────────────────────────┐
 │  🚪 BOUNDARY                                  │
-│  ├─ auth.routes.ts (API endpoints)            │
-│  ├─ opportunities.routes.ts                   │
-│  └─ validators/ (input validation)            │
+│  ├─ routes/auth.ts (API endpoints)            │
+│  ├─ routes/opportunities.ts                   │
+│  ├─ middleware/ (auth, validation, errors)    │
+│  └─ validators/ (input validation rules)      │
 └───────────────┬───────────────────────────────┘
                 ↓
 ┌───────────────────────────────────────────────┐
 │  🧠 CONTROL                                   │
-│  ├─ auth.controller.ts (business logic)       │
-│  ├─ request.controller.ts                     │
-│  └─ middleware/ (auth, error handling)        │
+│  ├─ controllers/auth/ (6 files)               │
+│  ├─ controllers/pin/ (15 files)               │
+│  ├─ controllers/csrRep/ (12 files)            │
+│  ├─ controllers/userAdmin/ (14 files)         │
+│  └─ controllers/platformManager/ (8 files)    │
 └───────────────┬───────────────────────────────┘
+                │ Uses Entity classes
                 ↓
 ┌───────────────────────────────────────────────┐
-│  💾 ENTITY                                    │
-│  └─ schema.prisma (all models)                │
+│  💾 ENTITY (Repository Pattern)               │
+│  ├─ entities/User.entity.ts                   │
+│  ├─ entities/Request.entity.ts                │
+│  ├─ entities/PIN.entity.ts                    │
+│  ├─ entities/CSRRep.entity.ts                 │
+│  ├─ entities/Match.entity.ts                  │
+│  └─ ... 5 more entity classes                 │
+│                                               │
+│  Entities use Prisma ORM:                     │
+│  └─ prisma/schema.prisma (database schema)    │
+│                                               │
+│  Supporting:                                  │
+│  └─ dto/ (Data Transfer Objects)              │
 └───────────────┬───────────────────────────────┘
                 ↓
-            DATABASE
+            DATABASE (PostgreSQL)
 ```
 
 ---
@@ -207,12 +230,13 @@ Classical BCE          →  Our Implementation
 > "Our CSR Volunteer Matching System implements the **BCE architectural pattern** 
 > across the full stack:
 > 
-> - **Boundary Layer**: React frontend (`client/src/`) handles user interaction
-> - **Control Layer**: Node.js backend (`server/src/controllers/`) implements business logic
-> - **Entity Layer**: Prisma models (`server/prisma/schema.prisma`) manage data persistence
+> - **Boundary Layer**: React frontend (`client/src/components/`) handles user interaction and makes direct API calls; Backend API layer (`routes/`, `middleware/`, `validators/`) manages HTTP endpoints
+> - **Control Layer**: Node.js backend controllers (`server/src/controllers/` - 58 files) orchestrate business logic and use cases
+> - **Entity Layer**: Entity classes (`server/src/entities/` - 10 classes) implement the Repository Pattern with domain business logic and data access methods; Prisma schema (`server/prisma/schema.prisma`) defines database structure
 >
-> Within the backend, we further apply BCE principles where routes act as API boundaries,
-> controllers contain use case logic, and Prisma models represent domain entities."
+> Our Entity layer uses the Repository Pattern where entity classes encapsulate both domain logic
+> (instance methods like `isActive()`, `isPIN()`) and data access operations
+> (static methods like `findById()`, `create()`) using Prisma ORM."
 
 ### For Technical Discussions (Developers, Code Reviews):
 

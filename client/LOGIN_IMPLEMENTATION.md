@@ -37,7 +37,7 @@ A comprehensive login page has been implemented for the CSR Volunteer Matching S
 ### Dependencies Used
 - **React Router DOM**: For navigation between pages
 - **TanStack Query**: For API state management and caching
-- **Axios**: For HTTP requests (configured in authService)
+- **Axios**: For HTTP requests (configured in config/api.ts)
 - **Lucide React**: For consistent iconography
 - **Tailwind CSS**: For styling and responsive design
 
@@ -45,10 +45,12 @@ A comprehensive login page has been implemented for the CSR Volunteer Matching S
 ```
 src/
 ├── components/
-│   ├── LoginPage.tsx      # Main login component
-│   └── Dashboard.tsx      # Post-login dashboard
-├── services/
-│   └── authService.ts    # Authentication API calls
+│   ├── LoginPage.tsx      # Main login component (with API calls)
+│   ├── AdminDashboard.tsx # Admin dashboard
+│   ├── PINDashboard.tsx   # PIN dashboard
+│   └── CSRRepDashboard.tsx# CSR Rep dashboard
+├── config/
+│   └── api.ts            # Axios instance with interceptors
 ├── types/
 │   └── index.ts          # TypeScript type definitions
 └── App.tsx               # Main app with routing

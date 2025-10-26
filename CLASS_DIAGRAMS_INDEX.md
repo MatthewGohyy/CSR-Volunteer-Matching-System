@@ -12,9 +12,8 @@
 
 **Contains:**
 - ✅ Entity Relationship Diagram (ERD)
-- ✅ Entity Layer Class Diagram
-- ✅ Controller Layer Class Diagram
-- ✅ Service Layer Class Diagram
+- ✅ Entity Class Diagram (Repository Pattern)
+- ✅ Controller Class Diagram
 
 **How to view:**
 - Online: [PlantText](https://www.planttext.com/) or [PlantUML Web Server](http://www.plantuml.com/plantuml/uml/)
@@ -29,9 +28,9 @@
 
 **Contains:**
 - ✅ Entity Relationship Diagram (ERD)
-- ✅ Entity Layer Class Diagram
-- ✅ Controller Layer Class Diagram
-- ✅ Service Layer Class Diagram
+- ✅ Entity Class Diagram (Repository Pattern)
+- ✅ Controller Class Diagram
+- ✅ BCE Architecture Diagram
 
 **How to view:**
 - GitHub: Renders automatically ✨
@@ -68,30 +67,46 @@ plantuml -tsvg CLASS_DIAGRAMS.md
 
 ### Entity Relationship Diagram (ERD)
 - Database schema visualization
-- Shows all tables and relationships
+- Shows all 11 tables and relationships
 - Includes primary keys, foreign keys, and unique constraints
-- Demonstrates cardinality (1:1, 1:many, many:many)
+- Demonstrates cardinality (1:1, 1:many)
 
 **⚠️ Important:** The User table supports 4 user types (PIN, CSR_REP, ADMIN, PLATFORM_MANAGER), but ADMIN users have NO separate profile table. Only PIN, CSRRep, and PlatformManager have profile tables.
 
 ### Class Diagrams
 
-#### 1. Entity Layer
-- All database entities (User, PIN, CSRRep, etc.)
-- Entity attributes and methods
+#### 1. Entity Class Diagram (Repository Pattern)
+- **10 Entity classes** in `server/src/entities/`
+- Shows instance methods (business logic) and static methods (CRUD)
+- Repository Pattern implementation
 - Relationships between entities
-- Enum definitions
+- Demonstrates how entities encapsulate data access
 
-#### 2. Controller Layer
-- All API controllers (AuthController, AdminController, etc.)
-- Controller methods and responsibilities
+**Key Entities:**
+- UserEntity
+- RequestEntity  
+- PINEntity
+- CSRRepEntity
+- PlatformManagerEntity
+- MatchEntity
+- ServiceCategoryEntity
+- ShortlistEntity
+- VolunteerOfferEntity
+- NotificationEntity
+
+#### 2. Controller Class Diagram
+- **58 controller files** organized by feature
+- Shows how controllers call Entity classes
+- Dependencies on Entity classes
 - HTTP request handling
 
-#### 3. Service Layer
-- Service classes (UserService, MatchingService, etc.)
-- Repository interfaces
-- Business logic patterns
-- Dependency injection
+**Controller Packages:**
+- Auth Controllers (6 files)
+- User Admin Controllers (14 files)
+- PIN Controllers (15 files)
+- CSR Rep Controllers (12 files)
+- Platform Manager Controllers (8 files)
+- Match Controller
 
 ---
 
@@ -100,9 +115,9 @@ plantuml -tsvg CLASS_DIAGRAMS.md
 | Diagram Type | In PlantUML File | In Mermaid File |
 |--------------|-----------------|-----------------|
 | **ERD** | ✅ | ✅ |
-| **Entity Classes** | ✅ | ✅ |
+| **Entity Classes (Repository Pattern)** | ✅ | ✅ |
 | **Controller Classes** | ✅ | ✅ |
-| **Service Classes** | ✅ | ✅ |
+| **BCE Architecture** | ❌ | ✅ |
 
 ---
 
@@ -116,15 +131,14 @@ plantuml -tsvg CLASS_DIAGRAMS.md
    ```
 
 2. **Include in Report:**
-   - Figure 1: Entity Relationship Diagram (ERD)
-   - Figure 2: Entity Layer Class Diagram
-   - Figure 3: Controller Layer Class Diagram
-   - Figure 4: Service Layer Class Diagram
+   - **Figure 1:** Entity Relationship Diagram (ERD) - Database schema
+   - **Figure 2:** Entity Class Diagram - Domain models with Repository Pattern
+   - **Figure 3:** Controller Class Diagram - Request handling and business logic
 
 3. **Add Descriptions:**
-   - Explain each diagram's purpose
-   - Describe key relationships
-   - Reference in your design section
+   - **ERD:** Explain database relationships, user types, key constraints
+   - **Entity Classes:** Explain Repository Pattern, instance vs static methods
+   - **Controllers:** Explain how controllers orchestrate entity operations
 
 ---
 
@@ -187,14 +201,15 @@ CSR-Volunteer-Matching-System/
 ### For Academic Submission
 - [ ] Generate images: `plantuml -tsvg CLASS_DIAGRAMS.md`
 - [ ] Include ERD in database design section
-- [ ] Include class diagrams in system design section
+- [ ] Include Entity class diagram - explain Repository Pattern
+- [ ] Include Controller class diagram
 - [ ] Add captions and explanations
 - [ ] Reference diagrams in text
 
 ### For Development
 - [ ] Understand entity relationships from ERD
-- [ ] Reference controller methods
-- [ ] Review service layer patterns
+- [ ] Review Entity class methods (business logic + CRUD)
+- [ ] Reference controller operations
 - [ ] Use as coding reference
 
 ---
@@ -217,6 +232,10 @@ CSR-Volunteer-Matching-System/
 - Solid lines = Strong relationships
 - Dashed lines = Dependencies
 
+### Repository Pattern in Entity Classes
+- **Instance methods** (lowercase): Business logic - `isActive()`, `isPIN()`, `toJSON()`
+- **Static methods** (with {static}): Data access - `findById()`, `create()`, `update()`
+
 ---
 
 ## 🎯 Use Cases
@@ -224,14 +243,57 @@ CSR-Volunteer-Matching-System/
 | I want to... | Use this file |
 |--------------|---------------|
 | View on GitHub | CLASS_DIAGRAMS_MERMAID.md |
-| Generate images | CLASS_DIAGRAMS.md |
+| Generate images for report | CLASS_DIAGRAMS.md (PlantUML) |
 | See database schema | ERD in either file |
-| Understand entities | Entity Class Diagram in either file |
+| Understand entity classes | Entity Class Diagram in either file |
+| See Repository Pattern | Entity Class Diagram - note static vs instance methods |
 | See API structure | Controller Class Diagram in either file |
-| Review business logic | Service Layer Diagram in either file |
+| Understand BCE architecture | BCE diagram in MERMAID file only |
 
 ---
 
-**Last Updated:** 2024  
+## 💡 Key Insights
+
+### Repository Pattern
+Entity classes implement the Repository Pattern:
+- **Encapsulate data access**: All Prisma calls are inside entities
+- **Provide business logic**: Instance methods like `isActive()`, `isPIN()`
+- **Type-safe operations**: Return entity instances, not raw data
+- **Reusable**: Static methods like `findById()` used across controllers
+
+### Architecture Flow
+```
+Controller → Entity Class → Prisma ORM → Database
+
+Example:
+LoginController.handle()
+  ↓ calls
+UserEntity.findByEmail(email)
+  ↓ uses
+prisma.user.findUnique()
+  ↓ queries
+PostgreSQL Database
+```
+
+---
+
+## 📐 Architecture Notes
+
+### No Service Layer
+This codebase does **NOT** have a separate service layer:
+- ✅ Controllers call Entity classes directly
+- ✅ Entity classes act as repositories
+- ❌ No intermediate service classes
+
+### Entity Classes = Repositories
+The `entities/` folder contains classes that:
+1. Represent domain models
+2. Contain business logic (instance methods)
+3. Provide data access (static methods)
+4. Use Prisma ORM internally
+
+---
+
+**Last Updated:** October 22, 2025  
 **Maintained By:** Development Team  
-**Status:** ✅ Complete - ERD and Class Diagrams Only
+**Status:** ✅ Complete and Accurate

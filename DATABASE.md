@@ -2,7 +2,9 @@
 
 ## Overview
 
-This project uses **PostgreSQL** as the database with **Prisma** as the ORM. The database runs in a Docker container for easy local development.
+This project uses **PostgreSQL** as the database with **Prisma ORM** for type-safe database access. The database runs in a Docker container for easy local development.
+
+---
 
 ## Architecture
 
@@ -24,75 +26,226 @@ This project uses **PostgreSQL** as the database with **Prisma** as the ORM. The
               ↕
 ┌─────────────────────────────────────────┐
 │      Express.js Application             │
+│  - Controllers & Routes                 │
 │  - Business logic                       │
-│  - API endpoints                        │
 │  - Authentication                       │
 └─────────────────────────────────────────┘
 ```
 
+---
+
 ## Database Schema
 
-### Users & Authentication
+### 👤 Users & Authentication
 
-#### User
-- Base user model for authentication
-- Fields: `id`, `email`, `password`, `userType`, `status`
-- Relations: PIN profile, CSR Rep profile, notifications
-- User types: `PIN`, `CSR_REP`, `ADMIN`
+#### User (Main Authentication Table)
+**Purpose:** Base user model for authentication across all user types
+
+**Fields:**
+- `id` - UUID (Primary Key)
+- `email` - String (Unique)
+- `password` - String (Bcrypt hashed)
+- `userType` - Enum: `PIN`, `CSR_REP`, `ADMIN`, `PLATFORM_MANAGER`
+- `status` - Enum: `ACTIVE`, `SUSPENDED`, `DEACTIVATED`
+- `createdAt`, `updatedAt` - Timestamps
+
+**Relations:**
+- One-to-one with PIN, CSRRep, or PlatformManager profile
+- One-to-many with Notifications
+
+---
+
+### 👥 User Profiles
 
 #### PIN (Person In Need)
-- Extended profile for persons seeking help
-- Fields: `name`, `age`, `location`, `phoneNumber`, `accessibilityNeeds`, `profilePhoto`
-- Relations: requests, matches
+**Purpose:** Profile for individuals seeking help
+
+**Fields:**
+- `id` - UUID (Primary Key)
+- `userId` - UUID (Foreign Key → User, Unique)
+- `name` - String
+- `age` - Integer (Optional)
+- `location` - String (Optional)
+- `phoneNumber` - String (Optional)
+- `accessibilityNeeds` - String (Optional)
+- `profilePhoto` - String (Optional)
+- `status` - Enum: `ACTIVE`, `SUSPENDED`, `DEACTIVATED`
+
+**Relations:**
+- One-to-many with Request
+- One-to-many with Match
+
+---
 
 #### CSRRep (CSR Representative)
-- Extended profile for company representatives
-- Fields: `companyName`, `companyRegistrationNumber`, `industry`, `contactPerson`, `approvalStatus`
-- Relations: shortlists, volunteer offers, matches
+**Purpose:** Profile for company representatives offering help
 
-### Service Management
+**Fields:**
+- `id` - UUID (Primary Key)
+- `userId` - UUID (Foreign Key → User, Unique)
+- `companyName` - String
+- `companyRegistrationNumber` - String (Unique)
+- `industry` - String (Optional)
+- `contactPerson` - String
+- `phoneNumber` - String
+- `companyAddress` - String (Optional)
+- `companyLogo` - String (Optional)
+- `status` - Enum: `ACTIVE`, `SUSPENDED`, `DEACTIVATED`
+
+**Relations:**
+- One-to-many with Shortlist
+- One-to-many with VolunteerOffer
+- One-to-many with Match
+
+---
+
+#### PlatformManager
+**Purpose:** Profile for platform administrators
+
+**Fields:**
+- `id` - UUID (Primary Key)
+- `userId` - UUID (Foreign Key → User, Unique)
+- `fullName` - String
+- `department` - String (Optional)
+- `phone` - String (Optional)
+- `status` - Enum: `ACTIVE`, `SUSPENDED`, `DEACTIVATED`
+
+**Relations:**
+- None (manages categories via API)
+
+---
+
+### 📋 Service Management
 
 #### ServiceCategory
-- Predefined categories of services
-- Examples: Medical, Transportation, Companionship, Home Care, etc.
-- Fields: `name`, `description`, `iconUrl`, `isActive`
+**Purpose:** Predefined categories for service requests
+
+**Fields:**
+- `id` - UUID (Primary Key)
+- `name` - String (Unique)
+- `description` - String (Optional)
+- `iconUrl` - String (Optional)
+- `isActive` - Boolean (Default: true)
+- `createdAt`, `updatedAt` - Timestamps
+
+**Relations:**
+- One-to-many with Request
+
+**Examples:** Medical, Transportation, Companionship, Home Care, Meal Delivery, etc.
+
+---
 
 #### Request
-- Service requests posted by PINs
-- Fields: `title`, `description`, `urgency`, `dateNeeded`, `location`, `status`
-- Statuses: `ACTIVE`, `MATCHED`, `COMPLETED`, `CANCELLED`
-- Urgency levels: `LOW`, `MEDIUM`, `HIGH`
+**Purpose:** Help requests posted by PINs
 
-### Matching System
+**Fields:**
+- `id` - UUID (Primary Key)
+- `pinId` - UUID (Foreign Key → PIN)
+- `categoryId` - UUID (Foreign Key → ServiceCategory)
+- `title` - String
+- `description` - String
+- `urgency` - Enum: `LOW`, `MEDIUM`, `HIGH`
+- `dateNeeded` - DateTime (Optional)
+- `location` - String (Optional)
+- `status` - Enum: `ACTIVE`, `MATCHED`, `COMPLETED`, `CANCELLED`
+- `viewCount` - Integer (Default: 0)
+- `shortlistCount` - Integer (Default: 0)
+- `createdAt`, `updatedAt` - Timestamps
+
+**Relations:**
+- Many-to-one with PIN
+- Many-to-one with ServiceCategory
+- One-to-many with Shortlist
+- One-to-many with VolunteerOffer
+- One-to-one with Match (when matched)
+
+---
+
+### 🤝 Matching System
 
 #### Shortlist
-- CSR reps can save requests they're interested in
-- Many-to-many relationship between CSR reps and requests
-- Unique constraint: One shortlist entry per CSR rep per request
+**Purpose:** CSR reps save requests they're interested in
+
+**Fields:**
+- `id` - UUID (Primary Key)
+- `csrRepId` - UUID (Foreign Key → CSRRep)
+- `requestId` - UUID (Foreign Key → Request)
+- `createdAt` - Timestamp
+
+**Constraints:**
+- Unique combination of (csrRepId, requestId)
+
+**Relations:**
+- Many-to-one with CSRRep
+- Many-to-one with Request
+
+---
 
 #### VolunteerOffer
-- Formal offers from CSR reps to help with requests
-- Fields: `message`, `status`
-- Statuses: `PENDING`, `ACCEPTED`, `DECLINED`
+**Purpose:** Formal offers from CSR reps to help with requests
+
+**Fields:**
+- `id` - UUID (Primary Key)
+- `csrRepId` - UUID (Foreign Key → CSRRep)
+- `requestId` - UUID (Foreign Key → Request)
+- `message` - String (Optional)
+- `status` - Enum: `PENDING`, `ACCEPTED`, `DECLINED`
+- `createdAt`, `updatedAt` - Timestamps
+
+**Relations:**
+- Many-to-one with CSRRep
+- Many-to-one with Request
+
+---
 
 #### Match
-- Confirmed matches between PINs and CSR reps
-- One-to-one relationship with request (one request = one match)
-- Fields: `status`, `matchedAt`, `completedAt`, `cancellationReason`
-- Statuses: `ACTIVE`, `COMPLETED`, `CANCELLED`
+**Purpose:** Confirmed matches between PINs and CSR reps
 
-### Notifications
+**Fields:**
+- `id` - UUID (Primary Key)
+- `requestId` - UUID (Foreign Key → Request, Unique)
+- `csrRepId` - UUID (Foreign Key → CSRRep)
+- `pinId` - UUID (Foreign Key → PIN)
+- `status` - Enum: `ACTIVE`, `COMPLETED`, `CANCELLED`
+- `matchedAt` - Timestamp (Default: now)
+- `completedAt` - Timestamp (Optional)
+- `cancellationReason` - String (Optional)
+- `updatedAt` - Timestamp
+
+**Constraints:**
+- One request can only have one match (unique requestId)
+
+**Relations:**
+- One-to-one with Request
+- Many-to-one with CSRRep
+- Many-to-one with PIN
+
+---
+
+### 🔔 Notifications
 
 #### Notification
-- System notifications for users
-- Types: `VOLUNTEER_OFFER`, `OFFER_ACCEPTED`, `OFFER_DECLINED`, `MATCH_CONFIRMED`, etc.
-- Fields: `message`, `isRead`, `createdAt`
+**Purpose:** System notifications for users
 
-## Database Relationships
+**Fields:**
+- `id` - UUID (Primary Key)
+- `userId` - UUID (Foreign Key → User)
+- `type` - Enum: `VOLUNTEER_OFFER`, `OFFER_ACCEPTED`, `OFFER_DECLINED`, `MATCH_CONFIRMED`, `MATCH_CANCELLED`, `REQUEST_UPDATED`
+- `message` - String
+- `isRead` - Boolean (Default: false)
+- `createdAt` - Timestamp
+
+**Relations:**
+- Many-to-one with User
+
+---
+
+## Entity Relationships
 
 ```
 User (1) ──── (0..1) PIN
 User (1) ──── (0..1) CSRRep
+User (1) ──── (0..1) PlatformManager
 User (1) ──── (0..*) Notification
 
 PIN (1) ──── (0..*) Request
@@ -102,322 +255,119 @@ CSRRep (1) ──── (0..*) Shortlist
 CSRRep (1) ──── (0..*) VolunteerOffer
 CSRRep (1) ──── (0..*) Match
 
+ServiceCategory (1) ──── (0..*) Request
+
 Request (1) ──── (0..*) Shortlist
 Request (1) ──── (0..*) VolunteerOffer
 Request (1) ──── (0..1) Match
-
-ServiceCategory (1) ──── (0..*) Request
 ```
 
-## Entity-Relationship Diagram
+---
 
-```
-┌─────────────┐
-│    User     │
-│─────────────│
-│ id (PK)     │
-│ email       │
-│ password    │
-│ userType    │
-│ status      │
-└─────────────┘
-      │
-      ├─────────────────────┐
-      │                     │
-      ▼                     ▼
-┌─────────────┐      ┌─────────────┐
-│    PIN      │      │   CSRRep    │
-│─────────────│      │─────────────│
-│ id (PK)     │      │ id (PK)     │
-│ userId (FK) │      │ userId (FK) │
-│ name        │      │ companyName │
-│ location    │      │ industry    │
-└─────────────┘      └─────────────┘
-      │                     │
-      │              ┌──────┴──────┐
-      │              │             │
-      ▼              ▼             ▼
-┌─────────────┐ ┌──────────┐ ┌────────────────┐
-│   Request   │ │Shortlist │ │VolunteerOffer  │
-│─────────────│ │──────────│ │────────────────│
-│ id (PK)     │ │ id (PK)  │ │ id (PK)        │
-│ pinId (FK)  │ │csrRepId  │ │ csrRepId (FK)  │
-│categoryId   │ │requestId │ │ requestId (FK) │
-│ title       │ └──────────┘ │ status         │
-│ description │              └────────────────┘
-│ urgency     │
-│ status      │
-└─────────────┘
-      │
-      ▼
-┌─────────────┐
-│    Match    │
-│─────────────│
-│ id (PK)     │
-│ requestId   │
-│ csrRepId    │
-│ pinId       │
-│ status      │
-└─────────────┘
-```
+## Enums
 
-## Seeded Data
+### UserType
+- `PIN` - Person In Need
+- `CSR_REP` - CSR Representative
+- `ADMIN` - Administrator
+- `PLATFORM_MANAGER` - Platform Manager
 
-The database is seeded with:
+### UserStatus & ProfileStatus
+- `ACTIVE` - Normal operation
+- `SUSPENDED` - Temporarily restricted
+- `DEACTIVATED` - Permanently disabled
 
-### Users
-- **Admin Account**
-  - Email: `admin@csr.com`
-  - Password: `admin123`
-  - Type: `ADMIN`
+### RequestStatus
+- `ACTIVE` - Open for offers
+- `MATCHED` - Matched with volunteer
+- `COMPLETED` - Help provided successfully
+- `CANCELLED` - Cancelled by PIN
 
-### Service Categories
-1. Medical - Medical appointments, healthcare support
-2. Transportation - Rides to appointments, errands
-3. Companionship - Social visits, conversation
-4. Home Care - Light housework, meal preparation
-5. Errands - Grocery shopping, picking up items
-6. Technology - Help with devices, online services
-7. Other - Other types of assistance
+### UrgencyLevel
+- `LOW` - Can wait, flexible timing
+- `MEDIUM` - Within a week
+- `HIGH` - Urgent, ASAP
 
-## Prisma Client Usage
+### OfferStatus
+- `PENDING` - Awaiting PIN response
+- `ACCEPTED` - PIN accepted the offer
+- `DECLINED` - PIN declined the offer
 
-### Basic Queries
+### MatchStatus
+- `ACTIVE` - Ongoing match
+- `COMPLETED` - Successfully completed
+- `CANCELLED` - Cancelled by either party
 
-```typescript
-import { prisma } from './config/database';
+### NotificationType
+- `VOLUNTEER_OFFER` - New offer received
+- `OFFER_ACCEPTED` - Offer was accepted
+- `OFFER_DECLINED` - Offer was declined
+- `MATCH_CONFIRMED` - Match created
+- `MATCH_CANCELLED` - Match cancelled
+- `REQUEST_UPDATED` - Request details changed
 
-// Find user by email
-const user = await prisma.user.findUnique({
-  where: { email: 'admin@csr.com' },
-  include: {
-    pin: true,
-    csrRep: true,
-  }
-});
+---
 
-// Create a request
-const request = await prisma.request.create({
-  data: {
-    pinId: pinId,
-    categoryId: categoryId,
-    title: 'Need help with groceries',
-    description: 'Weekly grocery shopping',
-    urgency: 'MEDIUM',
-    status: 'ACTIVE',
-  }
-});
+## Database Operations
 
-// Get all active requests with category
-const requests = await prisma.request.findMany({
-  where: { status: 'ACTIVE' },
-  include: {
-    category: true,
-    pin: {
-      include: {
-        user: {
-          select: {
-            email: true,
-          }
-        }
-      }
-    }
-  },
-  orderBy: {
-    createdAt: 'desc'
-  }
-});
-```
-
-### Advanced Queries
-
-```typescript
-// Create a match with transaction
-const match = await prisma.$transaction(async (tx) => {
-  // Update request status
-  await tx.request.update({
-    where: { id: requestId },
-    data: { status: 'MATCHED' }
-  });
-
-  // Create match
-  const newMatch = await tx.match.create({
-    data: {
-      requestId: requestId,
-      csrRepId: csrRepId,
-      pinId: pinId,
-      status: 'ACTIVE',
-    }
-  });
-
-  // Create notifications
-  await tx.notification.createMany({
-    data: [
-      {
-        userId: pinUserId,
-        type: 'MATCH_CONFIRMED',
-        message: 'Your request has been matched!',
-      },
-      {
-        userId: csrRepUserId,
-        type: 'MATCH_CONFIRMED',
-        message: 'You have been matched with a request!',
-      }
-    ]
-  });
-
-  return newMatch;
-});
-```
-
-## Migrations
-
-### Creating a Migration
-
+### Setup
 ```bash
-# Create a new migration
-npx prisma migrate dev --name add_new_field
+# Start PostgreSQL in Docker
+docker-compose up -d
 
-# Apply migrations to production
+# Generate Prisma client
+cd server
+npx prisma generate
+
+# Run migrations
 npx prisma migrate deploy
 
-# Reset database (development only)
+# Seed database (if seed file exists)
+npx prisma db seed
+```
+
+### Maintenance
+```bash
+# View database in Prisma Studio
+npx prisma studio
+
+# Create new migration
+npx prisma migrate dev --name migration_name
+
+# Reset database (WARNING: deletes all data)
 npx prisma migrate reset
 ```
 
-### Migration Best Practices
-
-1. **Always create migrations** when changing the schema
-2. **Test migrations** in development before production
-3. **Never modify** generated migration files manually
-4. **Use descriptive names** for migrations
-5. **Review SQL** in migration files before applying
-
-## Database Maintenance
-
 ### Backup
-
 ```bash
 # Backup database
-docker exec csr-platform-db pg_dump -U dev csr_platform > backup.sql
+docker exec postgres_db pg_dump -U csr_user csr_db > backup.sql
 
 # Restore database
-docker exec -i csr-platform-db psql -U dev csr_platform < backup.sql
+docker exec -i postgres_db psql -U csr_user csr_db < backup.sql
 ```
 
-### Reset Database
+---
 
-```bash
-# Stop containers and delete all data
-docker-compose down -v
+## Connection Details
 
-# Start fresh
-docker-compose up -d
-cd server
-npx prisma migrate dev
-npm run seed
+### Application Connection
+```env
+DATABASE_URL="postgresql://csr_user:csr_password@localhost:5432/csr_db"
 ```
 
-### View Database
+### pgAdmin Access
+- URL: `http://localhost:5050`
+- Email: `admin@csr.com`
+- Password: `admin123`
 
-```bash
-# Option 1: Prisma Studio (Recommended)
-npx prisma studio
+### Server Connection in pgAdmin
+- Host: `postgres_db` (or `localhost` from host machine)
+- Port: `5432`
+- Database: `csr_db`
+- Username: `csr_user`
+- Password: `csr_password`
 
-# Option 2: pgAdmin
-# Visit http://localhost:5050
-# Login: admin@csr.com / admin123
+---
 
-# Option 3: psql command line
-docker exec -it csr-platform-db psql -U dev -d csr_platform
-```
-
-## Performance Considerations
-
-### Indexes
-
-The schema automatically creates indexes on:
-- Primary keys (all `id` fields)
-- Foreign keys (all relation fields)
-- Unique constraints (`email`, `companyRegistrationNumber`, etc.)
-- Composite unique constraints (`csrRepId` + `requestId` in Shortlist)
-
-### Optimization Tips
-
-1. **Use select** to fetch only needed fields
-   ```typescript
-   const users = await prisma.user.findMany({
-     select: {
-       id: true,
-       email: true,
-       // Don't fetch password unnecessarily
-     }
-   });
-   ```
-
-2. **Pagination** for large datasets
-   ```typescript
-   const requests = await prisma.request.findMany({
-     skip: (page - 1) * limit,
-     take: limit,
-   });
-   ```
-
-3. **Use transactions** for related operations
-   ```typescript
-   await prisma.$transaction([
-     prisma.request.update(...),
-     prisma.match.create(...),
-   ]);
-   ```
-
-4. **Include only necessary relations**
-   ```typescript
-   // Instead of including everything
-   const request = await prisma.request.findUnique({
-     where: { id },
-     include: {
-       pin: true,
-       category: true,
-       // Only include what you need
-     }
-   });
-   ```
-
-## Security Considerations
-
-1. **Password Hashing**: Always hash passwords with bcrypt before storing
-2. **Cascade Deletes**: Configured for user data cleanup
-3. **Input Validation**: Use Prisma's type safety + express-validator
-4. **SQL Injection**: Prisma automatically prevents SQL injection
-5. **Environment Variables**: Never commit `.env` file
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Prisma Client Out of Sync**
-   ```bash
-   npx prisma generate
-   ```
-
-2. **Migration Conflicts**
-   ```bash
-   npx prisma migrate reset
-   ```
-
-3. **Connection Refused**
-   - Check if Docker is running
-   - Check if PostgreSQL container is healthy: `docker ps`
-   - Check logs: `docker-compose logs postgres`
-
-4. **Port Already in Use**
-   - Change port in `docker-compose.yml`
-   - Or stop the service using the port
-
-## Additional Resources
-
-- [Prisma Documentation](https://www.prisma.io/docs)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-- [Prisma Best Practices](https://www.prisma.io/docs/guides/performance-and-optimization)
-
+**Last Updated:** October 21, 2025

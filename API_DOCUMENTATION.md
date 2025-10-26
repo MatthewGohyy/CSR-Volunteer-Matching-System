@@ -1,30 +1,38 @@
-# API Documentation - CSR Volunteer Matching System
+# API Documentation
 
-## Base URL
-```
-http://localhost:4000/api
-```
+**Base URL:** `http://localhost:4000/api`
 
-## Authentication
-Most endpoints require a JWT token in the Authorization header:
+**Authentication:** Most endpoints require JWT token in header:
 ```
-Authorization: Bearer <your_jwt_token>
+Authorization: Bearer <token>
 ```
 
 ---
 
-## 🔐 Authentication Endpoints
+## 📑 Table of Contents
 
-### Register PIN (Person In Need)
+1. [Authentication](#authentication)
+2. [Admin Endpoints](#admin-endpoints)
+3. [PIN (Volunteer) Endpoints](#pin-endpoints)
+4. [CSR Rep (Organization) Endpoints](#csr-rep-endpoints)
+5. [Platform Manager Endpoints](#platform-manager-endpoints)
+6. [Opportunities/Requests](#opportunities)
+7. [Matches](#matches)
+8. [Enums & Status Codes](#enums)
+
+---
+
+## 🔐 Authentication
+
+### Register PIN
 ```http
 POST /api/auth/register/pin
 ```
-
 **Body:**
 ```json
 {
   "email": "john@example.com",
-  "password": "SecurePass123",
+  "password": "password123",
   "name": "John Doe",
   "age": 65,
   "location": "Singapore",
@@ -33,66 +41,35 @@ POST /api/auth/register/pin
 }
 ```
 
-**Response:**
-```json
-{
-  "message": "PIN registered successfully",
-  "user": {
-    "id": "uuid",
-    "email": "john@example.com",
-    "userType": "PIN",
-    "profile": { ... }
-  },
-  "token": "jwt_token"
-}
-```
-
 ### Register CSR Representative
 ```http
 POST /api/auth/register/csr-rep
 ```
-
 **Body:**
 ```json
 {
   "email": "rep@company.com",
-  "password": "SecurePass123",
+  "password": "password123",
   "companyName": "TechCorp Pte Ltd",
   "companyRegistrationNumber": "202012345A",
   "industry": "Technology",
   "contactPerson": "Jane Smith",
   "phoneNumber": "+65 6123 4567",
-  "companyAddress": "123 Business Street, Singapore"
+  "companyAddress": "123 Business St, Singapore"
 }
 ```
 
-**Response:**
-```json
-{
-  "message": "CSR Representative registered successfully. Pending admin approval.",
-  "user": {
-    "id": "uuid",
-    "email": "rep@company.com",
-    "userType": "CSR_REP",
-    "profile": { ... }
-  },
-  "token": "jwt_token"
-}
-```
-
-### Login
+### Login (All User Types)
 ```http
 POST /api/auth/login
 ```
-
 **Body:**
 ```json
 {
   "email": "user@example.com",
-  "password": "SecurePass123"
+  "password": "password123"
 }
 ```
-
 **Response:**
 ```json
 {
@@ -107,6 +84,12 @@ POST /api/auth/login
 }
 ```
 
+### Logout
+```http
+POST /api/auth/logout
+Authorization: Bearer <token>
+```
+
 ### Get Profile
 ```http
 GET /api/auth/profile
@@ -118,7 +101,6 @@ Authorization: Bearer <token>
 PUT /api/auth/password
 Authorization: Bearer <token>
 ```
-
 **Body:**
 ```json
 {
@@ -129,172 +111,148 @@ Authorization: Bearer <token>
 
 ---
 
-## 📋 Opportunity/Request Endpoints
+## 🧑‍💼 Admin Endpoints
 
-### Get All Service Categories
+**Base:** `/api/admin`  
+**Auth:** Admin only
+
+### User Account Management
+
+#### List Users
 ```http
-GET /api/opportunities/categories
+GET /api/admin/users?page=1&limit=10
 ```
 
-**Response:**
-```json
-{
-  "categories": [
-    {
-      "id": "uuid",
-      "name": "Medical",
-      "description": "Medical appointments, healthcare support",
-      "isActive": true
-    }
-  ]
-}
-```
-
-### Get All Requests
+#### Search Users
 ```http
-GET /api/opportunities?status=ACTIVE&urgency=HIGH&search=food&page=1&limit=10
+GET /api/admin/users/search?q=john
 ```
 
-**Query Parameters:**
-- `status`: ACTIVE, MATCHED, COMPLETED, CANCELLED
-- `urgency`: LOW, MEDIUM, HIGH
-- `categoryId`: UUID
-- `search`: Text search in title, description, location ✨ NEW
-- `page`: number (default: 1)
-- `limit`: number (default: 10)
-
-**Response:**
-```json
-{
-  "requests": [ ... ],
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "total": 45,
-    "pages": 5
-  }
-}
-```
-
-### Get Single Request
+#### Get User by ID
 ```http
-GET /api/opportunities/:id
+GET /api/admin/users/:id
 ```
 
-### Create Request (PIN only)
+#### Create User Account
 ```http
-POST /api/opportunities
-Authorization: Bearer <token>
+POST /api/admin/users
 ```
 
+#### Update User Account
+```http
+PUT /api/admin/users/:id
+```
+
+#### Update User Status
+```http
+PUT /api/admin/users/:id/status
+```
 **Body:**
 ```json
 {
-  "categoryId": "uuid",
-  "title": "Need help with grocery shopping",
-  "description": "Weekly grocery shopping assistance needed",
-  "urgency": "MEDIUM",
-  "dateNeeded": "2024-12-25",
-  "location": "Jurong West, Singapore"
+  "status": "ACTIVE" | "SUSPENDED" | "DEACTIVATED"
 }
 ```
 
-### Get My Requests (PIN only)
+#### Suspend User
 ```http
-GET /api/opportunities/my/requests
-Authorization: Bearer <token>
+PUT /api/admin/users/:id/suspend
 ```
 
-### Update Request (PIN only)
+#### Activate User
 ```http
-PUT /api/opportunities/:id
-Authorization: Bearer <token>
+PUT /api/admin/users/:id/activate
 ```
 
-### Delete Request (PIN only)
+#### Delete User
 ```http
-DELETE /api/opportunities/:id
-Authorization: Bearer <token>
+DELETE /api/admin/users/:id
+```
+
+### User Profile Management
+
+#### List Profiles
+```http
+GET /api/admin/profiles?page=1&limit=10
+```
+
+#### Search Profiles
+```http
+GET /api/admin/profiles/search?q=john
+```
+
+#### Get Profile by ID
+```http
+GET /api/admin/profiles/:id
+```
+
+#### Create User Profile
+```http
+POST /api/admin/profiles
+```
+
+#### Update User Profile
+```http
+PUT /api/admin/profiles/:id
+```
+
+#### Suspend Profile
+```http
+PUT /api/admin/profiles/:id/suspend
+```
+
+#### Activate Profile
+```http
+PUT /api/admin/profiles/:id/activate
+```
+
+### System Stats
+```http
+GET /api/admin/stats
 ```
 
 ---
 
-## 👤 PIN (Volunteer) Endpoints
+## 🙋 PIN Endpoints
 
-All endpoints require PIN authentication.
+**Base:** `/api/volunteers`  
+**Auth:** PIN only
 
-### Get Profile
+### Profile
 ```http
 GET /api/volunteers/profile
-Authorization: Bearer <token>
-```
-
-### Update Profile
-```http
 PUT /api/volunteers/profile
-Authorization: Bearer <token>
 ```
 
-**Body:**
-```json
-{
-  "name": "John Doe",
-  "age": 66,
-  "location": "Singapore",
-  "phoneNumber": "+65 9123 4567",
-  "accessibilityNeeds": "Wheelchair accessible",
-  "profilePhoto": "url_to_photo"
-}
-```
-
-### Get My Matches
+### Matches
 ```http
 GET /api/volunteers/matches
-Authorization: Bearer <token>
 ```
 
-### Get Notifications
+### Notifications
 ```http
 GET /api/volunteers/notifications
-Authorization: Bearer <token>
-```
-
-### Mark Notification as Read
-```http
 PUT /api/volunteers/notifications/:notificationId/read
-Authorization: Bearer <token>
-```
-
-### Mark All Notifications as Read
-```http
 PUT /api/volunteers/notifications/read-all
-Authorization: Bearer <token>
 ```
 
-### Get Completed Request History
+### Request History
 ```http
 GET /api/volunteers/requests/history?page=1&limit=10
-Authorization: Bearer <token>
-```
-
-### Search Completed Request History
-```http
-GET /api/volunteers/requests/history/search?q=food&page=1&limit=10
-Authorization: Bearer <token>
+GET /api/volunteers/requests/history/search?q=food
 ```
 
 ---
 
-## 🏢 Organization (CSR Rep) Endpoints
+## 🏢 CSR Rep Endpoints
 
-All endpoints require CSR Rep authentication.
+**Base:** `/api/organizations`  
+**Auth:** CSR Rep only
 
-### Shortlist a Request
+### Shortlist Management
 ```http
 POST /api/organizations/shortlist
-Authorization: Bearer <token>
 ```
-
 **Body:**
 ```json
 {
@@ -302,445 +260,208 @@ Authorization: Bearer <token>
 }
 ```
 
-### Remove from Shortlist
 ```http
+GET /api/organizations/shortlists?page=1&limit=10
+GET /api/organizations/shortlist/search?q=food
 DELETE /api/organizations/shortlist/:requestId
-Authorization: Bearer <token>
 ```
 
-### Get Shortlisted Requests
-```http
-GET /api/organizations/shortlists?search=food&page=1&limit=20
-Authorization: Bearer <token>
-```
-
-**Query Parameters:**
-- `search`: Text search in title, description, location ✨ NEW
-- `page`: Page number (default: 1)
-- `limit`: Items per page (default: 20)
-
-### Submit Volunteer Offer
+### Volunteer Offers
 ```http
 POST /api/organizations/offers
-Authorization: Bearer <token>
 ```
-
 **Body:**
 ```json
 {
   "requestId": "uuid",
-  "message": "We would like to help with this request. Our team is available next week."
+  "message": "We would like to help"
 }
 ```
 
-### Get My Offers
 ```http
 GET /api/organizations/offers
-Authorization: Bearer <token>
 ```
 
-### Get My Matches
+### Matches
 ```http
 GET /api/organizations/matches
-Authorization: Bearer <token>
 ```
 
-### Update Profile
+### Request History
+```http
+GET /api/organizations/requests/history?page=1&limit=10
+GET /api/organizations/requests/history/search?q=food
+```
+
+### Profile
 ```http
 PUT /api/organizations/profile
-Authorization: Bearer <token>
-```
-
-**Body:**
-```json
-{
-  "industry": "Technology",
-  "contactPerson": "Jane Smith",
-  "phoneNumber": "+65 6123 4567",
-  "companyAddress": "123 Business Street",
-  "companyLogo": "url_to_logo"
-}
-```
-
----
-
-## 🤝 Match Endpoints
-
-### Get Offers for My Requests (PIN only)
-```http
-GET /api/matches/offers
-Authorization: Bearer <token>
-```
-
-### Accept Offer (PIN only)
-```http
-POST /api/matches/offers/:offerId/accept
-Authorization: Bearer <token>
-```
-
-### Decline Offer (PIN only)
-```http
-POST /api/matches/offers/:offerId/decline
-Authorization: Bearer <token>
-```
-
-### Complete Match
-```http
-PUT /api/matches/:matchId/complete
-Authorization: Bearer <token>
-```
-
-**Note:** Both PIN and CSR Rep can mark a match as complete.
-
-### Cancel Match
-```http
-PUT /api/matches/:matchId/cancel
-Authorization: Bearer <token>
-```
-
-**Body:**
-```json
-{
-  "reason": "Unable to proceed due to scheduling conflict"
-}
-```
-
-**Note:** Both PIN and CSR Rep can cancel a match.
-
----
-
-## 📊 Status Codes
-
-| Code | Description |
-|------|-------------|
-| 200 | Success |
-| 201 | Created |
-| 400 | Bad Request |
-| 401 | Unauthorized |
-| 403 | Forbidden |
-| 404 | Not Found |
-| 409 | Conflict |
-| 500 | Internal Server Error |
-
----
-
-## 🔄 Enums
-
-### UserType
-- `PIN` - Person In Need
-- `CSR_REP` - CSR Representative
-- `ADMIN` - Administrator
-
-### UserStatus
-- `ACTIVE` - Account is active
-- `PENDING` - Pending approval
-- `SUSPENDED` - Temporarily suspended
-- `DEACTIVATED` - Permanently deactivated
-
-### RequestStatus
-- `ACTIVE` - Available for offers
-- `MATCHED` - Matched with a volunteer
-- `COMPLETED` - Help provided
-- `CANCELLED` - Cancelled by PIN
-
-### UrgencyLevel
-- `LOW` - Can wait
-- `MEDIUM` - Within a week
-- `HIGH` - Urgent, ASAP
-
-### OfferStatus
-- `PENDING` - Awaiting PIN response
-- `ACCEPTED` - Accepted by PIN
-- `DECLINED` - Declined by PIN
-
-### MatchStatus
-- `ACTIVE` - Ongoing
-- `COMPLETED` - Successfully completed
-- `CANCELLED` - Cancelled by either party
-
----
-
-## 🔔 Notification Types
-
-- `VOLUNTEER_OFFER` - New offer received
-- `OFFER_ACCEPTED` - Your offer was accepted
-- `OFFER_DECLINED` - Your offer was declined
-- `MATCH_CONFIRMED` - Match confirmed
-- `MATCH_CANCELLED` - Match cancelled
-- `REQUEST_UPDATED` - Request was updated
-
----
-
-## 🧑‍💼 Admin Endpoints
-
-**Base Path:** `/api/admin`  
-**Authorization:** Admin only
-
-### List Users
-```http
-GET /api/admin/users?page=1&limit=10
-```
-
-### Search Users
-```http
-GET /api/admin/users/search?q=john&userType=PIN&status=ACTIVE
-```
-
-### Get User by ID
-```http
-GET /api/admin/users/:id
-```
-
-### Create User
-```http
-POST /api/admin/users
-```
-
-**Body (PIN example):**
-```json
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "userType": "PIN",
-  "name": "John Doe",
-  "age": 65,
-  "location": "Singapore",
-  "phoneNumber": "+65 1234 5678"
-}
-```
-
-### Update User Email
-```http
-PUT /api/admin/users/:id
-```
-
-**Body:**
-```json
-{
-  "email": "newemail@example.com"
-}
-```
-
-### Update User Status
-```http
-PUT /api/admin/users/:id/status
-```
-
-**Body:**
-```json
-{
-  "status": "SUSPENDED"
-}
-```
-
-### Update User Profiles
-```http
-PUT /api/admin/users/:id/profile/pin
-PUT /api/admin/users/:id/profile/csr-rep
-PUT /api/admin/users/:id/profile/platform-manager
-```
-
-**Body (PIN example):**
-```json
-{
-  "name": "Updated Name",
-  "age": 66,
-  "location": "Updated Location"
-}
-```
-
-### Delete User
-```http
-DELETE /api/admin/users/:id
-```
-
-### Get System Statistics
-```http
-GET /api/admin/stats
-```
-
-**Response:**
-```json
-{
-  "users": {
-    "total": 200,
-    "active": 180,
-    "suspended": 20
-  },
-  "requests": {
-    "total": 150,
-    "active": 80
-  },
-  "matches": {
-    "total": 90,
-    "active": 45
-  }
-}
 ```
 
 ---
 
 ## 🧭 Platform Manager Endpoints
 
-**Base Path:** `/api/platform-manager`  
-**Authorization:** Platform Manager only
+**Base:** `/api/platform-manager`  
+**Auth:** Platform Manager only
 
-### Create Category
+### Category Management
 ```http
+GET /api/platform-manager/categories?page=1&limit=10
+GET /api/platform-manager/categories/:id
+GET /api/platform-manager/categories/search?q=medical
 POST /api/platform-manager/categories
-```
-
-**Body:**
-```json
-{
-  "name": "Food Assistance",
-  "description": "Help with meals and groceries",
-  "icon": "🍽️"
-}
-```
-
-### List Categories
-```http
-GET /api/platform-manager/categories?page=1&limit=10&search=food&isActive=true
-```
-
-### Search Categories
-```http
-GET /api/platform-manager/categories/search?q=food
-```
-
-### Update Category
-```http
 PUT /api/platform-manager/categories/:id
+DELETE /api/platform-manager/categories/:id
 ```
 
-**Body:**
+**Create/Update Body:**
 ```json
 {
-  "name": "Updated Name",
-  "description": "Updated description",
+  "name": "Medical",
+  "description": "Healthcare support",
+  "iconUrl": "https://...",
   "isActive": true
 }
 ```
 
-### Delete Category
+### Stats
 ```http
-DELETE /api/platform-manager/categories/:id?permanent=false
-```
-- `permanent=false`: Soft delete (deactivate)
-- `permanent=true`: Hard delete (only if no associated requests)
-
-### Get Platform Statistics
-```http
-GET /api/platform-manager/stats?period=monthly
+GET /api/platform-manager/stats
 ```
 
-**Periods:** `daily`, `weekly`, `monthly`, `all`
+### Profile
+```http
+GET /api/platform-manager/profile
+PUT /api/platform-manager/profile
+```
 
-**Response:**
+---
+
+## 📋 Opportunities
+
+**Base:** `/api/opportunities`
+
+### Public
+```http
+GET /api/opportunities/categories
+```
+
+### CSR Rep - Browse Requests
+```http
+GET /api/opportunities?status=ACTIVE&urgency=HIGH&page=1&limit=10
+GET /api/opportunities/:id
+GET /api/opportunities/search?q=food
+```
+
+### PIN - Manage Own Requests
+```http
+POST /api/opportunities
+PUT /api/opportunities/:id
+DELETE /api/opportunities/:id
+GET /api/opportunities/my/requests?page=1&limit=10
+GET /api/opportunities/my/search?q=food
+GET /api/opportunities/my/:id/views
+GET /api/opportunities/my/:id/shortlists
+```
+
+**Create Request Body:**
 ```json
 {
-  "period": "monthly",
-  "categories": {
-    "total": 15,
-    "active": 12,
-    "inactive": 3,
-    "topCategories": [
-      { "id": "uuid", "name": "Food Assistance", "requestCount": 45 }
-    ]
-  },
-  "requests": {
-    "total": 150,
-    "active": 80,
-    "completed": 70,
-    "periodNew": 25
-  },
-  "matches": {
-    "total": 90,
-    "active": 40,
-    "completed": 50,
-    "periodNew": 15
-  },
-  "users": {
-    "total": 200,
-    "pins": 120,
-    "csrReps": 80
-  }
+  "categoryId": "uuid",
+  "title": "Need grocery help",
+  "description": "Weekly shopping assistance",
+  "urgency": "MEDIUM",
+  "dateNeeded": "2024-12-25",
+  "location": "Jurong West"
 }
 ```
 
 ---
 
-## 📝 Example Workflow
+## 🤝 Matches
 
-### For PIN (Person In Need):
-1. Register as PIN: `POST /api/auth/register/pin`
-2. Create a request: `POST /api/opportunities`
-3. View offers: `GET /api/matches/offers`
-4. Accept an offer: `POST /api/matches/offers/:offerId/accept`
-5. View match details: `GET /api/volunteers/matches`
-6. Mark as complete: `PUT /api/matches/:matchId/complete`
+**Base:** `/api/matches`  
+**Auth:** Required
 
-### For CSR Rep:
-1. Register as CSR Rep: `POST /api/auth/register/csr-rep`
-2. Browse requests: `GET /api/opportunities`
-3. Shortlist interesting requests: `POST /api/organizations/shortlist`
-4. Submit offer: `POST /api/organizations/offers`
-5. Wait for acceptance
-6. View matches: `GET /api/organizations/matches`
-7. Mark as complete: `PUT /api/matches/:matchId/complete`
+### PIN - Manage Offers
+```http
+GET /api/matches/offers
+POST /api/matches/offers/:offerId/accept
+POST /api/matches/offers/:offerId/decline
+```
 
----
-
-## 🛡️ Error Response Format
-
+### Both PIN & CSR Rep
+```http
+PUT /api/matches/:matchId/complete
+PUT /api/matches/:matchId/cancel
+```
+**Cancel Body:**
 ```json
 {
-  "error": "Error message",
-  "details": [
-    {
-      "field": "email",
-      "message": "Valid email is required"
-    }
-  ]
+  "reason": "Scheduling conflict"
 }
 ```
 
 ---
 
-## 🧪 Testing
+## 📊 Enums
 
-Use these test credentials after running the seed:
+### UserType
+- `PIN` - Person In Need
+- `CSR_REP` - CSR Representative
+- `ADMIN` - Administrator
+- `PLATFORM_MANAGER` - Platform Manager
 
-**Admin:**
-- Email: `admin@csr.com`
-- Password: `admin123`
+### UserStatus / ProfileStatus
+- `ACTIVE`
+- `SUSPENDED`
+- `DEACTIVATED`
 
-**Test with cURL:**
-```bash
-# Login
-curl -X POST http://localhost:4000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@csr.com","password":"admin123"}'
+### RequestStatus
+- `ACTIVE` - Available for offers
+- `MATCHED` - Matched with volunteer
+- `COMPLETED` - Help provided
+- `CANCELLED` - Cancelled
 
-# Get categories
-curl http://localhost:4000/api/opportunities/categories
+### UrgencyLevel
+- `LOW`
+- `MEDIUM`
+- `HIGH`
 
-# Get requests (with auth)
-curl http://localhost:4000/api/opportunities \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
+### OfferStatus
+- `PENDING`
+- `ACCEPTED`
+- `DECLINED`
 
-**Test with Postman:**
-1. Import the API collection
-2. Set base URL: `http://localhost:4000/api`
-3. For protected routes, add token in Authorization > Bearer Token
+### MatchStatus
+- `ACTIVE`
+- `COMPLETED`
+- `CANCELLED`
+
+### NotificationType
+- `VOLUNTEER_OFFER`
+- `OFFER_ACCEPTED`
+- `OFFER_DECLINED`
+- `MATCH_CONFIRMED`
+- `MATCH_CANCELLED`
+- `REQUEST_UPDATED`
 
 ---
 
-## 📚 Additional Resources
+## 🔢 HTTP Status Codes
 
-- [Database Schema Documentation](DATABASE.md)
-- [Setup Guide](SETUP.md)
-- [Quick Start](QUICKSTART.md)
+| Code | Description |
+|------|-------------|
+| 200  | Success |
+| 201  | Created |
+| 400  | Bad Request - Invalid input |
+| 401  | Unauthorized - Missing/invalid token |
+| 403  | Forbidden - Insufficient permissions |
+| 404  | Not Found |
+| 409  | Conflict - Duplicate entry |
+| 500  | Internal Server Error |
 
+---
+
+**Last Updated:** 2025-10-21
