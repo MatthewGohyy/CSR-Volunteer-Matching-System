@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
-import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { UserProfileRole } from '@prisma/client';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { VolunteerOfferEntity } from '../../entities/VolunteerOffer.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
@@ -15,12 +16,12 @@ export class ViewOffersController {
 
       // Get CSR Rep profile
 
-      const csrRep = await CSRRepEntity.findByUserId(userId);
-      if (!csrRep) {
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.CSR_REP);
+      if (!user) {
         throw new AppError('CSR Rep profile not found', 404);
       }
 
-      const offers = await VolunteerOfferEntity.findByCSRRep(csrRep.id, 1, 100);
+      const offers = await VolunteerOfferEntity.findByCSRRep(user.id, 1, 100);
 
       res.json({ offers });
     } catch (error) {

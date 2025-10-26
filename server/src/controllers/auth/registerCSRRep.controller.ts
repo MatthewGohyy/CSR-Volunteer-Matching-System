@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserEntity } from '../../entities/User.entity';
-import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { hashPassword } from '../../utils/password';
 import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
-import { UserType, UserStatus } from '@prisma/client';
+import { UserProfileRole, UserStatus } from '@prisma/client';
 import { prisma } from '../../config/database';
 
 /**
@@ -25,8 +24,7 @@ export class RegisterCSRRepController {
         companyAddress,
       } = req.body;
 
-
-      const existingUser = await UserEntity.findByEmail(email);
+      const existingUser = await UserAccountEntity.findByEmail(email);
       if (existingUser) {
         throw new AppError('Email already registered', 409);
       }
@@ -34,34 +32,36 @@ export class RegisterCSRRepController {
       // Hash password
       const hashedPassword = await hashPassword(password);
 
-      // Create user and CSR Rep profile
-      const user = await prisma.user.create({
-        data: {
-          email,
-          password: hashedPassword,
-          userType: UserType.CSR_REP,
-          status: UserStatus.ACTIVE,
-          csrRep: {
-            create: {
-              companyName,
-              companyRegistrationNumber,
-              industry,
-              contactPerson,
-              phoneNumber,
-              companyAddress,
-            },
-          },
-        },
-        include: {
-          csrRep: true,
-        },
+      // Get CSR Rep profile
+      const csrRepProfile = await prisma.userProfile.findUnique({
+        where: { role: UserProfileRole.CSR_REP }
+      });
+
+      if (!csrRepProfile) {
+        throw new AppError('CSR Rep profile not found', 404);
+      }
+
+      // Create user account with CSR Rep fields
+      const user = await UserAccountEntity.create({
+        email,
+        password: hashedPassword,
+        name: contactPerson,
+        userProfileId: csrRepProfile.id,
+        status: UserStatus.ACTIVE,
+        phoneNumber,
+        companyName,
+        companyRegistrationNumber,
+        industry,
+        contactPerson,
+        companyAddress,
       });
 
       // Generate token
+      const role = user.getRole();
       const token = generateToken({
         userId: user.id,
         email: user.email,
-        userType: user.userType,
+        role: role!,
       });
 
       res.status(201).json({
@@ -69,8 +69,8 @@ export class RegisterCSRRepController {
         user: {
           id: user.id,
           email: user.email,
-          userType: user.userType,
-          profile: user.csrRep,
+          role,
+          name: user.name,
         },
         token,
       });

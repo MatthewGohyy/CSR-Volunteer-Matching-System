@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserEntity } from '../../entities/User.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { MatchEntity } from '../../entities/Match.entity';
 import { UserStatus, RequestStatus, MatchStatus } from '@prisma/client';
@@ -21,9 +21,9 @@ export class GetSystemStatsController {
         activeRequests,
         totalMatches,
       ] = await Promise.all([
-        UserEntity.count(),
-        UserEntity.countByStatus(UserStatus.ACTIVE),
-        UserEntity.countByStatus(UserStatus.SUSPENDED),
+        UserAccountEntity.count(),
+        UserAccountEntity.countByStatus(UserStatus.ACTIVE),
+        UserAccountEntity.countByStatus(UserStatus.SUSPENDED),
         RequestEntity.count(),
         RequestEntity.countByStatus(RequestStatus.ACTIVE),
         MatchEntity.count(),

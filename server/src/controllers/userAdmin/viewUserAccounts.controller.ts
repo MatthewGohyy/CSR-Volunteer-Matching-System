@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserEntity } from '../../entities/User.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -18,7 +18,7 @@ export class ViewUserAccountsController {
 
       // If ID is provided, get single user
       if (id) {
-        const user = await UserEntity.findById(id);
+        const user = await UserAccountEntity.findById(id);
 
         if (!user) {
           throw new AppError('User not found', 404);
@@ -30,8 +30,8 @@ export class ViewUserAccountsController {
 
       // Otherwise get all users with pagination
       const [users, total] = await Promise.all([
-        UserEntity.findAll(page, limit),
-        UserEntity.count(),
+        UserAccountEntity.findAll(page, limit),
+        UserAccountEntity.count(),
       ]);
 
       res.json({

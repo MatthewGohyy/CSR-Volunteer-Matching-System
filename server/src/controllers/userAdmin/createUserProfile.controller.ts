@@ -1,81 +1,35 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserEntity } from '../../entities/User.entity';
-import { PINEntity } from '../../entities/PIN.entity';
-import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
-import { UserType } from '@prisma/client';
-import { prisma } from '../../config/database';
+import { UserProfileRole } from '@prisma/client';
 
 /**
  * Create User Profile Controller
  * Story #8: As a User Admin, I want to create user profiles so that new roles can be assigned.
+ * 
+ * NOTE: With the new consolidated structure, profiles are created as part of user accounts.
+ * This endpoint now updates existing user accounts with profile data.
  */
 export class CreateUserProfileController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userId, userType, profileData } = req.body;
+      const { userId, profileData } = req.body;
 
-
-      const user = await UserEntity.findById(userId);
-
+      const user = await UserAccountEntity.findById(userId);
       if (!user) {
         throw new AppError('User not found', 404);
       }
 
-      // Check if profile already exists
-      if (userType === UserType.PIN && user.pin) {
-        throw new AppError('PIN profile already exists for this user', 409);
-      }
-      if (userType === UserType.CSR_REP && user.csrRep) {
-        throw new AppError('CSR Rep profile already exists for this user', 409);
-      }
-      if (userType === UserType.PLATFORM_MANAGER && user.platformManager) {
-        throw new AppError('Platform Manager profile already exists for this user', 409);
-      }
-
-      let profile;
-
-      switch (userType) {
-        case UserType.PIN:
-          profile = await prisma.pIN.create({
-            data: {
-              userId,
-              ...profileData,
-            },
-          });
-          break;
-
-        case UserType.CSR_REP:
-          profile = await prisma.cSRRep.create({
-            data: {
-              userId,
-              ...profileData,
-            },
-          });
-          break;
-
-        case UserType.PLATFORM_MANAGER:
-          profile = await prisma.platformManager.create({
-            data: {
-              userId,
-              ...profileData,
-            },
-          });
-          break;
-
-        default:
-          throw new AppError('Invalid user type for profile creation', 400);
-      }
-
-      // Update user's userType
-      await prisma.user.update({
-        where: { id: userId },
-        data: { userType },
-      });
+      // Update user with profile data
+      const updatedUser = await UserAccountEntity.update(userId, profileData);
 
       res.status(201).json({
-        message: 'User profile created successfully',
-        profile,
+        message: 'User profile updated successfully',
+        user: {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          role: updatedUser.getRole(),
+        },
       });
     } catch (error) {
       next(error);

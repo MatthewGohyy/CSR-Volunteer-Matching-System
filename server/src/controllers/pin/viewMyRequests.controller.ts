@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { PINEntity } from '../../entities/PIN.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
+import { UserProfileRole } from '@prisma/client';
 
 /**
  * View My Requests Controller
@@ -13,12 +14,12 @@ export class ViewMyRequestsController {
     try {
       const userId = (req as any).user!.userId;
 
-      const pin = await PINEntity.findByUserId(userId);
-      if (!pin) {
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.PIN);
+      if (!user) {
         throw new AppError('PIN profile not found', 404);
       }
 
-      const requests = await RequestEntity.findByPIN(pin.id, 1, 100);
+      const requests = await RequestEntity.findByPIN(user.id, 1, 100);
 
       res.json({ requests });
     } catch (error) {

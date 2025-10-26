@@ -10,10 +10,11 @@ interface CreateUserModalProps {
 }
 
 const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess }) => {
-  const [formData, setFormData] = useState<CreateUserData>({
+  const [formData, setFormData] = useState<any>({
     email: '',
     password: '',
-    userType: 'PIN',
+    role: 'PIN',
+    userProfileId: '',
     // PIN fields
     name: '',
     age: undefined,
@@ -51,7 +52,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
     
     // Clear specific field error when user starts typing
     if (errors[name]) {
@@ -76,14 +77,14 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
     }
 
     // PIN specific validation
-    if (formData.userType === 'PIN') {
+    if (formData.role === 'PIN') {
       if (!formData.name?.trim()) {
         newErrors.name = 'Name is required';
       }
     }
 
     // CSR Rep specific validation
-    if (formData.userType === 'CSR_REP') {
+    if (formData.role === 'CSR_REP') {
       if (!formData.companyName?.trim()) {
         newErrors.companyName = 'Company name is required';
       }
@@ -99,7 +100,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
     }
 
     // Platform Manager specific validation
-    if (formData.userType === 'PLATFORM_MANAGER') {
+    if (formData.role === 'PLATFORM_MANAGER') {
       if (!formData.fullName?.trim()) {
         newErrors.fullName = 'Full name is required';
       }
@@ -122,23 +123,23 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
     const submitData: CreateUserData = {
       email: formData.email,
       password: formData.password,
-      userType: formData.userType,
+      name: formData.name,
     };
 
-    if (formData.userType === 'PIN') {
+    if (formData.role === 'PIN') {
       submitData.name = formData.name;
       submitData.age = formData.age ? parseInt(formData.age.toString()) : undefined;
       submitData.location = formData.location;
       submitData.phoneNumber = formData.phoneNumber;
       submitData.accessibilityNeeds = formData.accessibilityNeeds;
-    } else if (formData.userType === 'CSR_REP') {
+    } else if (formData.role === 'CSR_REP') {
       submitData.companyName = formData.companyName;
       submitData.companyRegistrationNumber = formData.companyRegistrationNumber;
       submitData.industry = formData.industry;
       submitData.contactPerson = formData.contactPerson;
       submitData.phoneNumber = formData.phoneNumber;
       submitData.companyAddress = formData.companyAddress;
-    } else if (formData.userType === 'PLATFORM_MANAGER') {
+    } else if (formData.role === 'PLATFORM_MANAGER') {
       submitData.fullName = formData.fullName;
       submitData.department = formData.department;
       submitData.phone = formData.phone;

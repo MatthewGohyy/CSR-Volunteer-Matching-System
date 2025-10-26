@@ -1,4 +1,4 @@
-import { Request as PrismaRequest, RequestStatus, UrgencyLevel, PIN, ServiceCategory } from '@prisma/client';
+import { Request as PrismaRequest, RequestStatus, UrgencyLevel, ServiceCategory } from '@prisma/client';
 import { prisma } from '../config/database';
 
 /**
@@ -23,11 +23,9 @@ export class RequestEntity implements PrismaRequest {
   updatedAt: Date;
 
   // Related data
-  pin?: PIN;
   category?: ServiceCategory;
 
   constructor(data: PrismaRequest & {
-    pin?: PIN;
     category?: ServiceCategory;
   }) {
     this.id = data.id;
@@ -43,7 +41,6 @@ export class RequestEntity implements PrismaRequest {
     this.shortlistCount = data.shortlistCount;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
-    this.pin = data.pin;
     this.category = data.category;
   }
 

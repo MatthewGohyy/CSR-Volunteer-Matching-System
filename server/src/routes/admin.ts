@@ -14,12 +14,12 @@ import { SearchUserProfilesController } from '../controllers/userAdmin/searchUse
 import { DeleteUserAccountController } from '../controllers/userAdmin/deleteUserAccount.controller';
 import { GetSystemStatsController } from '../controllers/userAdmin/getSystemStats.controller';
 import { authenticate, authorize } from '../middleware/auth';
-import { UserType } from '@prisma/client';
+import { UserProfileRole } from '@prisma/client';
 
 const router = Router();
 
 // All routes require admin authentication
-router.use(authenticate, authorize(UserType.ADMIN));
+router.use(authenticate, authorize(UserProfileRole.USER_ADMIN));
 
 // User Account Management Routes (Stories #3-#7)
 // Story #7: Search user accounts (must be before :id route)

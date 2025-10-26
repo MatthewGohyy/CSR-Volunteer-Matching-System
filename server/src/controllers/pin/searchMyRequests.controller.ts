@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PINEntity } from '../../entities/PIN.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserProfileRole } from '@prisma/client';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus, UrgencyLevel } from '@prisma/client';
@@ -16,20 +17,20 @@ export class SearchMyRequestsController {
       const userId = (req as any).user!.userId;
       const { query, status, urgency } = req.query;
 
-      const pin = await PINEntity.findByUserId(userId);
-      if (!pin) {
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.PIN);
+      if (!user) {
         throw new AppError('PIN profile not found', 404);
       }
 
       let requests;
       if (status) {
         requests = await RequestEntity.findByStatus(status as RequestStatus, 1, 100);
-        requests = requests.filter(r => r.pinId === pin.id);
+        requests = requests.filter(r => r.pinId === user.id);
       } else if (urgency) {
         requests = await RequestEntity.findByUrgency(urgency as UrgencyLevel, 1, 100);
-        requests = requests.filter(r => r.pinId === pin.id);
+        requests = requests.filter(r => r.pinId === user.id);
       } else {
-        requests = await RequestEntity.findByPIN(pin.id, 1, 100);
+        requests = await RequestEntity.findByPIN(user.id, 1, 100);
       }
 
       if (query && typeof query === 'string') {

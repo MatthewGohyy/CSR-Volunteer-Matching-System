@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserEntity } from '../../entities/User.entity';
-import { UserType } from '@prisma/client';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserProfileRole } from '@prisma/client';
 
 /**
  * Search User Profiles Controller
@@ -15,16 +15,16 @@ export class SearchUserProfilesController {
 
       let users;
       if (query && typeof query === 'string') {
-        users = await UserEntity.search(query, 1, 1000);
+        users = await UserAccountEntity.search(query, 1, 1000);
       } else if (userType) {
-        users = await UserEntity.findByType(userType as UserType, 1, 1000);
+        users = await UserAccountEntity.findByProfileRole(userType as UserProfileRole, 1, 1000);
       } else {
-        users = await UserEntity.findAll(1, 1000);
+        users = await UserAccountEntity.findAll(1, 1000);
       }
 
-      const profiles = users.map(user => ({
+      const profiles = users.map((user: UserAccountEntity) => ({
         user: user.toJSON(),
-        profile: user.getProfile(),
+        role: user.getRole(),
       }));
 
       res.json({ profiles, total: profiles.length });
@@ -33,4 +33,3 @@ export class SearchUserProfilesController {
     }
   }
 }
-

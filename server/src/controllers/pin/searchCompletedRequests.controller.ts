@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PINEntity } from '../../entities/PIN.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserProfileRole } from '@prisma/client';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus } from '@prisma/client';
@@ -26,12 +27,12 @@ export class SearchCompletedRequestsController {
 
       // Get PIN profile
 
-      const pin = await PINEntity.findByUserId(userId);
-      if (!pin) {
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.PIN);
+      if (!user) {
         throw new AppError('PIN profile not found', 404);
       }
 
-      let allRequests = await RequestEntity.findByPIN(pin.id, 1, 1000);
+      let allRequests = await RequestEntity.findByPIN(user.id, 1, 1000);
       allRequests = allRequests.filter(r => 
         (r.status === RequestStatus.COMPLETED || r.status === RequestStatus.MATCHED) &&
         (r.title.toLowerCase().includes(q.toLowerCase()) || r.description.toLowerCase().includes(q.toLowerCase()))

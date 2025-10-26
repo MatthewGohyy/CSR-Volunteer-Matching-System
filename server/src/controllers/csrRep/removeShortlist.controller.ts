@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
-import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { UserProfileRole } from '@prisma/client';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { ShortlistEntity } from '../../entities/Shortlist.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
@@ -17,12 +18,12 @@ export class RemoveShortlistController {
 
       // Get CSR Rep profile
 
-      const csrRep = await CSRRepEntity.findByUserId(userId);
-      if (!csrRep) {
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.CSR_REP);
+      if (!user) {
         throw new AppError('CSR Rep profile not found', 404);
       }
 
-      await ShortlistEntity.deleteByCSRRepAndRequest(csrRep.id, requestId);
+      await ShortlistEntity.deleteByCSRRepAndRequest(user.id, requestId);
       await RequestEntity.incrementShortlistCountDB(requestId);
 
       res.json({ message: 'Request removed from shortlist' });

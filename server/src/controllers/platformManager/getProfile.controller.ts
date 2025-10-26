@@ -1,7 +1,8 @@
 import { Response, NextFunction } from 'express';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
-import { prisma } from '../../config/database';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserProfileRole } from '@prisma/client';
 
 /**
  * Get Platform Manager Profile Controller
@@ -13,24 +14,22 @@ export class GetProfileController {
     try {
       const userId = req.user!.userId;
 
-      const platformManager = await prisma.platformManager.findUnique({
-        where: { userId },
-        include: {
-          user: {
-            select: {
-              email: true,
-              status: true,
-              createdAt: true,
-            },
-          },
-        },
-      });
-
-      if (!platformManager) {
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.PLATFORM_MANAGER);
+      if (!user) {
         throw new AppError('Platform Manager profile not found', 404);
       }
 
-      res.json({ profile: platformManager });
+      res.json({ 
+        profile: {
+          id: user.id,
+          name: user.name,
+          department: user.department,
+          phoneNumber: user.phoneNumber,
+          email: user.email,
+          status: user.status,
+          profileStatus: user.profileStatus,
+        }
+      });
     } catch (error) {
       next(error);
     }

@@ -1,4 +1,4 @@
-import { PrismaClient, UserType, UserStatus } from '@prisma/client';
+import { PrismaClient, UserProfileRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -9,83 +9,133 @@ async function main() {
   // Hash password once (all test accounts use 'password123')
   const hashedPassword = await bcrypt.hash('password123', 10);
 
-  // 1. ADMIN USER
-  const adminUser = await prisma.user.upsert({
+  // 1. CREATE USER PROFILES (4 roles) - Expected to have only 4 records
+  const userProfiles = await Promise.all([
+    prisma.userProfile.upsert({
+      where: { role: UserProfileRole.USER_ADMIN },
+      update: {},
+      create: {
+        role: UserProfileRole.USER_ADMIN,
+        name: 'User Administrator',
+        description: 'Manages user accounts and profiles',
+        permissions: { manageUsers: true, manageProfiles: true },
+        isActive: true,
+      },
+    }),
+    prisma.userProfile.upsert({
+      where: { role: UserProfileRole.PIN },
+      update: {},
+      create: {
+        role: UserProfileRole.PIN,
+        name: 'Person in Need',
+        description: 'Recipient of volunteer assistance',
+        permissions: { createRequests: true, viewMatches: true },
+        isActive: true,
+      },
+    }),
+    prisma.userProfile.upsert({
+      where: { role: UserProfileRole.CSR_REP },
+      update: {},
+      create: {
+        role: UserProfileRole.CSR_REP,
+        name: 'CSR Representative',
+        description: 'Corporate volunteer representative',
+        permissions: { shortlistRequests: true, submitOffers: true },
+        isActive: true,
+      },
+    }),
+    prisma.userProfile.upsert({
+      where: { role: UserProfileRole.PLATFORM_MANAGER },
+      update: {},
+      create: {
+        role: UserProfileRole.PLATFORM_MANAGER,
+        name: 'Platform Manager',
+        description: 'Manages platform categories and reports',
+        permissions: { manageCategories: true, viewReports: true },
+        isActive: true,
+      },
+    }),
+  ]);
+  console.log('✅ User profiles created (4 roles)');
+
+  // Get the profile IDs for reference
+  const adminProfile = userProfiles[0]; // USER_ADMIN
+  const pinProfile = userProfiles[1]; // PIN
+  const csrRepProfile = userProfiles[2]; // CSR_REP
+  const pmProfile = userProfiles[3]; // PLATFORM_MANAGER
+
+  // 2. ADMIN USER ACCOUNT
+  const adminUser = await prisma.userAccount.upsert({
     where: { email: 'admin@test.com' },
     update: {},
     create: {
       email: 'admin@test.com',
       password: hashedPassword,
-      userType: UserType.ADMIN,
+      name: 'Admin User',
+      userProfileId: adminProfile.id,
       status: UserStatus.ACTIVE,
     },
   });
-  console.log('✅ Admin user created');
+  console.log('✅ Admin user account created');
 
-  // 2. PIN USER (Person in Need)
-  const pinUser = await prisma.user.upsert({
+  // 3. PIN USER ACCOUNT (Person in Need)
+  const pinUser = await prisma.userAccount.upsert({
     where: { email: 'pin@test.com' },
     update: {},
     create: {
       email: 'pin@test.com',
       password: hashedPassword,
-      userType: UserType.PIN,
+      name: 'John Doe',
+      phoneNumber: '+61 400 000 001',
+      address: 'Sydney, NSW',
+      userProfileId: pinProfile.id,
       status: UserStatus.ACTIVE,
-      pin: {
-        create: {
-          name: 'John Doe',
-          age: 65,
-          location: 'Sydney, NSW',
-          phoneNumber: '+61 400 000 001',
-          accessibilityNeeds: 'Wheelchair accessible',
-        },
-      },
+      // PIN-specific fields
+      age: 65,
+      location: 'Sydney, NSW',
+      accessibilityNeeds: 'Wheelchair accessible',
     },
   });
-  console.log('✅ PIN user created');
+  console.log('✅ PIN user account created');
 
-  // 3. CSR REP USER
-  const csrRepUser = await prisma.user.upsert({
+  // 4. CSR REP USER ACCOUNT
+  const csrRepUser = await prisma.userAccount.upsert({
     where: { email: 'csrrep@test.com' },
     update: {},
     create: {
       email: 'csrrep@test.com',
       password: hashedPassword,
-      userType: UserType.CSR_REP,
+      name: 'Jane Smith',
+      phoneNumber: '+61 400 000 002',
+      address: '123 Business St, Sydney NSW 2000',
+      userProfileId: csrRepProfile.id,
       status: UserStatus.ACTIVE,
-      csrRep: {
-        create: {
-          companyName: 'Test Corp Pty Ltd',
-          companyRegistrationNumber: 'ACN123456789',
-          industry: 'Technology',
-          contactPerson: 'Jane Smith',
-          phoneNumber: '+61 400 000 002',
-          companyAddress: '123 Business St, Sydney NSW 2000',
-        },
-      },
+      // CSR Rep-specific fields
+      companyName: 'Test Corp Pty Ltd',
+      companyRegistrationNumber: 'ACN123456789',
+      industry: 'Technology',
+      contactPerson: 'Jane Smith',
+      companyAddress: '123 Business St, Sydney NSW 2000',
     },
   });
-  console.log('✅ CSR Rep user created');
+  console.log('✅ CSR Rep user account created');
 
-  // 4. PLATFORM MANAGER USER
-  const pmUser = await prisma.user.upsert({
+  // 5. PLATFORM MANAGER USER ACCOUNT
+  const pmUser = await prisma.userAccount.upsert({
     where: { email: 'pm@test.com' },
     update: {},
     create: {
       email: 'pm@test.com',
       password: hashedPassword,
-      userType: UserType.PLATFORM_MANAGER,
+      name: 'Sarah Johnson',
+      phoneNumber: '+61 400 000 003',
+      userProfileId: pmProfile.id,
       status: UserStatus.ACTIVE,
-      platformManager: {
-        create: {
-          fullName: 'Sarah Johnson',
-          department: 'Platform Operations',
-          phone: '+61 400 000 003',
-        },
-      },
+      // Platform Manager-specific fields
+      department: 'Platform Operations',
     },
   });
-  console.log('✅ Platform Manager user created');
+  console.log('✅ Platform Manager user account created');
 
   // 5. SERVICE CATEGORIES
   const categories = [

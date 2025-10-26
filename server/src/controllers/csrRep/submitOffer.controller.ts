@@ -1,12 +1,11 @@
 import { Response, NextFunction } from 'express';
-import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { VolunteerOfferEntity } from '../../entities/VolunteerOffer.entity';
 import { NotificationEntity } from '../../entities/Notification.entity';
-import { PINEntity } from '../../entities/PIN.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
-import { OfferStatus, RequestStatus, NotificationType } from '@prisma/client';
+import { OfferStatus, RequestStatus, NotificationType, UserProfileRole } from '@prisma/client';
 import { prisma } from '../../config/database';
 
 /**
@@ -21,8 +20,8 @@ export class SubmitOfferController {
 
       // Get CSR Rep profile
 
-      const csrRep = await CSRRepEntity.findByUserId(userId);
-      if (!csrRep) {
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.CSR_REP);
+      if (!user) {
         throw new AppError('CSR Rep profile not found', 404);
       }
 
@@ -36,12 +35,12 @@ export class SubmitOfferController {
       }
 
       // Get PIN for notification
-      const pin = await PINEntity.findById(request.pinId);
-      if (!pin) {
+      const pinUser = await UserAccountEntity.findById(request.pinId);
+      if (!pinUser) {
         throw new AppError('PIN not found', 404);
       }
 
-      const offers = await VolunteerOfferEntity.findByCSRRep(csrRep.id, 1, 1000);
+      const offers = await VolunteerOfferEntity.findByCSRRep(user.id, 1, 1000);
       const existingOffer = offers.find(o => o.requestId === requestId);
       if (existingOffer) {
         throw new AppError('Offer already submitted', 409);
@@ -51,18 +50,12 @@ export class SubmitOfferController {
       const offer = await prisma.$transaction(async (tx) => {
         const newOffer = await tx.volunteerOffer.create({
           data: {
-            csrRepId: csrRep.id,
+            csrRepId: user.id,
             requestId,
             message,
             status: OfferStatus.PENDING,
           },
           include: {
-            csrRep: {
-              select: {
-                companyName: true,
-                contactPerson: true,
-              },
-            },
             request: {
               include: {
                 category: true,
@@ -74,9 +67,9 @@ export class SubmitOfferController {
         // Create notification for PIN
         await tx.notification.create({
           data: {
-            userId: pin.userId,
+            userId: pinUser.id,
             type: 'VOLUNTEER_OFFER',
-            message: `${csrRep.companyName} has offered to help with your request: ${request.title}`,
+            message: `${user.companyName} has offered to help with your request: ${request.title}`,
           },
         });
 

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserEntity } from '../../entities/User.entity';
-import { UserType, UserStatus } from '@prisma/client';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserProfileRole, UserStatus } from '@prisma/client';
 
 /**
  * Search User Accounts Controller
@@ -21,25 +21,25 @@ export class SearchUserAccountsController {
 
       // Search by query string
       if (query && typeof query === 'string') {
-        users = await UserEntity.search(query, page, limit);
+        users = await UserAccountEntity.search(query, page, limit);
         // For simplicity, count all matching users
-        const allMatches = await UserEntity.search(query, 1, 9999);
+        const allMatches = await UserAccountEntity.search(query, 1, 9999);
         total = allMatches.length;
       }
-      // Filter by user type
+      // Filter by user role
       else if (userType) {
-        users = await UserEntity.findByType(userType as UserType, page, limit);
-        total = await UserEntity.countByType(userType as UserType);
+        users = await UserAccountEntity.findByProfileRole(userType as UserProfileRole, page, limit);
+        total = await UserAccountEntity.countByProfileRole(userType as UserProfileRole);
       }
       // Filter by status
       else if (status) {
-        users = await UserEntity.findByStatus(status as UserStatus, page, limit);
-        total = await UserEntity.countByStatus(status as UserStatus);
+        users = await UserAccountEntity.findByStatus(status as UserStatus, page, limit);
+        total = await UserAccountEntity.countByStatus(status as UserStatus);
       }
       // Get all users
       else {
-        users = await UserEntity.findAll(page, limit);
-        total = await UserEntity.count();
+        users = await UserAccountEntity.findAll(page, limit);
+        total = await UserAccountEntity.count();
       }
 
       res.json({

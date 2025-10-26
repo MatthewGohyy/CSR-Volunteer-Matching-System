@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { UserProfileRole } from '@prisma/client';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { ShortlistEntity } from '../../entities/Shortlist.entity';
 import { AppError } from '../../middleware/errorHandler';
@@ -15,17 +16,17 @@ export class SaveRequestController {
       const { requestId } = req.body;
 
 
-      const csrRep = await CSRRepEntity.findByUserId(userId);
-      if (!csrRep) throw new AppError('CSR Rep profile not found', 404);
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.CSR_REP);
+      if (!user) throw new AppError('CSR Rep profile not found', 404);
 
       const request = await RequestEntity.findById(requestId);
       if (!request) throw new AppError('Request not found', 404);
 
-      const exists = await ShortlistEntity.exists(csrRep.id, requestId);
+      const exists = await ShortlistEntity.exists(user.id, requestId);
       if (exists) throw new AppError('Request already shortlisted', 409);
 
       const shortlist = await ShortlistEntity.create({
-        csrRepId: csrRep.id,
+        csrRepId: user.id,
         requestId,
       });
 

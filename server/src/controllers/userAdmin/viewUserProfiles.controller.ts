@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserEntity } from '../../entities/User.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
+import { UserProfileRole } from '@prisma/client';
 
 /**
  * View User Profiles Controller
@@ -14,26 +15,25 @@ export class ViewUserProfilesController {
       const { userType } = req.query;
 
       if (id) {
-        const user = await UserEntity.findById(id);
+        const user = await UserAccountEntity.findById(id);
         if (!user) {
           throw new AppError('User not found', 404);
         }
 
-        const profile = user.getProfile();
         res.json({ 
           user: user.toJSON(),
-          profile 
+          role: user.getRole(),
         });
         return;
       }
 
       const users = userType 
-        ? await UserEntity.findByType(userType as any, 1, 1000)
-        : await UserEntity.findAll(1, 1000);
+        ? await UserAccountEntity.findByProfileRole(userType as UserProfileRole, 1, 1000)
+        : await UserAccountEntity.findAll(1, 1000);
 
-      const profiles = users.map(user => ({
+      const profiles = users.map((user: UserAccountEntity) => ({
         user: user.toJSON(),
-        profile: user.getProfile(),
+        role: user.getRole(),
       }));
 
       res.json({ profiles });
@@ -42,4 +42,3 @@ export class ViewUserProfilesController {
     }
   }
 }
-

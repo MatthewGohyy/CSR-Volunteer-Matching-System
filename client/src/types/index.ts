@@ -1,12 +1,14 @@
 // User Types
-export type UserType = 'PIN' | 'CSR_REP' | 'ADMIN' | 'PLATFORM_MANAGER';
-export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
-export type ProfileStatus = 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
+export type UserRole = 'PIN' | 'CSR_REP' | 'USER_ADMIN' | 'PLATFORM_MANAGER';
+export type UserType = UserRole; // Legacy alias
+export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+export type ProfileStatus = 'ACTIVE' | 'SUSPENDED';
 
 export interface User {
   id: string;
   email: string;
-  userType: UserType;
+  role: UserRole;
+  name?: string;
   status: UserStatus;
   createdAt: string;
   updatedAt: string;
@@ -167,8 +169,8 @@ export interface AuthResponse {
   user: {
     id: string;
     email: string;
-    userType: UserType;
-    profile: PINProfile | CSRRepProfile | PlatformManagerProfile | null;
+    role: UserRole;
+    name?: string;
   };
   token: string;
 }
@@ -177,9 +179,10 @@ export interface AuthResponse {
 export interface CreateUserData {
   email: string;
   password: string;
-  userType: UserType;
-  // PIN specific fields
   name?: string;
+  userProfileId?: string;
+  role?: UserRole;
+  // PIN specific fields
   age?: number;
   location?: string;
   phoneNumber?: string;

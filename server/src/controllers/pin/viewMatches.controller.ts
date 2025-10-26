@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
-import { PINEntity } from '../../entities/PIN.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserProfileRole } from '@prisma/client';
 import { MatchEntity } from '../../entities/Match.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
@@ -13,12 +14,12 @@ export class ViewMatchesController {
     try {
       const userId = req.user!.userId;
 
-      const pin = await PINEntity.findByUserId(userId);
-      if (!pin) {
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.PIN);
+      if (!user) {
         throw new AppError('PIN profile not found', 404);
       }
 
-      const matches = await MatchEntity.findByPIN(pin.id, 1, 100);
+      const matches = await MatchEntity.findByPIN(user.id, 1, 100);
 
       res.json({ matches });
     } catch (error) {

@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { PINEntity } from '../../entities/PIN.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
-import { UrgencyLevel, RequestStatus } from '@prisma/client';
+import { UrgencyLevel, RequestStatus, UserProfileRole } from '@prisma/client';
 
 /**
  * Create Request Controller
@@ -15,13 +15,13 @@ export class CreateRequestController {
       const userId = (req as any).user!.userId;
       const { categoryId, title, description, urgency, dateNeeded, location } = req.body;
 
-      const pin = await PINEntity.findByUserId(userId);
-      if (!pin) {
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.PIN);
+      if (!user) {
         throw new AppError('PIN profile not found', 404);
       }
 
       const request = await RequestEntity.create({
-        pinId: pin.id,
+        pinId: user.id, // User account ID is now the PIN ID
         categoryId,
         title,
         description,

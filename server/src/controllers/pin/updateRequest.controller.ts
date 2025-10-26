@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PINEntity } from '../../entities/PIN.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserProfileRole } from '@prisma/client';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 
@@ -15,8 +16,8 @@ export class UpdateRequestController {
       const { id } = req.params;
       const { title, description, urgency, dateNeeded, location, status } = req.body;
 
-      const pin = await PINEntity.findByUserId(userId);
-      if (!pin) {
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.PIN);
+      if (!user) {
         throw new AppError('PIN profile not found', 404);
       }
 
@@ -24,7 +25,7 @@ export class UpdateRequestController {
       if (!existingRequest) {
         throw new AppError('Request not found', 404);
       }
-      if (existingRequest.pinId !== pin.id) {
+      if (existingRequest.pinId !== user.id) {
         throw new AppError('Unauthorized to update this request', 403);
       }
 

@@ -12,7 +12,7 @@ import {
   LogOut
 } from 'lucide-react';
 import api from '../config/api';
-import { UserType, UserStatus, AdminUser, UsersResponse } from '../types';
+import { UserType, UserRole, UserStatus, AdminUser, UsersResponse } from '../types';
 import CreateUserModal from './CreateUserModal';
 import UserDetailsModal from './UserDetailsModal';
 
@@ -55,20 +55,20 @@ const AdminDashboard: React.FC = () => {
         return 'text-green-600 bg-green-100';
       case 'SUSPENDED':
         return 'text-red-600 bg-red-100';
-      case 'DEACTIVATED':
+      case 'DELETED':
         return 'text-gray-600 bg-gray-100';
       default:
         return 'text-gray-600 bg-gray-100';
     }
   };
 
-  const getUserTypeColor = (userType: UserType) => {
-    switch (userType) {
+  const getUserTypeColor = (role: UserRole) => {
+    switch (role) {
       case 'PIN':
         return 'text-blue-600 bg-blue-100';
       case 'CSR_REP':
         return 'text-purple-600 bg-purple-100';
-      case 'ADMIN':
+      case 'USER_ADMIN':
         return 'text-orange-600 bg-orange-100';
       case 'PLATFORM_MANAGER':
         return 'text-indigo-600 bg-indigo-100';
@@ -215,7 +215,7 @@ const AdminDashboard: React.FC = () => {
                   <option value="ALL">All Status</option>
                   <option value="ACTIVE">Active</option>
                   <option value="SUSPENDED">Suspended</option>
-                  <option value="DEACTIVATED">Deactivated</option>
+                  <option value="DELETED">Deleted</option>
                 </select>
               </div>
             </div>
@@ -242,8 +242,8 @@ const AdminDashboard: React.FC = () => {
                       <p className="text-sm font-medium text-gray-900">
                         {user.pin?.name || user.csrRep?.companyName || user.platformManager?.fullName || user.email}
                       </p>
-                        <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(user.userType)}`}>
-                          {user.userType}
+                        <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(user.role)}`}>
+                          {user.role}
                         </span>
                         <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.status)}`}>
                           {user.status}

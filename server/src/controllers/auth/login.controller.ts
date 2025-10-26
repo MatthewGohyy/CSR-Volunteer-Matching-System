@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserEntity } from '../../entities/User.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { comparePassword } from '../../utils/password';
 import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
@@ -21,7 +21,7 @@ export class LoginController {
       const { email, password } = req.body;
 
       // Find user via Entity (direct database access)
-      const user = await UserEntity.findByEmail(email);
+      const user = await UserAccountEntity.findByEmail(email);
 
       if (!user) {
         throw new AppError('Invalid email or password', 401);
@@ -38,11 +38,17 @@ export class LoginController {
         throw new AppError('Invalid email or password', 401);
       }
 
+      // Get user role
+      const role = user.getRole();
+      if (!role) {
+        throw new AppError('User profile not found', 404);
+      }
+
       // Generate token
       const token = generateToken({
         userId: user.id,
         email: user.email,
-        userType: user.userType,
+        role,
       });
 
       res.json({
@@ -50,8 +56,8 @@ export class LoginController {
         user: {
           id: user.id,
           email: user.email,
-          userType: user.userType,
-          profile: user.getProfile(),
+          role,
+          name: user.name,
         },
         token,
       });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, User, Building2, Mail, Calendar, Shield, CheckCircle, XCircle, AlertCircle, Settings, Lock, UserCheck, Edit3, Save, X as XIcon } from 'lucide-react';
-import { AdminUser, UserType, UserStatus, ProfileStatus } from '../types';
+import { AdminUser, UserType, UserRole, UserStatus, ProfileStatus } from '../types';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../config/api';
 import Toast, { ToastType } from './Toast';
@@ -41,20 +41,20 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
         return 'text-green-600 bg-green-100';
       case 'SUSPENDED':
         return 'text-red-600 bg-red-100';
-      case 'DEACTIVATED':
+      case 'DELETED':
         return 'text-gray-600 bg-gray-100';
       default:
         return 'text-gray-600 bg-gray-100';
     }
   };
 
-  const getUserTypeColor = (userType: UserType) => {
-    switch (userType) {
+  const getUserTypeColor = (role: UserRole) => {
+    switch (role) {
       case 'PIN':
         return 'text-blue-600 bg-blue-100';
       case 'CSR_REP':
         return 'text-purple-600 bg-purple-100';
-      case 'ADMIN':
+      case 'USER_ADMIN':
         return 'text-orange-600 bg-orange-100';
       case 'PLATFORM_MANAGER':
         return 'text-indigo-600 bg-indigo-100';
@@ -69,7 +69,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
         return <CheckCircle className="h-5 w-5 text-green-600" />;
       case 'SUSPENDED':
         return <XCircle className="h-5 w-5 text-red-600" />;
-      case 'DEACTIVATED':
+      case 'DELETED':
         return <XCircle className="h-5 w-5 text-gray-600" />;
       default:
         return <AlertCircle className="h-5 w-5 text-gray-600" />;
@@ -242,11 +242,11 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
               <div className="h-16 w-16 rounded-full bg-gray-300 flex items-center justify-center">
-                {user.userType === 'PIN' ? (
+                {user.role === 'PIN' ? (
                   <User className="h-8 w-8 text-gray-600" />
-                ) : user.userType === 'CSR_REP' ? (
+                ) : user.role === 'CSR_REP' ? (
                   <Building2 className="h-8 w-8 text-gray-600" />
-                ) : user.userType === 'PLATFORM_MANAGER' ? (
+                ) : user.role === 'PLATFORM_MANAGER' ? (
                   <Settings className="h-8 w-8 text-gray-600" />
                 ) : (
                   <Shield className="h-8 w-8 text-gray-600" />
@@ -258,8 +258,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
                 {currentUser.pin?.name || currentUser.csrRep?.companyName || currentUser.platformManager?.fullName || currentUser.email}
               </h4>
               <div className="flex items-center space-x-2 mt-2">
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(currentUser.userType)}`}>
-                  {currentUser.userType}
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(currentUser.role)}`}>
+                  {currentUser.role}
                 </span>
               </div>
             </div>

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PINEntity } from '../../entities/PIN.entity';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserProfileRole } from '@prisma/client';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 
@@ -14,8 +15,8 @@ export class DeleteRequestController {
       const userId = (req as any).user!.userId;
       const { id } = req.params;
 
-      const pin = await PINEntity.findByUserId(userId);
-      if (!pin) {
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.PIN);
+      if (!user) {
         throw new AppError('PIN profile not found', 404);
       }
 
@@ -23,7 +24,7 @@ export class DeleteRequestController {
       if (!existingRequest) {
         throw new AppError('Request not found', 404);
       }
-      if (existingRequest.pinId !== pin.id) {
+      if (existingRequest.pinId !== user.id) {
         throw new AppError('Unauthorized to delete this request', 403);
       }
 

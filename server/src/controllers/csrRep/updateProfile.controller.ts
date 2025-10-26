@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
-import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { UserProfileRole } from '@prisma/client';
+import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -15,8 +16,8 @@ export class UpdateProfileController {
 
       // Get CSR Rep profile
 
-      const csrRep = await CSRRepEntity.findByUserId(userId);
-      if (!csrRep) {
+      const user = await UserAccountEntity.findByUserIdWithRole(userId, UserProfileRole.CSR_REP);
+      if (!user) {
         throw new AppError('CSR Rep profile not found', 404);
       }
 
@@ -27,7 +28,7 @@ export class UpdateProfileController {
       if (companyAddress) updateData.companyAddress = companyAddress;
       if (companyLogo) updateData.companyLogo = companyLogo;
 
-      const updated = await CSRRepEntity.updateByUserId(userId, updateData);
+      const updated = await UserAccountEntity.updateCSRRepProfile(userId, updateData);
 
       res.json({
         message: 'Profile updated successfully',

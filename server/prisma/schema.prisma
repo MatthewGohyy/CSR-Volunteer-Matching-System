@@ -7,17 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserType {
-  PIN
-  CSR_REP
-  ADMIN
-  PLATFORM_MANAGER
-}
-
 enum UserStatus {
   ACTIVE
   SUSPENDED
-  DEACTIVATED
+  DELETED
+}
+
+enum UserProfileRole {
+  CSR_REP
+  PIN
+  USER_ADMIN
+  PLATFORM_MANAGER
 }
 
 enum ProfileStatus {
@@ -60,64 +60,61 @@ enum NotificationType {
   REQUEST_UPDATED
 }
 
-model User {
-  id                String             @id @default(uuid())
-  email             String             @unique
-  password          String
-  userType          UserType
-  status            UserStatus         @default(ACTIVE)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  pin               PIN?
-  csrRep            CSRRep?
-  platformManager  PlatformManager?
-  notifications     Notification[]
-  @@map("users")
+model UserProfile {
+  id          String           @id @default(uuid())
+  role        UserProfileRole  @unique
+  name        String
+  description String?
+  permissions Json?
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  userAccounts UserAccount[]
+  @@map("user_profiles")
 }
 
-model PIN {
-  id                 String        @id @default(uuid())
-  userId             String        @unique
-  name               String
+model UserAccount {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  password     String
+  name         String
+  phoneNumber  String?
+  address      String?
+  dateOfBirth  DateTime?
+  status       UserStatus   @default(ACTIVE)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  userProfileId String
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id])
+  
+  // PIN-specific fields
   age                Int?
   location           String?
-  phoneNumber        String?
   accessibilityNeeds String?
   profilePhoto       String?
-  status             ProfileStatus @default(ACTIVE)
-  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  requests           Request[]
-  matches            Match[]
-  @@map("pins")
-}
-
-model CSRRep {
-  id                        String           @id @default(uuid())
-  userId                    String           @unique
-  companyName               String
-  companyRegistrationNumber String           @unique
+  
+  // CSR Rep-specific fields
+  companyName               String?
+  companyRegistrationNumber String? @unique
   industry                  String?
-  contactPerson             String
-  phoneNumber               String
+  contactPerson             String?
   companyAddress            String?
   companyLogo               String?
-  status                    ProfileStatus    @default(ACTIVE)
-  user                      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shortlists                Shortlist[]
-  volunteerOffers           VolunteerOffer[]
-  matches                   Match[]
-  @@map("csr_reps")
-}
-
-model PlatformManager {
-  id          String        @id @default(uuid())
-  userId      String        @unique
-  fullName    String
+  
+  // Platform Manager-specific fields
   department  String?
-  phone       String?
-  status      ProfileStatus @default(ACTIVE)
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  @@map("platform_managers")
+  
+  // Profile status (for profile operations)
+  profileStatus ProfileStatus @default(ACTIVE)
+  
+  // Relations
+  notifications Notification[]
+  requests      Request[]
+  shortlists    Shortlist[]
+  volunteerOffers VolunteerOffer[]
+  csrMatches    Match[]       @relation("CSRMatches")
+  pinMatches    Match[]       @relation("PINMatches")
+  @@map("user_accounts")
 }
 
 model ServiceCategory {
@@ -146,7 +143,7 @@ model Request {
   shortlistCount  Int              @default(0)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  pin             PIN              @relation(fields: [pinId], references: [id], onDelete: Cascade)
+  pin             UserAccount      @relation(fields: [pinId], references: [id], onDelete: Cascade)
   category        ServiceCategory  @relation(fields: [categoryId], references: [id])
   shortlists      Shortlist[]
   volunteerOffers VolunteerOffer[]
@@ -159,7 +156,7 @@ model Shortlist {
   csrRepId  String
   requestId String
   createdAt DateTime @default(now())
-  csrRep    CSRRep   @relation(fields: [csrRepId], references: [id], onDelete: Cascade)
+  csrRep    UserAccount @relation(fields: [csrRepId], references: [id], onDelete: Cascade)
   request   Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
   @@unique([csrRepId, requestId])
   @@map("shortlists")
@@ -173,7 +170,7 @@ model VolunteerOffer {
   status    OfferStatus @default(PENDING)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
-  csrRep    CSRRep      @relation(fields: [csrRepId], references: [id], onDelete: Cascade)
+  csrRep    UserAccount @relation(fields: [csrRepId], references: [id], onDelete: Cascade)
   request   Request     @relation(fields: [requestId], references: [id], onDelete: Cascade)
   @@map("volunteer_offers")
 }
@@ -189,8 +186,8 @@ model Match {
   cancellationReason String?
   updatedAt          DateTime    @updatedAt
   request            Request     @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  csrRep             CSRRep      @relation(fields: [csrRepId], references: [id], onDelete: Cascade)
-  pin                PIN         @relation(fields: [pinId], references: [id], onDelete: Cascade)
+  csrRep             UserAccount @relation("CSRMatches", fields: [csrRepId], references: [id], onDelete: Cascade)
+  pin                UserAccount @relation("PINMatches", fields: [pinId], references: [id], onDelete: Cascade)
   @@map("matches")
 }
 
@@ -201,7 +198,7 @@ model Notification {
   message   String
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      UserAccount      @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@map("notifications")
 }
 

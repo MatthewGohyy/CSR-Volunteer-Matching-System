@@ -1,4 +1,11 @@
-// Entity: User
+// Export entity classes
+export { UserAccountEntity } from './UserAccount.entity';
+export { UserProfileEntity } from './UserProfile.entity';
+
+// Legacy exports for backwards compatibility (to be deprecated)
+export { UserAccountEntity as UserEntity } from './UserAccount.entity';
+
+// Legacy exports (to be deprecated)
 export interface User {
   id: string;
   email: string;
