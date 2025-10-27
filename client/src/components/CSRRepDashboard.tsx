@@ -17,14 +17,16 @@ interface Request {
     id: string;
     name: string;
   };
-  urgencyLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  urgency?: 'LOW' | 'MEDIUM' | 'HIGH';
+  urgencyLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
   location: string;
   preferredDate?: string;
+  dateNeeded?: string | null;
   status: 'PENDING' | 'MATCHED' | 'COMPLETED' | 'CANCELLED';
   viewCount: number;
   shortlistCount: number;
   createdAt: string;
-  pin: {
+  pin?: {
     name: string;
     location?: string;
   };
@@ -62,10 +64,10 @@ const CSRRepDashboard: React.FC = () => {
     queryKey: ['available-requests', searchQuery, categoryFilter, urgencyFilter],
     queryFn: async (): Promise<RequestsResponse> => {
       const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
-      if (categoryFilter) params.append('category', categoryFilter);
+      if (searchQuery) params.append('query', searchQuery);
+      if (categoryFilter) params.append('categoryId', categoryFilter);
       if (urgencyFilter) params.append('urgency', urgencyFilter);
-      const response = await api.get<RequestsResponse>(`/csr/requests?${params.toString()}`);
+      const response = await api.get<RequestsResponse>(`/opportunities?${params.toString()}`);
       return response.data;
     },
     enabled: activeTab === 'browse',
@@ -99,7 +101,7 @@ const CSRRepDashboard: React.FC = () => {
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const response = await api.get('/common/categories');
+      const response = await api.get('/opportunities/categories');
       return response.data.categories;
     },
   });
@@ -137,7 +139,6 @@ const CSRRepDashboard: React.FC = () => {
       LOW: 'bg-blue-100 text-blue-800',
       MEDIUM: 'bg-yellow-100 text-yellow-800',
       HIGH: 'bg-orange-100 text-orange-800',
-      CRITICAL: 'bg-red-100 text-red-800',
     };
     return colors[urgency as keyof typeof colors] || colors.LOW;
   };
@@ -289,7 +290,6 @@ const CSRRepDashboard: React.FC = () => {
                   <option value="LOW">Low</option>
                   <option value="MEDIUM">Medium</option>
                   <option value="HIGH">High</option>
-                  <option value="CRITICAL">Critical</option>
                 </select>
               </>
             )}
@@ -341,8 +341,8 @@ const CSRRepDashboard: React.FC = () => {
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
                         {request.status}
                       </span>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUrgencyColor(request.urgencyLevel)}`}>
-                        {request.urgencyLevel}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUrgencyColor(request.urgency || request.urgencyLevel || 'MEDIUM')}`}>
+                        {request.urgency || request.urgencyLevel || 'MEDIUM'}
                       </span>
                       {request.category && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -356,18 +356,20 @@ const CSRRepDashboard: React.FC = () => {
                         <MapPin className="h-4 w-4 mr-1" />
                         {request.location}
                       </div>
-                      {request.preferredDate && (
+                      {(request.dateNeeded || request.preferredDate) && (
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
-                          {new Date(request.preferredDate).toLocaleDateString()}
+                          {new Date(request.dateNeeded || request.preferredDate!).toLocaleDateString()}
                         </div>
                       )}
                     </div>
 
-                    <div className="text-sm text-gray-600">
-                      <strong>Requested by:</strong> {request.pin.name}
-                      {request.pin.location && ` • ${request.pin.location}`}
-                    </div>
+                    {request.pin && (
+                      <div className="text-sm text-gray-600">
+                        <strong>Requested by:</strong> {request.pin.name}
+                        {request.pin.location && ` • ${request.pin.location}`}
+                      </div>
+                    )}
                   </div>
 
                   {activeTab !== 'history' && request.status === 'PENDING' && (

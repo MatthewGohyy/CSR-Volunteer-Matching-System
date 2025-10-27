@@ -30,16 +30,11 @@ export class ViewCompletedRequestsController {
       const completed = await RequestEntity.findByStatus(RequestStatus.COMPLETED, pageNum, limitNum);
       const matched = await RequestEntity.findByStatus(RequestStatus.MATCHED, pageNum, limitNum);
       const requests = [...completed, ...matched].filter(r => r.pinId === user.id);
-      const total = await RequestEntity.countByPIN(user.id);
+      const total = requests.length;
 
       res.json({
         requests,
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total,
-          pages: Math.ceil(total / limitNum),
-        },
+        total,
       });
     } catch (error) {
       next(error);

@@ -24,9 +24,11 @@ export class RequestEntity implements PrismaRequest {
 
   // Related data
   category?: ServiceCategory;
+  pin?: any; // UserAccount with profile data
 
   constructor(data: PrismaRequest & {
     category?: ServiceCategory;
+    pin?: any;
   }) {
     this.id = data.id;
     this.pinId = data.pinId;
@@ -42,6 +44,7 @@ export class RequestEntity implements PrismaRequest {
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
     this.category = data.category;
+    this.pin = (data as any).pin;
   }
 
   /**
@@ -92,6 +95,32 @@ export class RequestEntity implements PrismaRequest {
    */
   incrementShortlistCount(): number {
     return this.shortlistCount + 1;
+  }
+
+  /**
+   * Serialize request for JSON response (ensures dates are formatted correctly)
+   */
+  toJSON() {
+    return {
+      id: this.id,
+      pinId: this.pinId,
+      categoryId: this.categoryId,
+      title: this.title,
+      description: this.description,
+      urgency: this.urgency,
+      dateNeeded: this.dateNeeded?.toISOString() || null,
+      location: this.location,
+      status: this.status,
+      viewCount: this.viewCount,
+      shortlistCount: this.shortlistCount,
+      createdAt: this.createdAt.toISOString(),
+      updatedAt: this.updatedAt.toISOString(),
+      category: this.category,
+      pin: this.pin ? {
+        name: this.pin.name,
+        location: this.pin.location || this.pin.address,
+      } : null,
+    };
   }
 
   // ============================================
@@ -315,6 +344,73 @@ export class RequestEntity implements PrismaRequest {
           { location: { contains: query, mode: 'insensitive' } },
         ],
       },
+      skip,
+      take: limit,
+      include: {
+        pin: true,
+        category: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    return requests.map(request => new RequestEntity(request));
+  }
+
+  /**
+   * Search and filter requests (for CSR Rep)
+   */
+  static async searchWithFilters(params: {
+    query?: string;
+    status?: RequestStatus;
+    urgency?: UrgencyLevel;
+    categoryId?: string;
+  }, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const where: any = {
+      status: RequestStatus.ACTIVE, // Only return active requests for CSR Reps
+    };
+
+    // Add urgency filter
+    if (params.urgency) {
+      where.urgency = params.urgency;
+    }
+
+    // Add category filter
+    if (params.categoryId) {
+      where.categoryId = params.categoryId;
+    }
+
+    // Add search query filter using OR (but combine with other filters using AND)
+    if (params.query) {
+      const searchOrCondition = [
+        { title: { contains: params.query, mode: 'insensitive' } },
+        { description: { contains: params.query, mode: 'insensitive' } },
+        { location: { contains: params.query, mode: 'insensitive' } },
+      ];
+
+      // Build AND conditions array to combine status + search + other filters
+      const andConditions: any[] = [
+        { status: RequestStatus.ACTIVE },
+        { OR: searchOrCondition },
+      ];
+
+      if (params.urgency) {
+        andConditions.push({ urgency: params.urgency });
+      }
+      if (params.categoryId) {
+        andConditions.push({ categoryId: params.categoryId });
+      }
+
+      where.AND = andConditions;
+      // Remove the direct properties since we're using AND
+      delete where.status;
+      delete where.urgency;
+      delete where.categoryId;
+    }
+
+    const requests = await prisma.request.findMany({
+      where,
       skip,
       take: limit,
       include: {

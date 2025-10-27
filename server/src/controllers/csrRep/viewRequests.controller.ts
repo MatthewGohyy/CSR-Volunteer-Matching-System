@@ -9,18 +9,23 @@ import { RequestStatus } from '@prisma/client';
 export class ViewRequestsController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { status, categoryId } = req.query;
+      const { status, categoryId, urgency } = req.query;
 
-      let requests;
-      if (status) {
-        requests = await RequestEntity.findByStatus(status as RequestStatus, 1, 100);
-      } else if (categoryId) {
-        requests = await RequestEntity.findByCategory(categoryId as string, 1, 100);
-      } else {
-        requests = await RequestEntity.findAll(1, 100);
+      // Only return active requests by default for CSR Reps
+      const searchParams: any = {};
+      
+      if (typeof urgency === 'string') {
+        searchParams.urgency = urgency;
+      }
+      
+      if (typeof categoryId === 'string') {
+        searchParams.categoryId = categoryId;
       }
 
-      res.json({ requests });
+      const requests = await RequestEntity.searchWithFilters(searchParams, 1, 100);
+      const total = requests.length;
+
+      res.json({ requests, total });
     } catch (error) {
       next(error);
     }

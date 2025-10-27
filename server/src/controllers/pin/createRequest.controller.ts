@@ -26,7 +26,7 @@ export class CreateRequestController {
         title,
         description,
         urgency: urgency || UrgencyLevel.MEDIUM,
-        dateNeeded: dateNeeded ? new Date(dateNeeded) : undefined,
+        dateNeeded: new Date(dateNeeded),
         location,
         status: RequestStatus.ACTIVE,
       });

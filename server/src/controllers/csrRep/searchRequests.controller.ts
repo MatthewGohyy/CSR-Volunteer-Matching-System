@@ -20,24 +20,12 @@ export class SearchRequestsController {
         throw new AppError('CSR Rep profile not found', 404);
       }
 
-      let requests = await RequestEntity.findAll(1, 100);
-
-      if (status) {
-        requests = requests.filter(r => r.status === status);
-      }
-      if (urgency) {
-        requests = requests.filter(r => r.urgency === urgency);
-      }
-      if (categoryId) {
-        requests = requests.filter(r => r.categoryId === categoryId);
-      }
-      if (query && typeof query === 'string') {
-        const lowerQuery = query.toLowerCase();
-        requests = requests.filter(r => 
-          r.title.toLowerCase().includes(lowerQuery) ||
-          r.description.toLowerCase().includes(lowerQuery)
-        );
-      }
+      // Use searchWithFilters to get only active requests with applied filters
+      const requests = await RequestEntity.searchWithFilters({
+        query: typeof query === 'string' ? query : undefined,
+        urgency: typeof urgency === 'string' ? urgency as UrgencyLevel : undefined,
+        categoryId: typeof categoryId === 'string' ? categoryId : undefined,
+      }, 1, 100);
 
       res.json({ requests, total: requests.length });
     } catch (error) {

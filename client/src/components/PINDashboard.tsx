@@ -17,9 +17,11 @@ interface Request {
     id: string;
     name: string;
   };
-  urgencyLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  urgency?: 'LOW' | 'MEDIUM' | 'HIGH';
+  urgencyLevel?: 'LOW' | 'MEDIUM' | 'HIGH'; // Legacy field name
   location: string;
   preferredDate?: string;
+  dateNeeded?: string | null;
   status: 'PENDING' | 'MATCHED' | 'COMPLETED' | 'CANCELLED';
   viewCount: number;
   shortlistCount: number;
@@ -60,7 +62,7 @@ const PINDashboard: React.FC = () => {
     queryFn: async (): Promise<RequestsResponse> => {
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
-      const response = await api.get<RequestsResponse>(`/pin/requests?${params.toString()}`);
+      const response = await api.get<RequestsResponse>(`/opportunities/my/requests?${params.toString()}`);
       return response.data;
     },
   });
@@ -69,19 +71,19 @@ const PINDashboard: React.FC = () => {
   const { data: historyData } = useQuery({
     queryKey: ['pin-history', searchQuery],
     queryFn: async (): Promise<RequestsResponse> => {
-      const params = new URLSearchParams({ status: 'COMPLETED' });
+      const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
-      const response = await api.get<RequestsResponse>(`/pin/requests/history?${params.toString()}`);
+      const response = await api.get<RequestsResponse>(`/volunteers/requests/history?${params.toString()}`);
       return response.data;
     },
     enabled: activeTab === 'history',
   });
 
   // Fetch categories
-  const { data: categories } = useQuery({
+  const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useQuery({
     queryKey: ['categories'],
     queryFn: async (): Promise<ServiceCategory[]> => {
-      const response = await api.get<{ categories: ServiceCategory[] }>('/common/categories');
+      const response = await api.get<{ categories: ServiceCategory[] }>('/opportunities/categories');
       return response.data.categories;
     },
   });
@@ -89,7 +91,7 @@ const PINDashboard: React.FC = () => {
   // Delete request mutation
   const deleteRequestMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/pin/requests/${id}`);
+      await api.delete(`/opportunities/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pin-requests'] });
@@ -107,7 +109,6 @@ const PINDashboard: React.FC = () => {
       LOW: 'bg-blue-100 text-blue-800',
       MEDIUM: 'bg-yellow-100 text-yellow-800',
       HIGH: 'bg-orange-100 text-orange-800',
-      CRITICAL: 'bg-red-100 text-red-800',
     };
     return colors[urgency as keyof typeof colors] || colors.LOW;
   };
@@ -243,8 +244,8 @@ const PINDashboard: React.FC = () => {
                         {getStatusIcon(request.status)}
                         <span className="ml-1">{request.status}</span>
                       </span>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUrgencyColor(request.urgencyLevel)}`}>
-                        {request.urgencyLevel}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUrgencyColor(request.urgency || request.urgencyLevel || 'MEDIUM')}`}>
+                        {request.urgency || request.urgencyLevel || 'MEDIUM'}
                       </span>
                       {request.category && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -258,10 +259,11 @@ const PINDashboard: React.FC = () => {
                         <MapPin className="h-4 w-4 mr-1" />
                         {request.location}
                       </div>
-                      {request.preferredDate && (
-                        <div className="flex items-center">
+                      {(request.dateNeeded || request.preferredDate) && (
+                        <div className="flex items-center" title="Date Needed">
                           <Calendar className="h-4 w-4 mr-1" />
-                          {new Date(request.preferredDate).toLocaleDateString()}
+                          <span className="font-medium">Date:</span>
+                          <span className="ml-1">{new Date(request.dateNeeded || request.preferredDate!).toLocaleDateString()}</span>
                         </div>
                       )}
                     </div>
@@ -337,6 +339,8 @@ const PINDashboard: React.FC = () => {
         <CreateEditRequestModal
           request={editingRequest}
           categories={categories || []}
+          categoriesLoading={categoriesLoading}
+          categoriesError={categoriesError}
           onClose={() => {
             setShowCreateModal(false);
             setEditingRequest(null);
@@ -356,6 +360,8 @@ const PINDashboard: React.FC = () => {
 interface CreateEditRequestModalProps {
   request: Request | null;
   categories: ServiceCategory[];
+  categoriesLoading?: boolean;
+  categoriesError?: Error | null;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -363,6 +369,8 @@ interface CreateEditRequestModalProps {
 const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
   request,
   categories,
+  categoriesLoading = false,
+  categoriesError,
   onClose,
   onSuccess,
 }) => {
@@ -370,20 +378,24 @@ const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
     title: request?.title || '',
     description: request?.description || '',
     categoryId: request?.categoryId || '',
-    urgencyLevel: request?.urgencyLevel || 'MEDIUM',
+    urgency: ((request?.urgency || request?.urgencyLevel) as 'LOW' | 'MEDIUM' | 'HIGH') || 'MEDIUM',
     location: request?.location || '',
-    preferredDate: request?.preferredDate ? request.preferredDate.split('T')[0] : '',
+    dateNeeded: request?.dateNeeded || request?.preferredDate ? (request.dateNeeded || request.preferredDate!).split('T')[0] : '',
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       if (request) {
-        await api.put(`/pin/requests/${request.id}`, data);
+        await api.put(`/opportunities/${request.id}`, data);
       } else {
-        await api.post('/pin/requests', data);
+        await api.post('/opportunities', data);
       }
     },
     onSuccess,
+    onError: (error: any) => {
+      console.error('Error creating/updating request:', error);
+      // Error will be displayed via the mutation error state
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -438,14 +450,26 @@ const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
                   value={formData.categoryId}
                   onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                  disabled={categoriesLoading}
                 >
-                  <option value="">Select category</option>
+                  <option value="">
+                    {categoriesLoading 
+                      ? 'Loading categories...' 
+                      : categoriesError 
+                        ? 'Failed to load categories' 
+                        : 'Select category'}
+                  </option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
                     </option>
                   ))}
                 </select>
+                {categoriesError && (
+                  <p className="mt-1 text-sm text-red-600">
+                    Failed to load categories. Please try again.
+                  </p>
+                )}
               </div>
 
               <div>
@@ -454,14 +478,13 @@ const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
                 </label>
                 <select
                   required
-                  value={formData.urgencyLevel}
-                  onChange={(e) => setFormData({ ...formData, urgencyLevel: e.target.value as any })}
+                  value={formData.urgency}
+                  onChange={(e) => setFormData({ ...formData, urgency: e.target.value as any })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="LOW">Low</option>
                   <option value="MEDIUM">Medium</option>
                   <option value="HIGH">High</option>
-                  <option value="CRITICAL">Critical</option>
                 </select>
               </div>
             </div>
@@ -483,16 +506,28 @@ const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Preferred Date
+                  Preferred Date *
                 </label>
                 <input
                   type="date"
-                  value={formData.preferredDate}
-                  onChange={(e) => setFormData({ ...formData, preferredDate: e.target.value })}
+                  required
+                  value={formData.dateNeeded}
+                  onChange={(e) => setFormData({ ...formData, dateNeeded: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
             </div>
+
+            {createMutation.error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                <p className="font-medium">Error:</p>
+                <p className="text-sm">
+                  {createMutation.error?.response?.data?.error || 
+                   createMutation.error?.response?.data?.message || 
+                   'Failed to create request. Please try again.'}
+                </p>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-4">
               <button

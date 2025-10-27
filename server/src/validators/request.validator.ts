@@ -6,8 +6,9 @@ export const createRequestValidation = [
     .isLength({ max: 200 }).withMessage('Title must be less than 200 characters'),
   body('description').trim().notEmpty().withMessage('Description is required'),
   body('urgency').optional().isIn(['LOW', 'MEDIUM', 'HIGH']).withMessage('Invalid urgency level'),
-  body('dateNeeded').optional().isISO8601().withMessage('Valid date is required'),
-  body('location').optional().trim(),
+  body('dateNeeded').notEmpty().withMessage('Date is required')
+    .isISO8601().withMessage('Valid date is required'),
+  body('location').trim().notEmpty().withMessage('Location is required'),
 ];
 
 export const updateRequestValidation = [
@@ -15,6 +16,7 @@ export const updateRequestValidation = [
   body('title').optional().trim().notEmpty().withMessage('Title cannot be empty')
     .isLength({ max: 200 }).withMessage('Title must be less than 200 characters'),
   body('description').optional().trim().notEmpty().withMessage('Description cannot be empty'),
+  body('categoryId').optional().isUUID().withMessage('Valid category ID is required'),
   body('urgency').optional().isIn(['LOW', 'MEDIUM', 'HIGH']).withMessage('Invalid urgency level'),
   body('dateNeeded').optional().isISO8601().withMessage('Valid date is required'),
   body('location').optional().trim(),

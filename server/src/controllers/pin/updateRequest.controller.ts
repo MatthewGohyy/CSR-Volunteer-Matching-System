@@ -31,6 +31,7 @@ export class UpdateRequestController {
       const updateData: any = {};
       if (title) updateData.title = title;
       if (description) updateData.description = description;
+      if (req.body.categoryId) updateData.categoryId = req.body.categoryId;
       if (urgency) updateData.urgency = urgency;
       if (dateNeeded) updateData.dateNeeded = new Date(dateNeeded);
       if (location) updateData.location = location;

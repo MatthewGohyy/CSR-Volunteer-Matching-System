@@ -19,8 +19,9 @@ export class ViewMyRequestsController {
       }
 
       const requests = await RequestEntity.findByPIN(user.id, 1, 100);
+      const total = requests.length;
 
-      res.json({ requests });
+      res.json({ requests, total });
     } catch (error) {
       next(error);
     }
