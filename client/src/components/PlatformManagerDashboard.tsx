@@ -22,7 +22,6 @@ interface ServiceCategory {
 
 interface CategoriesResponse {
   categories: ServiceCategory[];
-  total: number;
 }
 
 interface PlatformStats {
@@ -139,7 +138,7 @@ const PlatformManagerDashboard: React.FC = () => {
                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
               >
                 <FolderOpen className="h-4 w-4 mr-2" />
-                Service Categories ({categoriesData?.total || 0})
+                Service Categories ({categoriesData?.categories?.length || 0})
               </button>
               <button
                 onClick={() => setActiveTab('stats')}

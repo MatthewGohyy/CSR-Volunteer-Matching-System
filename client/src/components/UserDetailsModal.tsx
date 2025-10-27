@@ -271,10 +271,24 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
                     </div>
                   </div>
                   <div className="flex items-center">
+                    <User className="h-4 w-4 text-gray-400 mr-3" />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-500">Name</p>
+                      <p className="text-sm font-medium text-gray-900">{currentUser.name || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
                     <Calendar className="h-4 w-4 text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Account Created</p>
                       <p className="text-sm font-medium text-gray-900">{formatDate(currentUser.createdAt)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 text-gray-400 mr-3" />
+                    <div>
+                      <p className="text-sm text-gray-500">Last Updated</p>
+                      <p className="text-sm font-medium text-gray-900">{currentUser.updatedAt ? formatDate(currentUser.updatedAt) : 'N/A'}</p>
                     </div>
                   </div>
                   <div className="flex items-center">
@@ -301,6 +315,33 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onUp
                       )}
                     </div>
                   </div>
+                  {currentUser.phoneNumber && (
+                    <div className="flex items-center">
+                      <User className="h-4 w-4 text-gray-400 mr-3" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-500">Phone Number</p>
+                        <p className="text-sm font-medium text-gray-900">{currentUser.phoneNumber}</p>
+                      </div>
+                    </div>
+                  )}
+                  {currentUser.address && (
+                    <div className="flex items-center md:col-span-2">
+                      <Building2 className="h-4 w-4 text-gray-400 mr-3" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-500">Address</p>
+                        <p className="text-sm font-medium text-gray-900">{currentUser.address}</p>
+                      </div>
+                    </div>
+                  )}
+                  {currentUser.dateOfBirth && (
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 text-gray-400 mr-3" />
+                      <div>
+                        <p className="text-sm text-gray-500">Date of Birth</p>
+                        <p className="text-sm font-medium text-gray-900">{new Date(currentUser.dateOfBirth).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

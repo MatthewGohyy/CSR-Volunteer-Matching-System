@@ -199,7 +199,14 @@ export interface CreateUserData {
   phone?: string;
 }
 
-export interface AdminUser extends User {
+export interface AdminUser extends Omit<User, 'updatedAt' | 'name'> {
+  // Basic account fields
+  name?: string;
+  phoneNumber?: string;
+  address?: string;
+  dateOfBirth?: string;
+  updatedAt?: string;
+  
   pin?: {
     id: string;
     name: string;
