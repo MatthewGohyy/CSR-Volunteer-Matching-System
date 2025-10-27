@@ -64,11 +64,30 @@ export class ShortlistEntity implements PrismaShortlist {
       skip,
       take: limit,
       include: {
-        request: { include: { pin: true, category: true } },
+        request: { 
+          include: { 
+            pin: true, 
+            category: true 
+          } 
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
-    return shortlists.map(s => new ShortlistEntity(s));
+    return shortlists.map(s => ({
+      ...s,
+      request: s.request,
+    }));
+  }
+
+  /**
+   * Get all shortlisted request IDs for a CSR Rep
+   */
+  static async getShortlistedRequestIds(csrRepId: string): Promise<string[]> {
+    const shortlists = await prisma.shortlist.findMany({
+      where: { csrRepId },
+      select: { requestId: true },
+    });
+    return shortlists.map(s => s.requestId);
   }
 
   /**

@@ -5,6 +5,7 @@ import { ViewShortlistController } from '../controllers/csrRep/viewShortlist.con
 import { SearchCompletedRequestsController } from '../controllers/csrRep/searchCompletedRequests.controller';
 import { ViewCompletedRequestsController } from '../controllers/csrRep/viewCompletedRequests.controller';
 import { RemoveShortlistController } from '../controllers/csrRep/removeShortlist.controller';
+import { GetShortlistedIdsController } from '../controllers/csrRep/getShortlistedIds.controller';
 import { SubmitOfferController } from '../controllers/csrRep/submitOffer.controller';
 import { ViewOffersController } from '../controllers/csrRep/viewOffers.controller';
 import { ViewMatchesController } from '../controllers/csrRep/viewMatches.controller';
@@ -22,6 +23,9 @@ router.get('/shortlist/search', SearchShortlistController.handle);
 
 // Story #30: View shortlist
 router.get('/shortlists', ViewShortlistController.handle);
+
+// Get shortlisted request IDs
+router.get('/shortlist/ids', GetShortlistedIdsController.handle);
 
 // Story #28: Save request (add to shortlist)
 router.post('/shortlist', SaveRequestController.handle);

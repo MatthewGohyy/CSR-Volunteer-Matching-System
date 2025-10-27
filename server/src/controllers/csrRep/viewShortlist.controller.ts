@@ -17,8 +17,19 @@ export class ViewShortlistController {
       if (!user) throw new AppError('CSR Rep profile not found', 404);
 
       const shortlists = await ShortlistEntity.findByCSRRep(user.id, 1, 100);
+      const total = shortlists.length;
 
-      res.json({ shortlists });
+      // Format the response - ensure request data is properly structured
+      const formattedShortlists = shortlists.map((s: any) => ({
+        id: s.id,
+        createdAt: s.createdAt.toISOString(),
+        request: s.request,
+      }));
+
+      res.json({ 
+        shortlist: formattedShortlists,
+        total
+      });
     } catch (error) {
       next(error);
     }

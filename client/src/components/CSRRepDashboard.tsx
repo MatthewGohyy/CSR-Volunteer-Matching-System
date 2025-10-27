@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Building2, LogOut, Search, Star, History, Eye, MapPin,
-  Calendar, AlertCircle, Clock, Bookmark, BookmarkCheck, X
+  Calendar, AlertCircle, Clock, X
 } from 'lucide-react';
 import api from '../config/api';
 import type { User as UserType } from '../types';
@@ -22,7 +22,7 @@ interface Request {
   location: string;
   preferredDate?: string;
   dateNeeded?: string | null;
-  status: 'PENDING' | 'MATCHED' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'ACTIVE' | 'MATCHED' | 'COMPLETED' | 'CANCELLED';
   viewCount: number;
   shortlistCount: number;
   createdAt: string;
@@ -79,7 +79,7 @@ const CSRRepDashboard: React.FC = () => {
     queryFn: async (): Promise<{ shortlist: Shortlist[]; total: number }> => {
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
-      const response = await api.get(`/csr/shortlist?${params.toString()}`);
+      const response = await api.get(`/organizations/shortlists?${params.toString()}`);
       return response.data;
     },
     enabled: activeTab === 'shortlist',
@@ -106,25 +106,42 @@ const CSRRepDashboard: React.FC = () => {
     },
   });
 
+  // Fetch shortlisted IDs
+  const { data: shortlistedIds } = useQuery({
+    queryKey: ['shortlisted-ids'],
+    queryFn: async (): Promise<string[]> => {
+      const response = await api.get('/organizations/shortlist/ids');
+      return response.data.shortlistedIds;
+    },
+  });
+
   // Save to shortlist mutation
   const saveToShortlistMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      await api.post('/csr/shortlist', { requestId });
+      await api.post('/organizations/shortlist', { requestId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['available-requests'] });
       queryClient.invalidateQueries({ queryKey: ['shortlist'] });
+      queryClient.invalidateQueries({ queryKey: ['shortlisted-ids'] });
+    },
+    onError: (error: any) => {
+      console.error('Error saving to shortlist:', error);
     },
   });
 
   // Remove from shortlist mutation
   const removeFromShortlistMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      await api.delete(`/csr/shortlist/${requestId}`);
+      await api.delete(`/organizations/shortlist/${requestId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['available-requests'] });
       queryClient.invalidateQueries({ queryKey: ['shortlist'] });
+      queryClient.invalidateQueries({ queryKey: ['shortlisted-ids'] });
+    },
+    onError: (error: any) => {
+      console.error('Error removing from shortlist:', error);
     },
   });
 
@@ -167,7 +184,9 @@ const CSRRepDashboard: React.FC = () => {
   if (activeTab === 'browse') {
     displayRequests = requestsData?.requests || [];
   } else if (activeTab === 'shortlist') {
-    displayRequests = shortlistData?.shortlist.map(s => s.request) || [];
+    displayRequests = shortlistData?.shortlist
+      ?.filter(s => s.request) // Filter out any null/undefined requests
+      .map(s => s.request) || [];
   } else if (activeTab === 'history') {
     displayRequests = historyData?.requests || [];
   }
@@ -372,7 +391,7 @@ const CSRRepDashboard: React.FC = () => {
                     )}
                   </div>
 
-                  {activeTab !== 'history' && request.status === 'PENDING' && (
+                  {activeTab !== 'history' && request.status === 'ACTIVE' && (
                     <div className="ml-4">
                       {activeTab === 'shortlist' ? (
                         <button
@@ -381,16 +400,27 @@ const CSRRepDashboard: React.FC = () => {
                           className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-md"
                           title="Remove from shortlist"
                         >
-                          <BookmarkCheck className="h-5 w-5" />
+                          <Star className="h-5 w-5 fill-current" />
                         </button>
                       ) : (
                         <button
-                          onClick={() => saveToShortlistMutation.mutate(request.id)}
-                          disabled={saveToShortlistMutation.isPending}
-                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
-                          title="Save to shortlist"
+                          onClick={() => {
+                            const isShortlisted = shortlistedIds?.includes(request.id);
+                            if (isShortlisted) {
+                              removeFromShortlistMutation.mutate(request.id);
+                            } else {
+                              saveToShortlistMutation.mutate(request.id);
+                            }
+                          }}
+                          disabled={saveToShortlistMutation.isPending || removeFromShortlistMutation.isPending}
+                          className={`p-2 rounded-md transition-colors ${
+                            shortlistedIds?.includes(request.id)
+                              ? 'text-blue-600 hover:bg-blue-50'
+                              : 'text-gray-600 hover:bg-gray-100 hover:text-blue-600'
+                          }`}
+                          title={shortlistedIds?.includes(request.id) ? 'Remove from shortlist' : 'Save to shortlist'}
                         >
-                          <Bookmark className="h-5 w-5" />
+                          <Star className={`h-5 w-5 ${shortlistedIds?.includes(request.id) ? 'fill-current' : ''}`} />
                         </button>
                       )}
                     </div>
