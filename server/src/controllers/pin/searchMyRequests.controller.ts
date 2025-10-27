@@ -3,7 +3,6 @@ import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus, UrgencyLevel } from '@prisma/client';
-import { prisma } from '../../config/database';
 
 /**
  * Search My Requests Controller

@@ -2,7 +2,6 @@ import { Response, NextFunction } from 'express';
 import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
-import { prisma } from '../../config/database';
 
 /**
  * Controller for deleting a service category

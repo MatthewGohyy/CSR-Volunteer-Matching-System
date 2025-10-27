@@ -2,7 +2,6 @@ import { Response, NextFunction } from 'express';
 import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
-import { prisma } from '../../config/database';
 
 /**
  * Controller for updating a service category
@@ -23,7 +22,7 @@ export class UpdateCategoryController {
       }
 
       if (name && name !== existingCategory.name) {
-        const allCategories = await ServiceCategoryEntity.findAll(1, 1000);
+        const allCategories = await ServiceCategoryEntity.findAll();
         const duplicate = allCategories.find(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== id);
 
         if (duplicate) {

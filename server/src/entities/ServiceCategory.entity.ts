@@ -52,20 +52,17 @@ export class ServiceCategoryEntity implements PrismaServiceCategory {
   // ============================================
 
   /**
-   * Find all categories with pagination
+   * Find all categories (simplified - pagination handled on frontend)
    */
-  static async findAll(page: number = 1, limit: number = 50) {
-    const skip = (page - 1) * limit;
+  static async findAll() {
     const categories = await prisma.serviceCategory.findMany({
-      skip,
-      take: limit,
       orderBy: { name: 'asc' },
     });
     return categories.map(c => new ServiceCategoryEntity(c));
   }
 
   /**
-   * Find active categories
+   * Find active categories only (simplified - pagination handled on frontend)
    */
   static async findActive() {
     const categories = await prisma.serviceCategory.findMany({
@@ -128,19 +125,16 @@ export class ServiceCategoryEntity implements PrismaServiceCategory {
   }
 
   /**
-   * Search categories
+   * Search categories (simplified - no pagination)
    */
-  static async search(query: string, page: number = 1, limit: number = 20) {
-    const skip = (page - 1) * limit;
+  static async search(query: string) {
     const categories = await prisma.serviceCategory.findMany({
       where: {
         OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
+          { name: { contains: query, mode: 'insensitive' } } // ,
+          // { description: { contains: query, mode: 'insensitive' } },
         ],
       },
-      skip,
-      take: limit,
       orderBy: { name: 'asc' },
     });
     return categories.map(c => new ServiceCategoryEntity(c));

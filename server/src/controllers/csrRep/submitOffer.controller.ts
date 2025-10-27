@@ -5,8 +5,7 @@ import { VolunteerOfferEntity } from '../../entities/VolunteerOffer.entity';
 import { NotificationEntity } from '../../entities/Notification.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
-import { OfferStatus, RequestStatus, NotificationType } from '@prisma/client';
-import { prisma } from '../../config/database';
+import { RequestStatus, NotificationType } from '@prisma/client';
 
 /**
  * Controller for submitting a volunteer offer to a request
@@ -47,33 +46,17 @@ export class SubmitOfferController {
       }
 
       // Create offer
-      const offer = await prisma.$transaction(async (tx) => {
-        const newOffer = await tx.volunteerOffer.create({
-          data: {
-            csrRepId: user.id,
-            requestId,
-            message,
-            status: OfferStatus.PENDING,
-          },
-          include: {
-            request: {
-              include: {
-                category: true,
-              },
-            },
-          },
-        });
+      const offer = await VolunteerOfferEntity.create({
+        csrRepId: user.id,
+        requestId,
+        message,
+      });
 
-        // Create notification for PIN
-        await tx.notification.create({
-          data: {
-            userId: pinUser.id,
-            type: 'VOLUNTEER_OFFER',
-            message: `${user.companyName} has offered to help with your request: ${request.title}`,
-          },
-        });
-
-        return newOffer;
+      // Create notification (supplementary logic)
+      await NotificationEntity.create({
+        userId: pinUser.id,
+        type: NotificationType.VOLUNTEER_OFFER,
+        message: `${user.companyName} has offered to help with your request: ${request.title}`,
       });
 
       res.status(201).json({

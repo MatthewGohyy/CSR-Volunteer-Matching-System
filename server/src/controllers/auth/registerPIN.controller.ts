@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserProfileEntity } from '../../entities/UserProfile.entity';
 import { hashPassword } from '../../utils/password';
 import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
 import { UserStatus } from '@prisma/client';
-import { prisma } from '../../config/database';
 
 /**
  * Controller for PIN user registration
@@ -25,10 +25,8 @@ export class RegisterPINController {
       // Hash password
       const hashedPassword = await hashPassword(password);
 
-      // Get PIN profile
-      const pinProfile = await prisma.userProfile.findUnique({
-        where: { name: 'Person in Need' }
-      });
+      // Get PIN profile via entity
+      const pinProfile = await UserProfileEntity.findByName('Person in Need');
 
       if (!pinProfile) {
         throw new AppError('PIN profile not found', 404);

@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserProfileEntity } from '../../entities/UserProfile.entity';
 import { hashPassword } from '../../utils/password';
 import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
 import { UserStatus } from '@prisma/client';
-import { prisma } from '../../config/database';
 
 /**
  * Controller for CSR Representative registration
@@ -32,10 +32,8 @@ export class RegisterCSRRepController {
       // Hash password
       const hashedPassword = await hashPassword(password);
 
-      // Get CSR Rep profile
-      const csrRepProfile = await prisma.userProfile.findUnique({
-        where: { name: 'CSR Representative' }
-      });
+      // Get CSR Rep profile via entity
+      const csrRepProfile = await UserProfileEntity.findByName('CSR Representative');
 
       if (!csrRepProfile) {
         throw new AppError('CSR Rep profile not found', 404);

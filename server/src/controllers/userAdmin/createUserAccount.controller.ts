@@ -3,7 +3,6 @@ import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { hashPassword } from '../../utils/password';
 import { AppError } from '../../middleware/errorHandler';
 import { UserStatus } from '@prisma/client';
-import { prisma } from '../../config/database';
 
 /**
  * Create User Account Controller

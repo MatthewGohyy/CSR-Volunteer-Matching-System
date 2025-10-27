@@ -40,7 +40,6 @@ router.get('/categories/search', SearchCategoriesController.handle);
 
 // Story #36: View categories
 router.get('/categories', ViewCategoriesController.handle);
-router.get('/categories/:id', validate(categoryIdValidation), ViewCategoriesController.handle);
 
 // Story #35: Create category
 router.post('/categories', validate(createCategoryValidation), CreateCategoryController.handle);
