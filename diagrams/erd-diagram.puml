@@ -44,54 +44,29 @@ entity UserAccount {
     dateOfBirth : DATE
     * status : UserStatus
     * userProfileId : UUID <<FK>>
-    * createdAt : TIMESTAMP
-    * updatedAt : TIMESTAMP
-}
-
-entity PIN {
-    * id : UUID <<PK>>
     --
-    * userAccountId : UUID <<FK>> <<UNIQUE>>
-    * name : VARCHAR(255)
+    ' PIN-specific fields
     age : INTEGER
     location : VARCHAR(255)
-    phoneNumber : VARCHAR(20)
     accessibilityNeeds : TEXT
     profilePhoto : VARCHAR(500)
-    * status : ProfileStatus
-    * createdAt : TIMESTAMP
-    * updatedAt : TIMESTAMP
-}
-
-entity CSRRep {
-    * id : UUID <<PK>>
     --
-    * userAccountId : UUID <<FK>> <<UNIQUE>>
-    * companyName : VARCHAR(255)
-    * companyRegistrationNumber : VARCHAR(100) <<UNIQUE>>
+    ' CSR Rep-specific fields
+    companyName : VARCHAR(255)
+    companyRegistrationNumber : VARCHAR(100) <<UNIQUE>>
     industry : VARCHAR(100)
-    * contactPerson : VARCHAR(255)
-    * phoneNumber : VARCHAR(20)
+    contactPerson : VARCHAR(255)
     companyAddress : TEXT
     companyLogo : VARCHAR(500)
-    * approvalStatus : UserStatus
-    certifications : TEXT
-    * status : ProfileStatus
+    --
+    ' Platform Manager-specific fields
+    department : VARCHAR(100)
+    --
+    * profileStatus : ProfileStatus
     * createdAt : TIMESTAMP
     * updatedAt : TIMESTAMP
 }
 
-entity PlatformManager {
-    * id : UUID <<PK>>
-    --
-    * userAccountId : UUID <<FK>> <<UNIQUE>>
-    * fullName : VARCHAR(255)
-    department : VARCHAR(100)
-    phone : VARCHAR(20)
-    * status : ProfileStatus
-    * createdAt : TIMESTAMP
-    * updatedAt : TIMESTAMP
-}
 
 ' ====================
 ' SERVICE MANAGEMENT
@@ -184,22 +159,19 @@ entity Notification {
 ' UserProfile <-> UserAccount (1:M)
 UserProfile ||--o{ UserAccount : "has role"
 
-' UserAccount <-> Profile Tables (1:1)
-UserAccount ||--o| PIN : "has"
-UserAccount ||--o| CSRRep : "has"
-UserAccount ||--o| PlatformManager : "has"
 
 ' UserAccount <-> Notification (1:M)
 UserAccount ||--o{ Notification : "receives"
 
-' PIN Relationships (1:M)
-PIN ||--o{ Request : "creates"
-PIN ||--o{ Match : "receives help"
+' UserAccount Relationships (1:M)
+' When userProfile.role = PIN:
+UserAccount ||--o{ Request : "creates (PIN)"
+UserAccount ||--o{ Match : "receives help (PIN)"
 
-' CSRRep Relationships (1:M)
-CSRRep ||--o{ Shortlist : "saves"
-CSRRep ||--o{ VolunteerOffer : "makes"
-CSRRep ||--o{ Match : "provides help"
+' When userProfile.role = CSR_REP:
+UserAccount ||--o{ Shortlist : "saves (CSR)"
+UserAccount ||--o{ VolunteerOffer : "makes (CSR)"
+UserAccount ||--o{ Match : "provides help (CSR)"
 
 ' ServiceCategory <-> Request (1:M)
 ServiceCategory ||--o{ Request : "categorizes"
@@ -217,26 +189,32 @@ note right of UserProfile
   **IMPORTANT**: This table contains 
   exactly 4 static records:
   
-  1. PIN (role = 'PIN')
-  2. CSR_REP (role = 'CSR_REP')
-  3. USER_ADMIN (role = 'USER_ADMIN')
-  4. PLATFORM_MANAGER (role = 'PLATFORM_MANAGER')
+  1. PIN (name = 'Person in Need')
+  2. CSR_REP (name = 'CSR Representative')
+  3. USER_ADMIN (name = 'User Administrator')
+  4. PLATFORM_MANAGER (name = 'Platform Manager')
   
   All UserAccounts reference one
-  of these 4 records.
+  of these 4 records via userProfileId.
 end note
 
 note right of UserAccount
-  **Refactored Design**:
-  - Renamed from "User"
-  - Many-to-One with UserProfile
-  - Separates authentication from
-    role/permission management
+  **Single Table Inheritance Pattern**:
+  - ALL role-specific fields in ONE table
+  - Role determined by userProfile reference
+  - PIN users use: age, location, accessibilityNeeds
+  - CSR users use: companyName, companyRegistrationNumber
+  - Platform Managers use: department
+  - Unused fields are NULL for each user
   
-  **Status Values**:
-  - ACTIVE
-  - SUSPENDED
-  - DELETED
+  **Benefits**:
+  - Simpler queries (no joins)
+  - Faster development
+  - Good for small-medium scale
+  
+  **Trade-offs**:
+  - Many NULL fields per row
+  - Less normalized design
 end note
 
 note bottom of Match
@@ -271,11 +249,5 @@ note bottom of Request
   - HIGH: Urgent, ASAP
 end note
 
-note bottom of CSRRep
-  **Approval Process**:
-  - approvalStatus: PENDING
-  - Must be approved by admin
-  - Only ACTIVE can create offers
-end note
 
 @enduml

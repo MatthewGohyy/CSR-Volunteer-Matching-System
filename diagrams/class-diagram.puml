@@ -86,17 +86,45 @@ class UserAccount {
     - dateOfBirth: DateTime
     - status: UserStatus
     - userProfileId: UUID
+    --
+    ' PIN-specific fields (nullable)
+    - age: Integer
+    - location: String
+    - accessibilityNeeds: String
+    - profilePhoto: String
+    --
+    ' CSR Rep-specific fields (nullable)
+    - companyName: String
+    - companyRegistrationNumber: String {unique}
+    - industry: String
+    - contactPerson: String
+    - companyAddress: String
+    - companyLogo: String
+    --
+    ' Platform Manager-specific fields (nullable)
+    - department: String
+    --
+    - profileStatus: ProfileStatus
     - createdAt: DateTime
     - updatedAt: DateTime
     --
     + isActive(): Boolean
     + isSuspended(): Boolean
-    + hasRole(role: UserProfileRole): Boolean
+    + isPIN(): Boolean
+    + isCSRRep(): Boolean
+    + isPlatformManager(): Boolean
+    + isUserAdmin(): Boolean
+    + hasRole(role: String): Boolean
     + getProfile(): UserProfile
+    + isSenior(): Boolean
+    + hasAccessibilityNeeds(): Boolean
+    + hasLogo(): Boolean
+    + isApproved(): Boolean
     + toJSON(): Object
     --
     {static} + findById(id: UUID): UserAccount
     {static} + findByEmail(email: String): UserAccount
+    {static} + findByRole(role: String): UserAccount[]
     {static} + create(data: Object): UserAccount
     {static} + update(id: UUID, data: Object): UserAccount
     {static} + suspend(id: UUID): UserAccount
@@ -122,83 +150,6 @@ class UserProfile {
     <<Note: Only 4 static records exist>>
 }
 
-class PIN {
-    - id: UUID
-    - userAccountId: UUID {unique}
-    - name: String
-    - age: Integer
-    - location: String
-    - phoneNumber: String
-    - accessibilityNeeds: String
-    - profilePhoto: String
-    - status: ProfileStatus
-    - createdAt: DateTime
-    - updatedAt: DateTime
-    --
-    + isActive(): Boolean
-    + isSuspended(): Boolean
-    + isSenior(): Boolean
-    + hasAccessibilityNeeds(): Boolean
-    + getDisplayName(): String
-    + toJSON(): Object
-    --
-    {static} + findById(id: UUID): PIN
-    {static} + findByUserId(userId: UUID): PIN
-    {static} + create(data: Object): PIN
-    {static} + update(id: UUID, data: Object): PIN
-    {static} + suspendByUserId(userId: UUID): PIN
-    {static} + activateByUserId(userId: UUID): PIN
-}
-
-class CSRRep {
-    - id: UUID
-    - userAccountId: UUID {unique}
-    - companyName: String
-    - companyRegistrationNumber: String {unique}
-    - industry: String
-    - contactPerson: String
-    - phoneNumber: String
-    - companyAddress: String
-    - companyLogo: String
-    - approvalStatus: UserStatus
-    - certifications: String
-    - status: ProfileStatus
-    - createdAt: DateTime
-    - updatedAt: DateTime
-    --
-    + isActive(): Boolean
-    + isApproved(): Boolean
-    + isPending(): Boolean
-    + hasLogo(): Boolean
-    + getDisplayName(): String
-    + toJSON(): Object
-    --
-    {static} + findById(id: UUID): CSRRep
-    {static} + findByUserId(userId: UUID): CSRRep
-    {static} + create(data: Object): CSRRep
-    {static} + update(id: UUID, data: Object): CSRRep
-    {static} + approve(id: UUID): CSRRep
-    {static} + suspendByUserId(userId: UUID): CSRRep
-}
-
-class PlatformManager {
-    - id: UUID
-    - userAccountId: UUID {unique}
-    - fullName: String
-    - department: String
-    - phone: String
-    - status: ProfileStatus
-    - createdAt: DateTime
-    - updatedAt: DateTime
-    --
-    + isActive(): Boolean
-    + getDisplayName(): String
-    --
-    {static} + findById(id: UUID): PlatformManager
-    {static} + findByUserId(userId: UUID): PlatformManager
-    {static} + create(data: Object): PlatformManager
-    {static} + update(id: UUID, data: Object): PlatformManager
-}
 
 ' ====================
 ' SERVICE MANAGEMENT
@@ -339,25 +290,16 @@ class Notification {
 UserProfile "1" -- "0..*" UserAccount : has >
 UserProfile::role -- UserProfileRole
 
-' UserAccount -> Profile Tables (1:1)
-UserAccount "1" -- "0..1" PIN : has >
-UserAccount "1" -- "0..1" CSRRep : has >
-UserAccount "1" -- "0..1" PlatformManager : has >
 
 ' UserAccount Status
 UserAccount::status -- UserStatus
 
-' PIN Relationships
-PIN "1" -- "0..*" Request : creates >
-PIN "1" -- "0..*" Match : receives help >
-PIN::status -- ProfileStatus
-
-' CSRRep Relationships
-CSRRep "1" -- "0..*" Shortlist : saves >
-CSRRep "1" -- "0..*" VolunteerOffer : makes >
-CSRRep "1" -- "0..*" Match : provides help >
-CSRRep::status -- ProfileStatus
-CSRRep::approvalStatus -- UserStatus
+' UserAccount Relationships (role-based)
+UserAccount "1" -- "0..*" Request : creates (PIN role) >
+UserAccount "1" -- "0..*" Shortlist : saves (CSR role) >
+UserAccount "1" -- "0..*" VolunteerOffer : makes (CSR role) >
+UserAccount "1" -- "0..*" Match : involved in >
+UserAccount::profileStatus -- ProfileStatus
 
 ' Request Relationships
 ServiceCategory "1" -- "0..*" Request : categorizes >
@@ -390,11 +332,18 @@ note right of UserProfile
 end note
 
 note right of UserAccount
-  **Refactored Design**:
-  - Renamed from "User"
-  - Separated authentication
-    from role definition
-  - Many-to-One with UserProfile
+  **Single Table Inheritance**:
+  - ALL role-specific fields in ONE class
+  - Role determined by userProfile reference
+  - PIN users use: age, location, accessibilityNeeds
+  - CSR users use: companyName, companyRegistrationNumber
+  - Platform Managers use: department
+  - Unused fields are NULL
+  
+  **Methods handle role logic**:
+  - isPIN(), isCSRRep(), etc.
+  - Business logic varies by role
+end note with UserProfile
 end note
 
 @enduml

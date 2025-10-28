@@ -1,4 +1,4 @@
-import { PrismaClient, UserStatus } from '@prisma/client';
+import { PrismaClient, UserStatus, ProfileStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -77,7 +77,10 @@ async function main() {
   // 3. PIN USER ACCOUNT (Person in Need)
   const pinUser = await prisma.userAccount.upsert({
     where: { email: 'pin@test.com' },
-    update: {},
+    update: {
+      status: UserStatus.ACTIVE,
+      profileStatus: ProfileStatus.ACTIVE,
+    },
     create: {
       email: 'pin@test.com',
       password: hashedPassword,

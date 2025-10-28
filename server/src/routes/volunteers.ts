@@ -7,6 +7,9 @@ import { MarkNotificationReadController } from '../controllers/pin/markNotificat
 import { MarkAllNotificationsReadController } from '../controllers/pin/markAllNotificationsRead.controller';
 import { SearchCompletedRequestsController } from '../controllers/pin/searchCompletedRequests.controller';
 import { ViewCompletedRequestsController } from '../controllers/pin/viewCompletedRequests.controller';
+import { ViewOffersController } from '../controllers/pin/viewOffers.controller';
+import { AcceptOfferController } from '../controllers/pin/acceptOffer.controller';
+import { DeclineOfferController } from '../controllers/pin/declineOffer.controller';
 import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
@@ -17,6 +20,11 @@ router.use(authenticate, authorize('Person in Need'));
 // Profile management
 router.get('/profile', GetProfileController.handle);
 router.put('/profile', UpdateProfileController.handle);
+
+// Volunteer Offers (NEW)
+router.get('/offers', ViewOffersController.handle);
+router.put('/offers/:offerId/accept', AcceptOfferController.handle);
+router.put('/offers/:offerId/decline', DeclineOfferController.handle);
 
 // Matches
 router.get('/matches', ViewMatchesController.handle);

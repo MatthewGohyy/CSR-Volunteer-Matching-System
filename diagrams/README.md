@@ -77,43 +77,54 @@ plantuml erd-diagram.puml
 
 ## 🎨 Diagram Highlights
 
-### UserAccount/UserProfile Design
+### UserAccount/UserProfile Design (Single Table Inheritance)
 
-The diagrams reflect the refactored architecture where:
+The diagrams reflect the **actual implementation** using Single Table Inheritance pattern:
 
 1. **UserProfile Table** (4 static records):
-   - PIN
-   - CSR_REP  
-   - USER_ADMIN
-   - PLATFORM_MANAGER
+   - PIN ("Person in Need")
+   - CSR_REP ("CSR Representative")
+   - USER_ADMIN ("User Administrator")
+   - PLATFORM_MANAGER ("Platform Manager")
 
-2. **UserAccount Table**:
+2. **UserAccount Table** (ONE table for all users):
    - References one of the 4 UserProfile records
    - Contains authentication credentials
    - Has personal information (name, email, phone, etc.)
+   - **Contains ALL role-specific fields in ONE table:**
+     - PIN fields: age, location, accessibilityNeeds, profilePhoto
+     - CSR fields: companyName, companyRegistrationNumber, industry, etc.
+     - Platform Manager fields: department
+   - Unused fields are NULL for each user type
 
-3. **Profile Tables** (PIN, CSRRep, PlatformManager):
-   - One-to-one relationship with UserAccount
-   - Role-specific information
+3. **No Separate Profile Tables**:
+   - No separate PIN/CSRRep/PlatformManager tables
+   - All data stored in UserAccount with nullable fields
+   - Role determined by userProfile reference
 
 ### Key Relationships
 
 ```
 UserProfile (1) ──── (M) UserAccount
-UserAccount (1) ──── (0..1) PIN
-UserAccount (1) ──── (0..1) CSRRep
-UserAccount (1) ──── (0..1) PlatformManager
-PIN (1) ──── (M) Request
-Request (1) ──── (1) Match
-CSRRep (1) ──── (M) VolunteerOffer
+UserAccount (1) ──── (M) Request (when role = PIN)
+UserAccount (1) ──── (M) Shortlist (when role = CSR_REP)
+UserAccount (1) ──── (M) VolunteerOffer (when role = CSR_REP)
+UserAccount (1) ──── (M) Match (as PIN or CSR_REP)
+Request (1) ──── (0..1) Match
 ```
+
+**Note:** No separate PIN/CSRRep/PlatformManager tables. Role determined by `userProfile` reference.
 
 ## 📝 Notes
 
-- **M:1 Cardinality**: Many UserAccounts reference one UserProfile
-- **1:1 Relationships**: Each UserAccount has at most one profile (PIN or CSRRep or PlatformManager)
+- **Single Table Inheritance**: All user types stored in ONE UserAccount table
+- **M:1 Cardinality**: Many UserAccounts reference one UserProfile (4 static records)
+- **Role Determination**: UserProfile reference determines which fields are used
+- **Nullable Fields**: Each user only uses relevant fields; others are NULL
 - **Unique Constraints**: Marked with `<<UNIQUE>>` in PlantUML, `UK` in Mermaid
 - **Foreign Keys**: Marked with `<<FK>>` in PlantUML, `FK` in Mermaid
+
+For detailed explanation, see [DESIGN_PATTERN.md](./DESIGN_PATTERN.md)
 
 ## 🔄 Keeping Diagrams Updated
 

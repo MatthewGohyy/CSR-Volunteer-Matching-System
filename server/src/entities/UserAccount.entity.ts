@@ -135,7 +135,7 @@ export class UserAccountEntity implements PrismaUserAccount {
    * Check if user is PIN (Person In Need)
    */
   isPIN(): boolean {
-    return this.userProfile?.name === 'Person in Need' || this.userProfile?.name === 'PIN' || this.userProfile?.name === 'CSR_REP';
+    return this.userProfile?.name === 'Person in Need' || this.userProfile?.name === 'PIN';
   }
 
   /**
