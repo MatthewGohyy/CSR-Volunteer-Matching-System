@@ -1,0 +1,356 @@
+classDiagram
+    %% ============================================
+    %% CSR Volunteer Matching System - Class Diagram
+    %% Refactored Design with UserAccount/UserProfile
+    %% ============================================
+
+    %% ============================================
+    %% ENUMS
+    %% ============================================
+    
+    class UserProfileRole {
+        <<enumeration>>
+        PIN
+        CSR_REP
+        USER_ADMIN
+        PLATFORM_MANAGER
+    }
+
+    class UserStatus {
+        <<enumeration>>
+        ACTIVE
+        SUSPENDED
+        DELETED
+    }
+
+    class ProfileStatus {
+        <<enumeration>>
+        ACTIVE
+        SUSPENDED
+        DELETED
+    }
+
+    class RequestStatus {
+        <<enumeration>>
+        ACTIVE
+        MATCHED
+        COMPLETED
+        CANCELLED
+    }
+
+    class UrgencyLevel {
+        <<enumeration>>
+        LOW
+        MEDIUM
+        HIGH
+    }
+
+    class OfferStatus {
+        <<enumeration>>
+        PENDING
+        ACCEPTED
+        DECLINED
+    }
+
+    class MatchStatus {
+        <<enumeration>>
+        ACTIVE
+        COMPLETED
+        CANCELLED
+    }
+
+    class NotificationType {
+        <<enumeration>>
+        VOLUNTEER_OFFER
+        OFFER_ACCEPTED
+        OFFER_DECLINED
+        MATCH_CONFIRMED
+        MATCH_CANCELLED
+        REQUEST_UPDATED
+    }
+
+    %% ============================================
+    %% CORE AUTHENTICATION & AUTHORIZATION
+    %% ============================================
+
+    class UserAccount {
+        -UUID id
+        -String email
+        -String password
+        -String name
+        -String phoneNumber
+        -String address
+        -DateTime dateOfBirth
+        -UserStatus status
+        -UUID userProfileId
+        -DateTime createdAt
+        -DateTime updatedAt
+        +isActive() Boolean
+        +isSuspended() Boolean
+        +hasRole(role) Boolean
+        +getProfile() UserProfile
+        +toJSON() Object
+        +findById(id)$ UserAccount
+        +findByEmail(email)$ UserAccount
+        +create(data)$ UserAccount
+        +update(id, data)$ UserAccount
+        +suspend(id)$ UserAccount
+        +activate(id)$ UserAccount
+    }
+
+    class UserProfile {
+        -UUID id
+        -UserProfileRole role
+        -String name
+        -String description
+        -JSON permissions
+        -Boolean isActive
+        -DateTime createdAt
+        -DateTime updatedAt
+        +hasPermission(permission) Boolean
+        +isActiveRole() Boolean
+        +findByRole(role)$ UserProfile
+        +getAllProfiles()$ UserProfile[]
+    }
+
+    note for UserProfile "Only 4 static records exist:\nPIN, CSR_REP, USER_ADMIN, PLATFORM_MANAGER"
+
+    %% ============================================
+    %% USER PROFILE TYPES
+    %% ============================================
+
+    class PIN {
+        -UUID id
+        -UUID userAccountId
+        -String name
+        -Integer age
+        -String location
+        -String phoneNumber
+        -String accessibilityNeeds
+        -String profilePhoto
+        -ProfileStatus status
+        -DateTime createdAt
+        -DateTime updatedAt
+        +isActive() Boolean
+        +isSuspended() Boolean
+        +isSenior() Boolean
+        +hasAccessibilityNeeds() Boolean
+        +getDisplayName() String
+        +toJSON() Object
+        +findById(id)$ PIN
+        +findByUserId(userId)$ PIN
+        +create(data)$ PIN
+        +update(id, data)$ PIN
+        +suspendByUserId(userId)$ PIN
+        +activateByUserId(userId)$ PIN
+    }
+
+    class CSRRep {
+        -UUID id
+        -UUID userAccountId
+        -String companyName
+        -String companyRegistrationNumber
+        -String industry
+        -String contactPerson
+        -String phoneNumber
+        -String companyAddress
+        -String companyLogo
+        -UserStatus approvalStatus
+        -String certifications
+        -ProfileStatus status
+        -DateTime createdAt
+        -DateTime updatedAt
+        +isActive() Boolean
+        +isApproved() Boolean
+        +isPending() Boolean
+        +hasLogo() Boolean
+        +getDisplayName() String
+        +toJSON() Object
+        +findById(id)$ CSRRep
+        +findByUserId(userId)$ CSRRep
+        +create(data)$ CSRRep
+        +update(id, data)$ CSRRep
+        +approve(id)$ CSRRep
+        +suspendByUserId(userId)$ CSRRep
+    }
+
+    class PlatformManager {
+        -UUID id
+        -UUID userAccountId
+        -String fullName
+        -String department
+        -String phone
+        -ProfileStatus status
+        -DateTime createdAt
+        -DateTime updatedAt
+        +isActive() Boolean
+        +getDisplayName() String
+        +findById(id)$ PlatformManager
+        +findByUserId(userId)$ PlatformManager
+        +create(data)$ PlatformManager
+        +update(id, data)$ PlatformManager
+    }
+
+    %% ============================================
+    %% SERVICE MANAGEMENT
+    %% ============================================
+
+    class ServiceCategory {
+        -UUID id
+        -String name
+        -String description
+        -String iconUrl
+        -Boolean isActive
+        -DateTime createdAt
+        -DateTime updatedAt
+        +isActive() Boolean
+        +findById(id)$ ServiceCategory
+        +findAll()$ ServiceCategory[]
+        +create(data)$ ServiceCategory
+        +update(id, data)$ ServiceCategory
+    }
+
+    class Request {
+        -UUID id
+        -UUID pinId
+        -UUID categoryId
+        -String title
+        -String description
+        -UrgencyLevel urgency
+        -DateTime dateNeeded
+        -String location
+        -RequestStatus status
+        -Integer viewCount
+        -Integer shortlistCount
+        -DateTime createdAt
+        -DateTime updatedAt
+        +isActive() Boolean
+        +isMatched() Boolean
+        +isCompleted() Boolean
+        +isUrgent() Boolean
+        +canBeUpdated() Boolean
+        +incrementViewCount() void
+        +incrementShortlistCount() void
+        +findById(id)$ Request
+        +findByPinId(pinId)$ Request[]
+        +create(data)$ Request
+        +update(id, data)$ Request
+        +cancel(id)$ Request
+    }
+
+    %% ============================================
+    %% MATCHING SYSTEM
+    %% ============================================
+
+    class Shortlist {
+        -UUID id
+        -UUID csrRepId
+        -UUID requestId
+        -DateTime createdAt
+        +findById(id)$ Shortlist
+        +findByCsrRepId(csrRepId)$ Shortlist[]
+        +create(data)$ Shortlist
+        +delete(id)$ void
+    }
+
+    class VolunteerOffer {
+        -UUID id
+        -UUID csrRepId
+        -UUID requestId
+        -String message
+        -OfferStatus status
+        -DateTime createdAt
+        -DateTime updatedAt
+        +isPending() Boolean
+        +isAccepted() Boolean
+        +isDeclined() Boolean
+        +findById(id)$ VolunteerOffer
+        +findByRequestId(requestId)$ VolunteerOffer[]
+        +create(data)$ VolunteerOffer
+        +accept(id)$ VolunteerOffer
+        +decline(id)$ VolunteerOffer
+    }
+
+    class Match {
+        -UUID id
+        -UUID requestId
+        -UUID csrRepId
+        -UUID pinId
+        -MatchStatus status
+        -DateTime matchedAt
+        -DateTime completedAt
+        -String cancellationReason
+        -DateTime updatedAt
+        +isActive() Boolean
+        +isCompleted() Boolean
+        +isCancelled() Boolean
+        +canBeCompleted() Boolean
+        +findById(id)$ Match
+        +findByPinId(pinId)$ Match[]
+        +create(data)$ Match
+        +complete(id)$ Match
+        +cancel(id, reason)$ Match
+    }
+
+    %% ============================================
+    %% NOTIFICATIONS
+    %% ============================================
+
+    class Notification {
+        -UUID id
+        -UUID userAccountId
+        -NotificationType type
+        -String message
+        -Boolean isRead
+        -DateTime createdAt
+        +markAsRead() void
+        +isUnread() Boolean
+        +findById(id)$ Notification
+        +findByUserId(userId)$ Notification[]
+        +create(data)$ Notification
+        +markAllAsRead(userId)$ void
+    }
+
+    %% ============================================
+    %% RELATIONSHIPS
+    %% ============================================
+
+    %% Core Authentication
+    UserProfile "1" --> "0..*" UserAccount : has
+    UserAccount --> UserProfileRole : role via UserProfile
+    UserAccount --> UserStatus : has status
+
+    %% User Profiles
+    UserAccount "1" --> "0..1" PIN : has
+    UserAccount "1" --> "0..1" CSRRep : has
+    UserAccount "1" --> "0..1" PlatformManager : has
+
+    %% PIN Relationships
+    PIN "1" --> "0..*" Request : creates
+    PIN "1" --> "0..*" Match : receives help
+    PIN --> ProfileStatus : has status
+
+    %% CSRRep Relationships
+    CSRRep "1" --> "0..*" Shortlist : saves
+    CSRRep "1" --> "0..*" VolunteerOffer : makes
+    CSRRep "1" --> "0..*" Match : provides help
+    CSRRep --> ProfileStatus : has status
+    CSRRep --> UserStatus : approval status
+
+    %% Request Relationships
+    ServiceCategory "1" --> "0..*" Request : categorizes
+    Request "1" --> "0..*" Shortlist : saved by
+    Request "1" --> "0..*" VolunteerOffer : receives
+    Request "1" --> "0..1" Match : matched with
+    Request --> RequestStatus : has status
+    Request --> UrgencyLevel : has urgency
+
+    %% Match
+    Match --> MatchStatus : has status
+
+    %% Volunteer Offer
+    VolunteerOffer --> OfferStatus : has status
+
+    %% Notifications
+    UserAccount "1" --> "0..*" Notification : receives
+    Notification --> NotificationType : has type

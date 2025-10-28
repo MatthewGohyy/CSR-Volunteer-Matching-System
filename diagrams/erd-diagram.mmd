@@ -1,0 +1,151 @@
+erDiagram
+    %% ============================================
+    %% CSR Volunteer Matching System - ERD
+    %% Refactored Design with UserAccount/UserProfile
+    %% ============================================
+
+    UserProfile ||--o{ UserAccount : "has role"
+    UserAccount ||--o| PIN : "has"
+    UserAccount ||--o| CSRRep : "has"
+    UserAccount ||--o| PlatformManager : "has"
+    UserAccount ||--o{ Notification : "receives"
+    PIN ||--o{ Request : "creates"
+    PIN ||--o{ Match : "receives help"
+    CSRRep ||--o{ Shortlist : "saves"
+    CSRRep ||--o{ VolunteerOffer : "makes"
+    CSRRep ||--o{ Match : "provides help"
+    ServiceCategory ||--o{ Request : "categorizes"
+    Request ||--o{ Shortlist : "saved by"
+    Request ||--o{ VolunteerOffer : "receives"
+    Request ||--o| Match : "matched with"
+
+    UserProfile {
+        uuid id PK "Primary Key"
+        enum role UK "PIN, CSR_REP, USER_ADMIN, PLATFORM_MANAGER"
+        varchar name "Role display name"
+        text description "Role description"
+        json permissions "Future RBAC"
+        boolean isActive "Is role active"
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    UserAccount {
+        uuid id PK "Primary Key"
+        varchar email UK "Unique email"
+        varchar password "Bcrypt hashed"
+        varchar name "Full name"
+        varchar phoneNumber
+        text address
+        date dateOfBirth
+        enum status "ACTIVE, SUSPENDED, DELETED"
+        uuid userProfileId FK "References UserProfile"
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    PIN {
+        uuid id PK "Primary Key"
+        uuid userAccountId FK_UK "References UserAccount"
+        varchar name
+        int age
+        varchar location
+        varchar phoneNumber
+        text accessibilityNeeds
+        varchar profilePhoto "URL"
+        enum status "ACTIVE, SUSPENDED, DELETED"
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    CSRRep {
+        uuid id PK "Primary Key"
+        uuid userAccountId FK_UK "References UserAccount"
+        varchar companyName
+        varchar companyRegistrationNumber UK
+        varchar industry
+        varchar contactPerson
+        varchar phoneNumber
+        text companyAddress
+        varchar companyLogo "URL"
+        enum approvalStatus "PENDING, ACTIVE, SUSPENDED"
+        text certifications
+        enum status "ACTIVE, SUSPENDED, DELETED"
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    PlatformManager {
+        uuid id PK "Primary Key"
+        uuid userAccountId FK_UK "References UserAccount"
+        varchar fullName
+        varchar department
+        varchar phone
+        enum status "ACTIVE, SUSPENDED, DELETED"
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    ServiceCategory {
+        uuid id PK "Primary Key"
+        varchar name UK "Unique category name"
+        text description
+        varchar iconUrl
+        boolean isActive
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    Request {
+        uuid id PK "Primary Key"
+        uuid pinId FK "References PIN"
+        uuid categoryId FK "References ServiceCategory"
+        varchar title
+        text description
+        enum urgency "LOW, MEDIUM, HIGH"
+        timestamp dateNeeded
+        varchar location
+        enum status "ACTIVE, MATCHED, COMPLETED, CANCELLED"
+        int viewCount "Default 0"
+        int shortlistCount "Default 0"
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    Shortlist {
+        uuid id PK "Primary Key"
+        uuid csrRepId FK "References CSRRep"
+        uuid requestId FK "References Request"
+        timestamp createdAt
+    }
+
+    VolunteerOffer {
+        uuid id PK "Primary Key"
+        uuid csrRepId FK "References CSRRep"
+        uuid requestId FK "References Request"
+        text message
+        enum status "PENDING, ACCEPTED, DECLINED"
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    Match {
+        uuid id PK "Primary Key"
+        uuid requestId FK_UK "References Request (Unique)"
+        uuid csrRepId FK "References CSRRep"
+        uuid pinId FK "References PIN"
+        enum status "ACTIVE, COMPLETED, CANCELLED"
+        timestamp matchedAt
+        timestamp completedAt
+        text cancellationReason
+        timestamp updatedAt
+    }
+
+    Notification {
+        uuid id PK "Primary Key"
+        uuid userAccountId FK "References UserAccount"
+        enum type "VOLUNTEER_OFFER, OFFER_ACCEPTED, etc."
+        text message
+        boolean isRead "Default false"
+        timestamp createdAt
+    }

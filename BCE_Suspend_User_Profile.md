@@ -10,17 +10,17 @@
 
 ```
 ┌──────────────────────────────────────┐     ┌──────────────────────────────────────┐     ┌──────────────────────────────────────┐
-│     UserDetailsModal.tsx             │     │  SuspendUserProfileController        │     │   UserEntity + Profile Entities      │
+│     UserDetailsModal.tsx             │     │  SuspendUserProfileController        │     │   UserAccountEntity + UserProfileEntity │
 │         (BOUNDARY)                   │────▶│         (CONTROL)                    │────▶│          (ENTITY)                    │
 │      Frontend - React                │     │       Backend - Node.js              │     │   Database + Business Logic          │
 ├──────────────────────────────────────┤     ├──────────────────────────────────────┤     ├──────────────────────────────────────┤
 │                                      │     │                                      │     │                                      │
 │ UI Component:                        │     │ API Endpoint:                        │     │ ┌──────────────────────────────────┐ │
-│   +profile status badge display      │     │   PUT /admin/profiles/:id/suspend    │     │ │      UserEntity                  │ │
+│   +profile status badge display      │     │   PUT /admin/profiles/:id/suspend    │     │ │      UserAccountEntity           │ │
 │   +suspend profile button            │     │                                      │     │ │  (User Domain Object)            │ │
 │   +activate profile button           │     │ +static async handle(                │     │ ├──────────────────────────────────┤ │
 │   +confirmation dialog               │     │    req: Request,                     │     │ │ Static Methods (CRUD):           │ │
-│   +toast notifications               │     │    res: Response,                    │     │ │   +findById(id): UserEntity      │ │
+│   +toast notifications               │     │    res: Response,                    │     │ │   +findById(id): UserAccountEntity│ │
 │                                      │     │    next: NextFunction                │     │ │   +findByEmail(email)            │ │
 │ API Call:                            │     │  ): Promise<void>                    │     │ │   +create(data)                  │ │
 │   +handleProfileStatusChange(        │     │                                      │     │ │   +update(id, data)              │ │
@@ -29,41 +29,40 @@
 │   ↓                                  │     │ ══════════════════════════════════   │     │ │                                  │ │
 │   api.put(                           │     │                                      │     │ │ Instance Methods (Logic):        │ │
 │     `/admin/profiles/${id}/suspend`) │     │ Step 1: Get User & Determine Type    │     │ │   +isActive(): boolean           │ │
-│                                      │     │   const user = await                 │     │ │   +isSuspended(): boolean        │ │
-│ User Actions:                        │     │     UserEntity.findById(id); ────────┼─────┼─▶   +isAdmin(): boolean           │ │
-│   +click_suspend_profile()           │     │   if (!user) throw 404               │     │ │   +isPIN(): boolean              │ │
+│                                      │     │   const userAccount = await          │     │ │   +isSuspended(): boolean        │ │
+│ User Actions:                        │     │     UserAccountEntity.findById(id); ─┼─────┼─▶ │   +isAdmin(): boolean           │ │
+│   +click_suspend_profile()           │     │   if (!userAccount) throw 404         │     │ │   +isPIN(): boolean              │ │
 │   +confirm_suspension()              │     │                                      │     │ │   +isCSRRep(): boolean           │ │
-│   +view_success_toast()              │     │ Step 2: Validate Profile Exists      │     │ │   +isPlatformManager(): boolean  │ │
-│                                      │     │   Uses: user.pin / user.csrRep /     │     │ │   +getProfile(): Profile | null  │ │
-│ HTTP Request:                        │     │         user.platformManager         │     │ │   +toJSON()                      │ │
-│   PUT with userId in URL             │     │   if (!profile) throw 404            │     │ └──────────────────────────────────┘ │
-│   Headers: Authorization Bearer      │     │                                      │     │                                      │
-│                                      │     │ Step 3: Suspend Based on Type        │     │ ┌──────────────────────────────────┐ │
-│ Response Handling:                   │     │   switch (user.userType) {           │     │ │   PINEntity / CSRRepEntity /     │ │
-│   - 200: Success                     │     │     case UserType.PIN:               │     │ │   PlatformManagerEntity          │ │
-│     ↓ Invalidate cache               │     │       suspendedProfile = await       │     │ │  (Profile Domain Objects)        │ │
-│     ↓ Refresh user data              │     │         PINEntity.suspendByUserId(id)├─────┼─▶                                  │ │
-│     ↓ Show success toast             │     │       break;                         │     │ ├──────────────────────────────────┤ │
-│   - 404: User/Profile not found      │     │     case UserType.CSR_REP:           │     │ │ Static Methods (CRUD):           │ │
-│   - 400: Cannot suspend admin        │     │       suspendedProfile = await       │     │ │   +findById(id)                  │ │
-│   - 401: Unauthorized                │     │         CSRRepEntity                 │     │ │   +findByUserId(userId)          │ │
-│                                      │     │           .suspendByUserId(id);──────┼─────┼─▶   +create(data)                  │ │
-│ State Management:                    │     │       break;                         │     │ │   +update(id, data)              │ │
-│   +React Query cache                 │     │     case UserType.PLATFORM_MANAGER:  │     │ │   +updateByUserId(userId, data)  │ │
-│   +Local component state             │     │       suspendedProfile = await       │     │ │   +suspend(id)                   │ │
-│   +Toast notification state          │     │         PlatformManagerEntity        │     │ │   +suspendByUserId(userId)───────┼─┐│
-│                                      │     │           .suspendByUserId(id);──────┼─────┼─▶   +activate(id)                 │ ││
-│ Note:                                │     │       break;                         │     │ │   +activateByUserId(userId)      │ ││
-│   Suspends PROFILE, not account.     │     │     case UserType.ADMIN:             │     │ │   +delete(id)                    │ ││
-│   User can still login but cannot    │     │       throw AppError(400);           │     │ │                                  │ ││
-│   perform role-specific tasks.       │     │   }                                  │     │ │ Instance Methods (Logic):        │ ││
-│                                      │     │                                      │     │ │   +isActive(): boolean           │ ││
-└──────────────────────────────────────┘     │ Step 4: Format Response              │     │ │   +isSuspended(): boolean        │ ││
-         ↑                                    │   res.json({                         │     │ │   +isProfileComplete(): boolean  │ ││
-         │                                    │     message: "...",                   │     │ │   +getDisplayName(): string      │ ││
-   User Interface                            │     user: { id, email, userType,     │     │ │   +hasAccessibilityNeeds() [PIN] │ ││
-   (Presentation)                            │            status },                 │     │ │   +isSenior(): boolean [PIN]     │ ││
-                                             │     profile: suspendedProfile        │     │ │   +hasLogo(): boolean [CSRRep]   │ ││
+│   +view_success_toast()              │     │ Step 2: Validate Profile Exists      │     │ │   +hasRole(role): boolean        │ │
+│                                      │     │   if (!userAccount.userProfile) throw 404 │     │ │   +getProfile(): Profile | null  │ │
+│ HTTP Request:                        │     │                                      │     │ │   +toJSON()                      │ │
+│   PUT with userId in URL             │     │ Step 3: Suspend Based on Type        │     │ └──────────────────────────────────┘ │
+│   Headers: Authorization Bearer      │     │   switch (userAccount.userProfile.role) │     │                                      │
+│                                      │     │     case UserProfileRole.PIN:        │     │ ┌──────────────────────────────────┐ │
+│ Response Handling:                   │     │       suspendedProfile = await       │     │ │      PINEntity                  │ │
+│   - 200: Success                     │     │         PINEntity.suspendByUserId(id)├─────┼─▶ │  (Profile Domain Object)        │ │
+│     ↓ Invalidate cache               │     │       break;                         │     │ ├──────────────────────────────────┤ │
+│     ↓ Refresh user data              │     │     case UserProfileRole.CSR_REP:    │     │ │ Static Methods (CRUD):           │ │
+│     ↓ Show success toast             │     │       suspendedProfile = await       │     │ │   +findById(id)                  │ │
+│   - 404: User/Profile not found      │     │         CSRRepEntity                 │     │ │   +findByUserId(userId)          │ │
+│   - 400: Cannot suspend admin        │     │           .suspendByUserId(id);──────┼─────┼─▶ │   +create(data)                  │ │
+│   - 401: Unauthorized                │     │       break;                         │     │ │   +update(id, data)              │ │
+│                                      │     │     case UserProfileRole.PLATFORM_MANAGER: │     │ │   +updateByUserId(userId, data)  │ │
+│ State Management:                    │     │       suspendedProfile = await       │     │ │   +suspend(id)                   │ │
+│   +React Query cache                 │     │         PlatformManagerEntity        │     │ │   +suspendByUserId(userId)───────┼─┐│
+│   +Local component state             │     │           .suspendByUserId(id);──────┼─────┼─▶ │   +activate(id)                 │ ││
+│   +Toast notification state          │     │       break;                         │     │ │   +activateByUserId(userId)      │ ││
+│                                      │     │     case UserProfileRole.USER_ADMIN: │     │ │   +delete(id)                    │ ││
+│ Note:                                │     │       throw AppError(400);           │     │ │                                  │ ││
+│   Suspends PROFILE, not account.     │     │   }                                  │     │ │ Instance Methods (Logic):        │ ││
+│   User can still login but cannot    │     │                                      │     │ │   +isActive(): boolean           │ ││
+│   perform role-specific tasks.       │     │ Step 4: Format Response              │     │ │   +isSuspended(): boolean        │ ││
+└──────────────────────────────────────┘     │   res.json({                         │     │ │   +isProfileComplete(): boolean  │ ││
+         ↑                                    │     message: "...",                   │     │ │   +getDisplayName(): string      │ ││
+         │                                    │     userAccount: {                   │     │ │   +hasAccessibilityNeeds() [PIN] │ ││
+   User Interface                            │       id, email, userProfile,        │     │ │   +isSenior(): boolean [PIN]     │ ││
+   (Presentation)                            │       status },                      │     │ │   +hasLogo(): boolean [CSRRep]   │ ││
+                                             │     profile: suspendedProfile        │     │ │   +toJSON()                      │ ││
                                              │   });                                │     │ └──────────────────────────────────┘ ││
                                              │                                      │     │                                      ││
                                              │ ══════════════════════════════════   │     │ ┌──────────────────────────────────┐ ││
@@ -127,8 +126,8 @@ The controller does NOT contain entity-specific business logic. Instead, it:
 5. **Formats HTTP response** (res.json)
 
 ### 4. **Two-Step Entity Interaction**
-   - **Step 1**: Controller calls `UserEntity.findById(id)` to retrieve user
-   - **Step 2**: Based on `user.userType`, controller calls **ONE** of:
+   - **Step 1**: Controller calls `UserAccountEntity.findById(id)` to retrieve user account
+   - **Step 2**: Based on `userAccount.userProfile.role`, controller calls **ONE** of:
      - `PINEntity.suspendByUserId(id)` OR
      - `CSRRepEntity.suspendByUserId(id)` OR  
      - `PlatformManagerEntity.suspendByUserId(id)`
@@ -147,24 +146,24 @@ The controller does NOT contain entity-specific business logic. Instead, it:
 ### 7. **Actual Implementation Code**
    ```typescript
    // Controller orchestrates the flow
-   const user = await UserEntity.findById(id);  // Step 1
-   if (!user) throw new AppError('User not found', 404);
+   const userAccount = await UserAccountEntity.findById(id);  // Step 1
+   if (!userAccount) throw new AppError('User account not found', 404);
 
-   // Step 2: Conditional entity call
-   switch (user.userType) {
-     case UserType.PIN:
-       if (!user.pin) throw new AppError('PIN profile not found', 404);
+   // Step 2: Conditional entity call based on role
+   switch (userAccount.userProfile.role) {
+     case UserProfileRole.PIN:
+       if (!userAccount.pin) throw new AppError('PIN profile not found', 404);
        suspendedProfile = await PINEntity.suspendByUserId(id);
        break;
-     case UserType.CSR_REP:
-       if (!user.csrRep) throw new AppError('CSR Rep profile not found', 404);
+     case UserProfileRole.CSR_REP:
+       if (!userAccount.csrRep) throw new AppError('CSR Rep profile not found', 404);
        suspendedProfile = await CSRRepEntity.suspendByUserId(id);
        break;
-     case UserType.PLATFORM_MANAGER:
-       if (!user.platformManager) throw new AppError('Platform Manager profile not found', 404);
+     case UserProfileRole.PLATFORM_MANAGER:
+       if (!userAccount.platformManager) throw new AppError('Platform Manager profile not found', 404);
        suspendedProfile = await PlatformManagerEntity.suspendByUserId(id);
        break;
-     case UserType.ADMIN:
+     case UserProfileRole.USER_ADMIN:
        throw new AppError('Cannot suspend admin profile', 400);
    }
    ```
@@ -178,30 +177,35 @@ The controller does NOT contain entity-specific business logic. Instead, it:
 #### **Anemic Domain Model (Anti-Pattern)**
 ```typescript
 // ❌ BAD: All logic in controller, entity is just data
-class UserEntity {
+class UserAccountEntity {
   id: string;
   status: UserStatus;
   // No methods, just data
 }
 
 // Controller has to know entity internals
-if (user.status === UserStatus.ACTIVE) { ... }
+if (userAccount.status === UserStatus.ACTIVE) { ... }
 ```
 
 #### **Rich Domain Model (Best Practice)** ⭐
 ```typescript
 // ✅ GOOD: Entity encapsulates its own logic
-class UserEntity {
+class UserAccountEntity {
   id: string;
   status: UserStatus;
+  userProfile: UserProfile;
   
   isActive(): boolean {
     return this.status === UserStatus.ACTIVE;  // Entity knows itself
   }
+  
+  hasRole(role: UserProfileRole): boolean {
+    return this.userProfile?.role === role;
+  }
 }
 
 // Controller uses entity's interface
-if (user.isActive()) { ... }
+if (userAccount.isActive() && userAccount.hasRole(UserProfileRole.PIN)) { ... }
 ```
 
 ### **Benefits**:

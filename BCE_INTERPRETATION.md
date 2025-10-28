@@ -32,10 +32,11 @@ BCE (Boundary-Control-Entity) or ECB (Entity-Control-Boundary) can be interprete
    └── Workflow coordination
 
 💾 ENTITY (Data Layer)
-   Location: server/prisma/
-   └── Domain objects
+   Location: server/src/entities/ + server/prisma/
+   └── Entity classes (UserAccount, UserProfile, Request, etc.)
+   └── Domain objects with business logic
    └── Persistent data models
-   └── Business rules
+   └── Repository pattern implementation
 ```
 
 **When to Use This View:**
@@ -72,7 +73,10 @@ BCE (Boundary-Control-Entity) or ECB (Entity-Control-Boundary) can be interprete
 
 💾 ENTITY (Data + Domain Layer)
    Location: server/src/ + server/prisma/
-   ├── entities/ - 10 Entity classes (Repository Pattern)
+   ├── entities/ - Entity classes (Repository Pattern)
+   │   ├── UserAccount.entity.ts - User authentication & accounts
+   │   ├── UserProfile.entity.ts - User roles (4 static records)
+   │   ├── Request.entity.ts - Help requests
    │   ├── Domain business logic (instance methods)
    │   └── Data access CRUD (static methods)
    ├── dto/ - Data Transfer Objects
@@ -108,11 +112,14 @@ Classical BCE          →  Our Implementation
 🚪 BOUNDARY (Frontend)  →  client/src/components/
                           client/src/config/api.ts
 
-🧠 CONTROL (Backend)    →  server/src/controllers/ (58 files)
+🧠 CONTROL (Backend)    →  server/src/controllers/ (50+ files)
                           server/src/routes/
                           server/src/middleware/
 
-💾 ENTITY (Backend)     →  server/src/entities/ (10 Entity classes)
+💾 ENTITY (Backend)     →  server/src/entities/ (Entity classes)
+                          ├── UserAccount.entity.ts
+                          ├── UserProfile.entity.ts  
+                          ├── Request.entity.ts, etc.
                           server/prisma/schema.prisma
                           server/src/dto/ (Data Transfer Objects)
 ```
@@ -161,12 +168,14 @@ Classical BCE          →  Our Implementation
                 ↓
 ┌───────────────────────────────────────────────┐
 │  💾 ENTITY (Repository Pattern)               │
-│  ├─ UserEntity.findByEmail() (CRUD)           │
-│  ├─ user.isActive() (business logic)          │
-│  └─ user.getProfile() (business logic)        │
+│  ├─ UserAccountEntity.findByEmail() (CRUD)    │
+│  ├─ userAccount.isActive() (business logic)   │
+│  ├─ userAccount.getProfile() (business logic) │
+│  └─ UserProfileEntity (manages 4 role records)│
 │                                               │
 │  Entity uses Prisma:                          │
-│  └─ schema.prisma (User, PIN, CSRRep models)  │
+│  └─ schema.prisma (UserAccount, UserProfile,  │
+│                     PIN, CSRRep models)       │
 └───────────────┬───────────────────────────────┘
                 ↓
             DATABASE (PostgreSQL)
@@ -204,12 +213,12 @@ Classical BCE          →  Our Implementation
                 ↓
 ┌───────────────────────────────────────────────┐
 │  💾 ENTITY (Repository Pattern)               │
-│  ├─ entities/User.entity.ts                   │
+│  ├─ entities/UserAccount.entity.ts            │
+│  ├─ entities/UserProfile.entity.ts            │
 │  ├─ entities/Request.entity.ts                │
-│  ├─ entities/PIN.entity.ts                    │
-│  ├─ entities/CSRRep.entity.ts                 │
+│  ├─ entities/Shortlist.entity.ts              │
 │  ├─ entities/Match.entity.ts                  │
-│  └─ ... 5 more entity classes                 │
+│  └─ ... additional entity classes             │
 │                                               │
 │  Entities use Prisma ORM:                     │
 │  └─ prisma/schema.prisma (database schema)    │
@@ -231,11 +240,11 @@ Classical BCE          →  Our Implementation
 > across the full stack:
 > 
 > - **Boundary Layer**: React frontend (`client/src/components/`) handles user interaction and makes direct API calls; Backend API layer (`routes/`, `middleware/`, `validators/`) manages HTTP endpoints
-> - **Control Layer**: Node.js backend controllers (`server/src/controllers/` - 58 files) orchestrate business logic and use cases
-> - **Entity Layer**: Entity classes (`server/src/entities/` - 10 classes) implement the Repository Pattern with domain business logic and data access methods; Prisma schema (`server/prisma/schema.prisma`) defines database structure
+> - **Control Layer**: Node.js backend controllers (`server/src/controllers/` - 50+ files) orchestrate business logic and use cases
+> - **Entity Layer**: Entity classes (`server/src/entities/`) implement the Repository Pattern with domain business logic and data access methods. Key entities include `UserAccountEntity` (handles authentication and user accounts) and `UserProfileEntity` (manages 4 static role records: PIN, CSR_REP, USER_ADMIN, PLATFORM_MANAGER). Prisma schema (`server/prisma/schema.prisma`) defines database structure with UserAccount and UserProfile separation.
 >
 > Our Entity layer uses the Repository Pattern where entity classes encapsulate both domain logic
-> (instance methods like `isActive()`, `isPIN()`) and data access operations
+> (instance methods like `isActive()`, `hasRole()`) and data access operations
 > (static methods like `findById()`, `create()`) using Prisma ORM."
 
 ### For Technical Discussions (Developers, Code Reviews):

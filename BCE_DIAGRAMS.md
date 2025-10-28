@@ -12,40 +12,48 @@ This document contains **Classical BCE diagrams** for our main features, showing
 
 ```
 ┌─────────────────────────────────────┐     ┌──────────────────────────────────────┐     ┌─────────────────────────────────────┐
-│     RegisterPage.tsx                │     │      AuthController                  │     │          UserEntity                 │
+│     RegisterPage.tsx                │     │      AuthController                  │     │   UserAccountEntity + PIN           │
 │         (BOUNDARY)                  │────▶│         (CONTROL)                    │────▶│          (ENTITY)                   │
 │      Frontend - React               │     │       Backend - Node.js              │     │      Database - Prisma              │
 ├─────────────────────────────────────┤     ├──────────────────────────────────────┤     ├─────────────────────────────────────┤
 │                                     │     │                                      │     │                                     │
-│ UI Component:                       │     │ API Endpoint:                        │     │ model User {                        │
+│ UI Component:                       │     │ API Endpoint:                        │     │ model UserAccount {                 │
 │   +form inputs (email, password,    │     │   POST /api/auth/register/pin        │     │   id: string                        │
 │    name, age, location)             │     │                                      │     │   email: string @unique             │
 │                                     │     │ +async registerPIN(                  │     │   password: string                  │
-│ API Call:                           │     │    email: string,                    │     │   userType: UserType                │
-│   +authService.registerPIN(data)    │     │    password: string,                 │     │   status: UserStatus                │
-│                                     │     │    name: string,                     │     │   pin: PIN                          │
-│ User Actions:                       │     │    age: int,                         │     │   csrRep: CSRRep                    │
-│   +fill_form()                      │     │    location: string,                 │     │   createdAt: DateTime               │
-│   +click_register_button()          │     │    phoneNumber: string,              │     │ }                                   │
-│   +display_success_message()        │     │    accessibilityNeeds: string        │     │                                     │
-│   +navigate_to_dashboard()          │     │  ): Promise<Response>                │     │ model PIN {                         │
-│                                     │     │                                      │     │   id: string                        │
-│ HTTP Request:                       │     │ // Business Logic:                   │     │   userId: string @unique            │
-│   POST with JSON body               │     │ +check_existing_user()               │     │   name: string                      │
-│   Headers: Content-Type             │     │ +validate_input_data()               │     │   age: int                          │
-│                                     │     │ +hash_password()                     │     │   location: string                  │
-│ Response Handling:                  │     │ +create_user_and_profile()           │     │   phoneNumber: string               │
-│   - 201: Store token, redirect     │     │ +generate_jwt_token()                │     │   accessibilityNeeds: string        │
-│   - 409: Show "Email exists" error  │     │ +format_response()                   │     │   user: User                        │
-│   - 400: Show validation errors     │     │                                      │     │   requests: Request[]               │
-│                                     │     │ // Error Handling:                   │     │   matches: Match[]                  │
-│                                     │     │ +throw AppError (409)                │     │ }                                   │
-│                                     │     │   if email exists                    │     │                                     │
-│                                     │     │ +throw AppError (400)                │     │ Relationships:                      │
-│                                     │     │   if validation fails                │     │   User ← PIN (one-to-one)           │
-│                                     │     │                                      │     │   PIN  → Request (one-to-many)      │
-│                                     │     │ HTTP Response:                       │     │   PIN  → Match (one-to-many)        │
-│                                     │     │   JSON with user data + JWT token    │     │                                     │
+│ API Call:                           │     │    email: string,                    │     │   name: string                      │
+│   +authService.registerPIN(data)    │     │    password: string,                 │     │   phoneNumber: string               │
+│                                     │     │    name: string,                     │     │   status: UserStatus                │
+│ User Actions:                       │     │    age: int,                         │     │   userProfileId: string             │
+│   +fill_form()                      │     │    location: string,                 │     │   userProfile: UserProfile          │
+│   +click_register_button()          │     │    phoneNumber: string,              │     │   pin: PIN                          │
+│   +display_success_message()        │     │    accessibilityNeeds: string        │     │   csrRep: CSRRep                    │
+│   +navigate_to_dashboard()          │     │  ): Promise<Response>                │     │ }                                   │
+│                                     │     │                                      │     │                                     │
+│ HTTP Request:                       │     │ // Business Logic:                   │     │ model UserProfile {                 │
+│   POST with JSON body               │     │ +check_existing_user()               │     │   id: string                        │
+│   Headers: Content-Type             │     │ +validate_input_data()               │     │   role: UserProfileRole @unique     │
+│                                     │     │ +hash_password()                     │     │   name: string                      │
+│ Response Handling:                  │     │ +get_pin_profile_id()                │     │   // 4 static records (PIN,         │
+│   - 201: Store token, redirect     │     │ +create_account_and_profile()        │     │   //  CSR_REP, USER_ADMIN,          │
+│   - 409: Show "Email exists" error  │     │ +generate_jwt_token()                │     │   //  PLATFORM_MANAGER)             │
+│   - 400: Show validation errors     │     │ +format_response()                   │     │ }                                   │
+│                                     │     │                                      │     │                                     │
+│                                     │     │ // Error Handling:                   │     │ model PIN {                         │
+│                                     │     │ +throw AppError (409)                │     │   id: string                        │
+│                                     │     │   if email exists                    │     │   userAccountId: string @unique     │
+│                                     │     │ +throw AppError (400)                │     │   name: string                      │
+│                                     │     │   if validation fails                │     │   age: int                          │
+│                                     │     │                                      │     │   location: string                  │
+│                                     │     │ HTTP Response:                       │     │   phoneNumber: string               │
+│                                     │     │   JSON with user data + JWT token    │     │   accessibilityNeeds: string        │
+│                                     │     │                                      │     │   userAccount: UserAccount          │
+│                                     │     │                                      │     │ }                                   │
+│                                     │     │                                      │     │                                     │
+│                                     │     │                                      │     │ Relationships:                      │
+│                                     │     │                                      │     │   UserAccount → UserProfile (M:1)   │
+│                                     │     │                                      │     │   UserAccount ← PIN (1:1)           │
+│                                     │     │                                      │     │   PIN → Request (1:M)               │
 └─────────────────────────────────────┘     └──────────────────────────────────────┘     └─────────────────────────────────────┘
          ↑                                              ↑                                             ↑
          │                                              │                                             │
@@ -59,37 +67,41 @@ This document contains **Classical BCE diagrams** for our main features, showing
 
 ```
 ┌─────────────────────────────────────┐     ┌──────────────────────────────────────┐     ┌─────────────────────────────────────┐
-│        LoginPage.tsx                │     │       AuthController                 │     │          UserEntity                 │
+│        LoginPage.tsx                │     │       AuthController                 │     │      UserAccountEntity              │
 │         (BOUNDARY)                  │────▶│         (CONTROL)                    │────▶│          (ENTITY)                   │
 │      Frontend - React               │     │       Backend - Node.js              │     │      Database - Prisma              │
 ├─────────────────────────────────────┤     ├──────────────────────────────────────┤     ├─────────────────────────────────────┤
 │                                     │     │                                      │     │                                     │
-│ UI Component:                       │     │ API Endpoint:                        │     │ model User {                        │
+│ UI Component:                       │     │ API Endpoint:                        │     │ model UserAccount {                 │
 │   +email input field                │     │   POST /api/auth/login               │     │   id: string                        │
 │   +password input field             │     │                                      │     │   email: string @unique             │
 │   +login button                     │     │ +async login(                        │     │   password: string (hashed)         │
-│   +error message display            │     │    email: string,                    │     │   userType: UserType                │
+│   +error message display            │     │    email: string,                    │     │   name: string                      │
 │                                     │     │    password: string                  │     │   status: UserStatus                │
-│ API Call:                           │     │  ): Promise<Response>                │     │   pin: PIN                          │
-│   +authService.login(email, pwd)    │     │                                      │     │   csrRep: CSRRep                    │
-│                                     │     │ // Business Logic:                   │     │ }                                   │
-│ User Actions:                       │     │ +find_user_by_email()                │     │                                     │
-│   +enter_credentials()              │     │ +check_user_status_active()          │     │ Relationships:                      │
-│   +click_login_button()             │     │ +verify_password_hash()              │     │   User ← PIN (one-to-one)           │
-│   +store_token_on_success()         │     │ +check_approval_status()             │     │   User ← CSRRep (one-to-one)        │
-│   +navigate_to_dashboard()          │     │ +generate_jwt_token()                │     │                                     │
-│                                     │     │ +format_response_with_profile()      │     │ Query:                              │
-│ HTTP Request:                       │     │                                      │     │   prisma.user.findUnique({          │
-│   POST with JSON body               │     │ // Error Handling:                   │     │     where: { email },               │
-│   { email, password }               │     │ +throw AppError (401)                │     │     include: {                      │
-│                                     │     │   if credentials invalid             │     │       pin: true,                    │
-│ Response Handling:                  │     │ +throw AppError (403)                │     │       csrRep: true                  │
-│   - 200: Save token, redirect       │     │   if account not active              │     │     }                               │
-│   - 401: Show "Invalid credentials" │     │ +throw AppError (403)                │     │   })                                │
-│   - 403: Show "Account inactive"    │     │   if pending approval                │     │                                     │
-│   - 403: Show "Pending approval"    │     │                                      │     │ Password verification:              │
-│                                     │     │ HTTP Response:                       │     │   Compare hashed password           │
-│                                     │     │   JSON with user + token + profile   │     │   using bcrypt                      │
+│ API Call:                           │     │  ): Promise<Response>                │     │   userProfileId: string             │
+│   +authService.login(email, pwd)    │     │                                      │     │   userProfile: UserProfile          │
+│                                     │     │ // Business Logic:                   │     │   pin: PIN                          │
+│ User Actions:                       │     │ +find_account_by_email()             │     │   csrRep: CSRRep                    │
+│   +enter_credentials()              │     │ +check_account_status_active()       │     │ }                                   │
+│   +click_login_button()             │     │ +verify_password_hash()              │     │                                     │
+│   +store_token_on_success()         │     │ +check_profile_role()                │     │ Relationships:                      │
+│   +navigate_to_dashboard()          │     │ +generate_jwt_token()                │     │   UserAccount → UserProfile (M:1)   │
+│                                     │     │ +format_response_with_profile()      │     │   UserAccount ← PIN (1:1)           │
+│ HTTP Request:                       │     │                                      │     │   UserAccount ← CSRRep (1:1)        │
+│   POST with JSON body               │     │ // Error Handling:                   │     │                                     │
+│   { email, password }               │     │ +throw AppError (401)                │     │ Query:                              │
+│                                     │     │   if credentials invalid             │     │   prisma.userAccount.findUnique({   │
+│ Response Handling:                  │     │ +throw AppError (403)                │     │     where: { email },               │
+│   - 200: Save token, redirect       │     │   if account not active              │     │     include: {                      │
+│   - 401: Show "Invalid credentials" │     │ +throw AppError (403)                │     │       userProfile: true,            │
+│   - 403: Show "Account inactive"    │     │   if pending approval                │     │       pin: true,                    │
+│   - 403: Show "Pending approval"    │     │                                      │     │       csrRep: true                  │
+│                                     │     │ HTTP Response:                       │     │     }                               │
+│                                     │     │   JSON with user + token + profile   │     │   })                                │
+│                                     │     │                                      │     │                                     │
+│                                     │     │                                      │     │ Password verification:              │
+│                                     │     │                                      │     │   Compare hashed password           │
+│                                     │     │                                      │     │   using bcrypt                      │
 └─────────────────────────────────────┘     └──────────────────────────────────────┘     └─────────────────────────────────────┘
          ↑                                              ↑                                             ↑
          │                                              │                                             │
@@ -176,17 +188,17 @@ This document contains **Classical BCE diagrams** for our main features, showing
 
 ```
 ┌─────────────────────────────────────┐     ┌──────────────────────────────────────┐     ┌─────────────────────────────────────┐
-│    csr_registrationPage             │     │       AuthController                 │     │       User + CSRRepEntity           │
+│    csr_registrationPage             │     │       AuthController                 │     │  UserAccount + CSRRepEntity         │
 │         (BOUNDARY)                  │────▶│         (CONTROL)                    │────▶│          (ENTITY)                   │
 ├─────────────────────────────────────┤     ├──────────────────────────────────────┤     ├─────────────────────────────────────┤
 │                                     │     │                                      │     │                                     │
-│ Route: POST                         │     │ +async registerCSRRep(               │     │ model User {                        │
+│ Route: POST                         │     │ +async registerCSRRep(               │     │ model UserAccount {                 │
 │   /api/auth/register/csr-rep        │     │    email: string,                    │     │   // Same as above                  │
 │                                     │     │    password: string,                 │     │ }                                   │
 │ +validate(registerCSRRepValidation) │     │    companyName: string,              │     │                                     │
 │                                     │     │    companyRegistrationNumber: string,│     │ model CSRRep {                      │
 │ +send_to_controller()               │     │    industry: string,                 │     │   id: string                        │
-│                                     │     │    contactPerson: string,            │     │   userId: string @unique            │
+│                                     │     │    contactPerson: string,            │     │   userAccountId: string @unique     │
 │ +return_JSON_response()             │     │    phoneNumber: string,              │     │   companyName: string               │
 │   - 201: Success (pending approval) │     │    companyAddress: string            │     │   companyRegistrationNumber: string │
 │   - 409: Email exists               │     │  ): Promise<Response>                │     │   industry: string                  │
@@ -195,13 +207,14 @@ This document contains **Classical BCE diagrams** for our main features, showing
 │                                     │     │ +check_existing_email()              │     │   companyAddress: string            │
 │                                     │     │ +check_company_reg_number()          │     │   approvalStatus: UserStatus        │
 │                                     │     │ +hash_password()                     │     │   certifications: string            │
-│                                     │     │ +create_user_and_csr_profile()       │     │   createdAt: DateTime               │
-│                                     │     │ +set_approval_PENDING()              │     │                                     │
-│                                     │     │ +generate_jwt_token()                │     │   user: User                        │
-│                                     │     │ +format_response()                   │     │   volunteerOffers: VolunteerOffer[] │
-│                                     │     │                                      │     │   matches: Match[]                  │
-│                                     │     │ // Error Handling:                   │     │   shortlists: Shortlist[]           │
-│                                     │     │ +throw AppError (409)                │     │ }                                   │
+│                                     │     │ +get_csrrep_profile_id()             │     │                                     │
+│                                     │     │ +create_account_and_profile()        │     │   userAccount: UserAccount          │
+│                                     │     │ +set_approval_PENDING()              │     │   volunteerOffers: VolunteerOffer[] │
+│                                     │     │ +generate_jwt_token()                │     │   matches: Match[]                  │
+│                                     │     │ +format_response()                   │     │   shortlists: Shortlist[]           │
+│                                     │     │                                      │     │ }                                   │
+│                                     │     │ // Error Handling:                   │     │                                     │
+│                                     │     │ +throw AppError (409)                │     │                                     │
 │                                     │     │   if email or reg number exists      │     │                                     │
 └─────────────────────────────────────┘     └──────────────────────────────────────┘     └─────────────────────────────────────┘
 ```
@@ -212,24 +225,29 @@ This document contains **Classical BCE diagrams** for our main features, showing
 
 ```
 ┌─────────────────────────────────────┐     ┌──────────────────────────────────────┐     ┌─────────────────────────────────────┐
-│       profile_viewPage              │     │       AuthController                 │     │          UserEntity                 │
+│       profile_viewPage              │     │       AuthController                 │     │      UserAccountEntity              │
 │         (BOUNDARY)                  │────▶│         (CONTROL)                    │────▶│          (ENTITY)                   │
 ├─────────────────────────────────────┤     ├──────────────────────────────────────┤     ├─────────────────────────────────────┤
 │                                     │     │                                      │     │                                     │
-│ Route: GET /api/auth/profile        │     │ +async getProfile(                   │     │ model User {                        │
+│ Route: GET /api/auth/profile        │     │ +async getProfile(                   │     │ model UserAccount {                 │
 │                                     │     │    // userId from JWT token          │     │   id: string                        │
 │ +authenticate()                     │     │  ): Promise<Response>                │     │   email: string                     │
-│   ↓ extracts JWT                    │     │                                      │     │   userType: UserType                │
+│   ↓ extracts JWT                    │     │                                      │     │   name: string                      │
 │   ↓ verifies token                  │     │ // Business Logic:                   │     │   status: UserStatus                │
-│   ↓ attaches user to request        │     │ +get_user_id_from_jwt()              │     │   pin: PIN                          │
-│                                     │     │ +find_user_by_id()                   │     │   csrRep: CSRRep                    │
-│ +send_to_controller()               │     │ +include_profile_based_on_type()     │     │   createdAt: DateTime               │
-│                                     │     │ +remove_password_from_response()     │     │ }                                   │
-│ +return_JSON_response()             │     │ +format_response()                   │     │                                     │
-│   - 200: User with profile          │     │                                      │     │ Query:                              │
-│   - 404: User not found             │     │ // Error Handling:                   │     │   findUnique({                      │
-│   - 401: Invalid/expired token      │     │ +throw AppError (404)                │     │     where: { id: userId },          │
-│                                     │     │   if user not found                  │     │     include: { pin, csrRep }        │
+│   ↓ attaches user to request        │     │ +get_user_id_from_jwt()              │     │   userProfileId: string             │
+│                                     │     │ +find_account_by_id()                │     │   userProfile: UserProfile          │
+│ +send_to_controller()               │     │ +include_profile_based_on_role()     │     │   pin: PIN                          │
+│                                     │     │ +remove_password_from_response()     │     │   csrRep: CSRRep                    │
+│ +return_JSON_response()             │     │ +format_response()                   │     │ }                                   │
+│   - 200: User with profile          │     │                                      │     │                                     │
+│   - 404: User not found             │     │ // Error Handling:                   │     │ Query:                              │
+│   - 401: Invalid/expired token      │     │ +throw AppError (404)                │     │   findUnique({                      │
+│                                     │     │   if user not found                  │     │     where: { id: userId },          │
+│                                     │     │                                      │     │     include: {                      │
+│                                     │     │                                      │     │       userProfile: true,            │
+│                                     │     │                                      │     │       pin: true,                    │
+│                                     │     │                                      │     │       csrRep: true                  │
+│                                     │     │                                      │     │     }                               │
 │                                     │     │                                      │     │   })                                │
 └─────────────────────────────────────┘     └──────────────────────────────────────┘     └─────────────────────────────────────┘
 ```
@@ -278,11 +296,11 @@ This document contains **Classical BCE diagrams** for our main features, showing
 
 ```
 ┌─────────────────────────────────────┐     ┌──────────────────────────────────────┐     ┌─────────────────────────────────────┐
-│    profile_changePasswordPage       │     │       AuthController                 │     │          UserEntity                 │
+│    profile_changePasswordPage       │     │       AuthController                 │     │      UserAccountEntity              │
 │         (BOUNDARY)                  │────▶│         (CONTROL)                    │────▶│          (ENTITY)                   │
 ├─────────────────────────────────────┤     ├──────────────────────────────────────┤     ├─────────────────────────────────────┤
 │                                     │     │                                      │     │                                     │
-│ Route: PUT /api/auth/password       │     │ +async updatePassword(               │     │ model User {                        │
+│ Route: PUT /api/auth/password       │     │ +async updatePassword(               │     │ model UserAccount {                 │
 │                                     │     │    currentPassword: string,          │     │   id: string                        │
 │ +authenticate()                     │     │    newPassword: string               │     │   password: string (hashed)         │
 │ +validate(updatePasswordValidation) │     │  ): Promise<Response>                │     │   updatedAt: DateTime               │

@@ -1,0 +1,281 @@
+@startuml CSR_Volunteer_Matching_System_ERD
+
+!define TABLE_COLOR #E3F2FD
+!define KEY_COLOR #FFF59D
+!define RELATION_COLOR #90CAF9
+
+skinparam entity {
+    BackgroundColor TABLE_COLOR
+    BorderColor #1976D2
+    FontName Arial
+}
+
+skinparam class {
+    BackgroundColor TABLE_COLOR
+    BorderColor #1976D2
+}
+
+' ====================
+' CORE ENTITIES
+' ====================
+
+entity UserProfile {
+    * id : UUID <<PK>>
+    --
+    * role : UserProfileRole <<UNIQUE>>
+    * name : VARCHAR(100)
+    description : TEXT
+    permissions : JSON
+    * isActive : BOOLEAN
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+    --
+    <<Static 4 Records Only>>
+}
+
+entity UserAccount {
+    * id : UUID <<PK>>
+    --
+    * email : VARCHAR(255) <<UNIQUE>>
+    * password : VARCHAR(255)
+    * name : VARCHAR(255)
+    phoneNumber : VARCHAR(20)
+    address : TEXT
+    dateOfBirth : DATE
+    * status : UserStatus
+    * userProfileId : UUID <<FK>>
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+}
+
+entity PIN {
+    * id : UUID <<PK>>
+    --
+    * userAccountId : UUID <<FK>> <<UNIQUE>>
+    * name : VARCHAR(255)
+    age : INTEGER
+    location : VARCHAR(255)
+    phoneNumber : VARCHAR(20)
+    accessibilityNeeds : TEXT
+    profilePhoto : VARCHAR(500)
+    * status : ProfileStatus
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+}
+
+entity CSRRep {
+    * id : UUID <<PK>>
+    --
+    * userAccountId : UUID <<FK>> <<UNIQUE>>
+    * companyName : VARCHAR(255)
+    * companyRegistrationNumber : VARCHAR(100) <<UNIQUE>>
+    industry : VARCHAR(100)
+    * contactPerson : VARCHAR(255)
+    * phoneNumber : VARCHAR(20)
+    companyAddress : TEXT
+    companyLogo : VARCHAR(500)
+    * approvalStatus : UserStatus
+    certifications : TEXT
+    * status : ProfileStatus
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+}
+
+entity PlatformManager {
+    * id : UUID <<PK>>
+    --
+    * userAccountId : UUID <<FK>> <<UNIQUE>>
+    * fullName : VARCHAR(255)
+    department : VARCHAR(100)
+    phone : VARCHAR(20)
+    * status : ProfileStatus
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+}
+
+' ====================
+' SERVICE MANAGEMENT
+' ====================
+
+entity ServiceCategory {
+    * id : UUID <<PK>>
+    --
+    * name : VARCHAR(100) <<UNIQUE>>
+    description : TEXT
+    iconUrl : VARCHAR(500)
+    * isActive : BOOLEAN
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+}
+
+entity Request {
+    * id : UUID <<PK>>
+    --
+    * pinId : UUID <<FK>>
+    * categoryId : UUID <<FK>>
+    * title : VARCHAR(255)
+    * description : TEXT
+    * urgency : UrgencyLevel
+    dateNeeded : TIMESTAMP
+    location : VARCHAR(255)
+    * status : RequestStatus
+    * viewCount : INTEGER
+    * shortlistCount : INTEGER
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+}
+
+' ====================
+' MATCHING SYSTEM
+' ====================
+
+entity Shortlist {
+    * id : UUID <<PK>>
+    --
+    * csrRepId : UUID <<FK>>
+    * requestId : UUID <<FK>>
+    * createdAt : TIMESTAMP
+    --
+    <<UNIQUE(csrRepId, requestId)>>
+}
+
+entity VolunteerOffer {
+    * id : UUID <<PK>>
+    --
+    * csrRepId : UUID <<FK>>
+    * requestId : UUID <<FK>>
+    message : TEXT
+    * status : OfferStatus
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+}
+
+entity Match {
+    * id : UUID <<PK>>
+    --
+    * requestId : UUID <<FK>> <<UNIQUE>>
+    * csrRepId : UUID <<FK>>
+    * pinId : UUID <<FK>>
+    * status : MatchStatus
+    * matchedAt : TIMESTAMP
+    completedAt : TIMESTAMP
+    cancellationReason : TEXT
+    * updatedAt : TIMESTAMP
+}
+
+' ====================
+' NOTIFICATIONS
+' ====================
+
+entity Notification {
+    * id : UUID <<PK>>
+    --
+    * userAccountId : UUID <<FK>>
+    * type : NotificationType
+    * message : TEXT
+    * isRead : BOOLEAN
+    * createdAt : TIMESTAMP
+}
+
+' ====================
+' RELATIONSHIPS
+' ====================
+
+' UserProfile <-> UserAccount (1:M)
+UserProfile ||--o{ UserAccount : "has role"
+
+' UserAccount <-> Profile Tables (1:1)
+UserAccount ||--o| PIN : "has"
+UserAccount ||--o| CSRRep : "has"
+UserAccount ||--o| PlatformManager : "has"
+
+' UserAccount <-> Notification (1:M)
+UserAccount ||--o{ Notification : "receives"
+
+' PIN Relationships (1:M)
+PIN ||--o{ Request : "creates"
+PIN ||--o{ Match : "receives help"
+
+' CSRRep Relationships (1:M)
+CSRRep ||--o{ Shortlist : "saves"
+CSRRep ||--o{ VolunteerOffer : "makes"
+CSRRep ||--o{ Match : "provides help"
+
+' ServiceCategory <-> Request (1:M)
+ServiceCategory ||--o{ Request : "categorizes"
+
+' Request Relationships
+Request ||--o{ Shortlist : "saved by"
+Request ||--o{ VolunteerOffer : "receives"
+Request ||--o| Match : "matched with"
+
+' ====================
+' NOTES & CONSTRAINTS
+' ====================
+
+note right of UserProfile
+  **IMPORTANT**: This table contains 
+  exactly 4 static records:
+  
+  1. PIN (role = 'PIN')
+  2. CSR_REP (role = 'CSR_REP')
+  3. USER_ADMIN (role = 'USER_ADMIN')
+  4. PLATFORM_MANAGER (role = 'PLATFORM_MANAGER')
+  
+  All UserAccounts reference one
+  of these 4 records.
+end note
+
+note right of UserAccount
+  **Refactored Design**:
+  - Renamed from "User"
+  - Many-to-One with UserProfile
+  - Separates authentication from
+    role/permission management
+  
+  **Status Values**:
+  - ACTIVE
+  - SUSPENDED
+  - DELETED
+end note
+
+note bottom of Match
+  **Constraints**:
+  - One Request can have only ONE Match
+  - requestId is UNIQUE
+  
+  **Status Values**:
+  - ACTIVE
+  - COMPLETED
+  - CANCELLED
+end note
+
+note bottom of Shortlist
+  **Composite Unique Key**:
+  (csrRepId, requestId)
+  
+  A CSRRep can only shortlist
+  a Request once.
+end note
+
+note bottom of Request
+  **Status Values**:
+  - ACTIVE: Open for offers
+  - MATCHED: Matched with volunteer
+  - COMPLETED: Help provided
+  - CANCELLED: Cancelled by PIN
+  
+  **Urgency Levels**:
+  - LOW: Flexible timing
+  - MEDIUM: Within a week
+  - HIGH: Urgent, ASAP
+end note
+
+note bottom of CSRRep
+  **Approval Process**:
+  - approvalStatus: PENDING
+  - Must be approved by admin
+  - Only ACTIVE can create offers
+end note
+
+@enduml

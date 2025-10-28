@@ -23,7 +23,7 @@
                                    └── Node.js backend
 
     📦 ENTITY = Storage Room        📂 Where: server/src/entities/ + prisma/
-    (Where ingredients are stored) ├── entities/ (10 classes with logic)
+    (Where ingredients are stored) ├── entities/ (UserAccount, UserProfile, etc.)
                                    └── schema.prisma (database structure)
 ```
 
@@ -116,18 +116,19 @@ CSR-Volunteer-Matching-System/
 
     📦 ENTITY LAYER (Backend - Data + Domain Logic)
     ├── server/src/entities/         → Entity Classes (Repository Pattern)
-    │   ├── User.entity.ts           → User domain + CRUD methods
-    │   ├── Request.entity.ts        → Request domain + CRUD methods
-    │   ├── PIN.entity.ts            → PIN domain + CRUD methods
-    │   ├── CSRRep.entity.ts         → CSR Rep domain + CRUD methods
-    │   ├── Match.entity.ts          → Match domain + CRUD methods
-    │   └── ... 5 more entity classes
+    │   ├── UserAccount.entity.ts    → User accounts + authentication
+    │   ├── UserProfile.entity.ts    → User roles (4 static records)
+    │   ├── Request.entity.ts        → Help requests domain + CRUD
+    │   ├── Shortlist.entity.ts      → Shortlist domain + CRUD
+    │   ├── Match.entity.ts          → Match domain + CRUD
+    │   └── ... additional entity classes
     │
     ├── server/src/dto/              → Data Transfer Objects
     │
     └── server/prisma/
         └── schema.prisma            → Database Schema (structure only)
-            ├── User model
+            ├── UserAccount model (replaces User)
+            ├── UserProfile model (4 static role records)
             ├── PIN model  
             ├── CSRRep model
             ├── Request model
@@ -202,11 +203,51 @@ export class RequestEntity {
     return request ? new RequestEntity(request) : null;
   }
 }
+
+// entities/UserAccount.entity.ts (NEW!)
+export class UserAccountEntity {
+  // Instance methods: Business logic
+  isActive(): boolean {
+    return this.status === UserStatus.ACTIVE;
+  }
+  
+  hasRole(role: UserProfileRole): boolean {
+    return this.userProfile?.role === role;
+  }
+  
+  // Static methods: Data access
+  static async findByEmail(email: string) {
+    return await prisma.userAccount.findUnique({ 
+      where: { email },
+      include: { userProfile: true, pin: true, csrRep: true }
+    });
+  }
+}
 ```
 
 **B) Database Schema:**
 ```prisma
 // prisma/schema.prisma
+model UserAccount {
+  id            String      @id @default(uuid())
+  email         String      @unique
+  password      String
+  name          String
+  status        UserStatus  @default(ACTIVE)
+  userProfileId String
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id])
+  pin           PIN?
+  csrRep        CSRRep?
+}
+
+model UserProfile {
+  id          String           @id @default(uuid())
+  role        UserProfileRole  @unique  // Only 4 records!
+  name        String
+  isActive    Boolean          @default(true)
+  userAccounts UserAccount[]
+}
+
 model Request {
   id          String        @id @default(uuid())
   pinId       String
@@ -246,6 +287,9 @@ STEP 1: ENTITY (Define data & logic)
 │   model NewFeature {
 │     id    String @id
 │     name  String
+│     // Reference UserAccount if needed
+│     userAccountId String?
+│     userAccount   UserAccount? @relation(...)
 │   }
 │
 └── B) Create entities/NewFeature.entity.ts (domain + data access)

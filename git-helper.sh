@@ -248,7 +248,7 @@ switch_branch() {
     echo -e "${GREEN}Current branch:${NC} $current_branch"
     echo ""
     
-    read -p "Enter branch name to switch to: " branch_name
+    read -p "Enter branch name to switch to (e.g., 'refactor-entity' or 'origin/refactor-entity'): " branch_name
     
     # Check for uncommitted changes
     if ! git diff-index --quiet HEAD --; then
@@ -289,13 +289,31 @@ switch_branch() {
         esac
     fi
     
-    git checkout "$branch_name"
+    # Check if it's a remote branch (contains 'origin/')
+    if [[ "$branch_name" == origin/* ]]; then
+        # Extract local branch name (remove 'origin/' prefix)
+        local_branch="${branch_name#origin/}"
+        
+        # Check if local branch exists
+        if git show-ref --verify --quiet refs/heads/"$local_branch"; then
+            # Local branch exists, just checkout
+            git checkout "$local_branch"
+        else
+            # Create local tracking branch
+            echo "Creating local tracking branch for $branch_name..."
+            git checkout -b "$local_branch" "$branch_name"
+        fi
+    else
+        # Regular local branch checkout
+        git checkout "$branch_name"
+    fi
     
     if [ $? -eq 0 ]; then
         echo ""
-        echo -e "${GREEN}✅ Switched to branch: $branch_name${NC}"
+        echo -e "${GREEN}✅ Switched to branch: ${branch_name#origin/}${NC}"
     else
         echo "❌ Failed to switch branch"
+        echo "Tip: Make sure to fetch latest branches with: git fetch origin"
     fi
     echo ""
 }
