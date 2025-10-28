@@ -22,7 +22,19 @@ export class ViewOffersController {
 
       const offers = await VolunteerOfferEntity.findByCSRRep(user.id, 1, 100);
 
-      res.json({ offers });
+      // Calculate statistics
+      const total = offers.length;
+      const pending = offers.filter(o => o.status === 'PENDING').length;
+      const accepted = offers.filter(o => o.status === 'ACCEPTED').length;
+      const declined = offers.filter(o => o.status === 'DECLINED').length;
+
+      res.json({ 
+        offers,
+        total,
+        pending,
+        accepted,
+        declined
+      });
     } catch (error) {
       next(error);
     }

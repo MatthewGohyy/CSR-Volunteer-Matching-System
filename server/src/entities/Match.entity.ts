@@ -18,7 +18,7 @@ export class MatchEntity implements PrismaMatch {
   cancellationReason: string | null;
   updatedAt: Date;
 
-  constructor(data: PrismaMatch) {
+  constructor(data: any) {
     this.id = data.id;
     this.requestId = data.requestId;
     this.csrRepId = data.csrRepId;
@@ -28,6 +28,17 @@ export class MatchEntity implements PrismaMatch {
     this.completedAt = data.completedAt;
     this.cancellationReason = data.cancellationReason;
     this.updatedAt = data.updatedAt;
+    
+    // Preserve related data if included
+    if (data.request) {
+      (this as any).request = data.request;
+    }
+    if (data.csrRep) {
+      (this as any).csrRep = data.csrRep;
+    }
+    if (data.pin) {
+      (this as any).pin = data.pin;
+    }
   }
 
   /**

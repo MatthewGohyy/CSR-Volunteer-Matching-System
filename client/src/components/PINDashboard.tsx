@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   Heart, LogOut, Plus, Search, Edit2, Trash2, Eye, Star, 
-  Calendar, MapPin, AlertCircle, CheckCircle, Clock, History 
+  Calendar, MapPin, AlertCircle, CheckCircle, Clock, History, Mail, Users 
 } from 'lucide-react';
 import api from '../config/api';
 import type { User as UserType } from '../types';
+import OffersList from './OffersList';
+import MatchesList from './MatchesList';
 
 // Types
 interface Request {
@@ -42,7 +44,7 @@ interface RequestsResponse {
 
 const PINDashboard: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'my-requests' | 'history'>('my-requests');
+  const [activeTab, setActiveTab] = useState<'my-requests' | 'offers' | 'matches' | 'history'>('my-requests');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingRequest, setEditingRequest] = useState<Request | null>(null);
@@ -188,6 +190,28 @@ const PINDashboard: React.FC = () => {
                 My Requests ({requestsData?.total || 0})
               </button>
               <button
+                onClick={() => setActiveTab('offers')}
+                className={`${
+                  activeTab === 'offers'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Offers
+              </button>
+              <button
+                onClick={() => setActiveTab('matches')}
+                className={`${
+                  activeTab === 'matches'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Matches
+              </button>
+              <button
                 onClick={() => setActiveTab('history')}
                 className={`${
                   activeTab === 'history'
@@ -225,8 +249,12 @@ const PINDashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Requests List */}
-        {requestsLoading ? (
+        {/* Tab Content */}
+        {activeTab === 'offers' ? (
+          <OffersList />
+        ) : activeTab === 'matches' ? (
+          <MatchesList userType="PIN" />
+        ) : requestsLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           </div>

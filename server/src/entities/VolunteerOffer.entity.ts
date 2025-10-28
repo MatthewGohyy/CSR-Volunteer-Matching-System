@@ -16,7 +16,7 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
   createdAt: Date;
   updatedAt: Date;
 
-  constructor(data: PrismaVolunteerOffer) {
+  constructor(data: any) {
     this.id = data.id;
     this.csrRepId = data.csrRepId;
     this.requestId = data.requestId;
@@ -24,6 +24,14 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
     this.status = data.status;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
+    
+    // Preserve related data if included
+    if (data.request) {
+      (this as any).request = data.request;
+    }
+    if (data.csrRep) {
+      (this as any).csrRep = data.csrRep;
+    }
   }
 
   /**

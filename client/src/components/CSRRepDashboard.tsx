@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Building2, LogOut, Search, Star, History, Eye, MapPin,
-  Calendar, AlertCircle, Clock, X
+  Calendar, AlertCircle, Clock, X, Mail, Users
 } from 'lucide-react';
 import api from '../config/api';
 import type { User as UserType } from '../types';
+import CSROffersList from './CSROffersList';
+import MatchesList from './MatchesList';
+import SubmitOfferModal from './SubmitOfferModal';
 
 // Types
 interface Request {
@@ -45,7 +48,8 @@ interface Shortlist {
 
 const CSRRepDashboard: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'browse' | 'shortlist' | 'history'>('browse');
+  const [activeTab, setActiveTab] = useState<'browse' | 'shortlist' | 'offers' | 'matches' | 'history'>('browse');
+  const [offerModalRequest, setOfferModalRequest] = useState<Request | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [urgencyFilter, setUrgencyFilter] = useState('');
@@ -105,6 +109,20 @@ const CSRRepDashboard: React.FC = () => {
       return response.data.categories;
     },
   });
+
+  // Fetch submitted offers to track which requests already have offers
+  const { data: submittedOffers } = useQuery({
+    queryKey: ['csr-offers-list'],
+    queryFn: async () => {
+      const response = await api.get('/organizations/offers');
+      return response.data.offers || [];
+    },
+  });
+
+  // Create a set of request IDs that already have offers
+  const requestsWithOffers = new Set(
+    submittedOffers?.map((offer: any) => offer.requestId) || []
+  );
 
   // Fetch shortlisted IDs
   const { data: shortlistedIds } = useQuery({
@@ -255,6 +273,34 @@ const CSRRepDashboard: React.FC = () => {
               </button>
               <button
                 onClick={() => {
+                  setActiveTab('offers');
+                  setSearchQuery('');
+                }}
+                className={`${
+                  activeTab === 'offers'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                My Offers
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('matches');
+                  setSearchQuery('');
+                }}
+                className={`${
+                  activeTab === 'matches'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Matches
+              </button>
+              <button
+                onClick={() => {
                   setActiveTab('history');
                   setSearchQuery('');
                 }}
@@ -342,8 +388,12 @@ const CSRRepDashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Requests List */}
-        {isLoading ? (
+        {/* Tab Content */}
+        {activeTab === 'offers' ? (
+          <CSROffersList />
+        ) : activeTab === 'matches' ? (
+          <MatchesList userType="CSR_REP" />
+        ) : isLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           </div>
@@ -392,7 +442,24 @@ const CSRRepDashboard: React.FC = () => {
                   </div>
 
                   {activeTab !== 'history' && request.status === 'ACTIVE' && (
-                    <div className="ml-4">
+                    <div className="ml-4 flex gap-2">
+                      {requestsWithOffers.has(request.id) ? (
+                        <button
+                          disabled
+                          className="px-4 py-2 bg-gray-300 text-gray-600 rounded-md cursor-not-allowed text-sm font-medium"
+                          title="You already submitted an offer on this request"
+                        >
+                          ✓ Offer Submitted
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setOfferModalRequest(request)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+                          title="Submit volunteer offer"
+                        >
+                          Submit Offer
+                        </button>
+                      )}
                       {activeTab === 'shortlist' ? (
                         <button
                           onClick={() => removeFromShortlistMutation.mutate(request.id)}
@@ -461,6 +528,14 @@ const CSRRepDashboard: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Submit Offer Modal */}
+      {offerModalRequest && (
+        <SubmitOfferModal
+          request={offerModalRequest}
+          onClose={() => setOfferModalRequest(null)}
+        />
+      )}
     </div>
   );
 };

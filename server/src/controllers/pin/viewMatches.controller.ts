@@ -20,7 +20,19 @@ export class ViewMatchesController {
 
       const matches = await MatchEntity.findByPIN(user.id, 1, 100);
 
-      res.json({ matches });
+      // Calculate statistics
+      const total = matches.length;
+      const active = matches.filter(m => m.status === 'ACTIVE').length;
+      const completed = matches.filter(m => m.status === 'COMPLETED').length;
+      const cancelled = matches.filter(m => m.status === 'CANCELLED').length;
+
+      res.json({ 
+        matches,
+        total,
+        active,
+        completed,
+        cancelled
+      });
     } catch (error) {
       next(error);
     }
