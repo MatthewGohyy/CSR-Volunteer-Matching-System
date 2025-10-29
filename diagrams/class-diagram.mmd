@@ -27,7 +27,7 @@ classDiagram
         <<enumeration>>
         ACTIVE
         SUSPENDED
-        DELETED
+        DEACTIVATED
     }
 
     class RequestStatus {
@@ -83,15 +83,34 @@ classDiagram
         -DateTime dateOfBirth
         -UserStatus status
         -UUID userProfileId
+        -Integer age
+        -String location
+        -String accessibilityNeeds
+        -String profilePhoto
+        -String companyName
+        -String companyRegistrationNumber
+        -String industry
+        -String contactPerson
+        -String companyAddress
+        -String companyLogo
+        -String department
+        -ProfileStatus profileStatus
         -DateTime createdAt
         -DateTime updatedAt
         +isActive() Boolean
         +isSuspended() Boolean
+        +isPIN() Boolean
+        +isCSRRep() Boolean
+        +isPlatformManager() Boolean
         +hasRole(role) Boolean
         +getProfile() UserProfile
+        +isSenior() Boolean
+        +hasAccessibilityNeeds() Boolean
+        +hasLogo() Boolean
         +toJSON() Object
         +findById(id)$ UserAccount
         +findByEmail(email)$ UserAccount
+        +findByProfileName(name)$ UserAccount[]
         +create(data)$ UserAccount
         +update(id, data)$ UserAccount
         +suspend(id)$ UserAccount
@@ -114,82 +133,7 @@ classDiagram
     }
 
     note for UserProfile "Only 4 static records exist:\nPIN, CSR_REP, USER_ADMIN, PLATFORM_MANAGER"
-
-    %% ============================================
-    %% USER PROFILE TYPES
-    %% ============================================
-
-    class PIN {
-        -UUID id
-        -UUID userAccountId
-        -String name
-        -Integer age
-        -String location
-        -String phoneNumber
-        -String accessibilityNeeds
-        -String profilePhoto
-        -ProfileStatus status
-        -DateTime createdAt
-        -DateTime updatedAt
-        +isActive() Boolean
-        +isSuspended() Boolean
-        +isSenior() Boolean
-        +hasAccessibilityNeeds() Boolean
-        +getDisplayName() String
-        +toJSON() Object
-        +findById(id)$ PIN
-        +findByUserId(userId)$ PIN
-        +create(data)$ PIN
-        +update(id, data)$ PIN
-        +suspendByUserId(userId)$ PIN
-        +activateByUserId(userId)$ PIN
-    }
-
-    class CSRRep {
-        -UUID id
-        -UUID userAccountId
-        -String companyName
-        -String companyRegistrationNumber
-        -String industry
-        -String contactPerson
-        -String phoneNumber
-        -String companyAddress
-        -String companyLogo
-        -UserStatus approvalStatus
-        -String certifications
-        -ProfileStatus status
-        -DateTime createdAt
-        -DateTime updatedAt
-        +isActive() Boolean
-        +isApproved() Boolean
-        +isPending() Boolean
-        +hasLogo() Boolean
-        +getDisplayName() String
-        +toJSON() Object
-        +findById(id)$ CSRRep
-        +findByUserId(userId)$ CSRRep
-        +create(data)$ CSRRep
-        +update(id, data)$ CSRRep
-        +approve(id)$ CSRRep
-        +suspendByUserId(userId)$ CSRRep
-    }
-
-    class PlatformManager {
-        -UUID id
-        -UUID userAccountId
-        -String fullName
-        -String department
-        -String phone
-        -ProfileStatus status
-        -DateTime createdAt
-        -DateTime updatedAt
-        +isActive() Boolean
-        +getDisplayName() String
-        +findById(id)$ PlatformManager
-        +findByUserId(userId)$ PlatformManager
-        +create(data)$ PlatformManager
-        +update(id, data)$ PlatformManager
-    }
+    note for UserAccount "Single Table Inheritance Pattern:\n- All role-specific fields in ONE class\n- Role determined by userProfile reference\n- PIN users use: age, location, accessibilityNeeds\n- CSR users use: companyName, companyRegistrationNumber, etc\n- Platform Managers use: department\n- Unused fields are NULL for each user"
 
     %% ============================================
     %% SERVICE MANAGEMENT
@@ -298,7 +242,7 @@ classDiagram
 
     class Notification {
         -UUID id
-        -UUID userAccountId
+        -UUID userId
         -NotificationType type
         -String message
         -Boolean isRead
@@ -317,25 +261,15 @@ classDiagram
 
     %% Core Authentication
     UserProfile "1" --> "0..*" UserAccount : has
-    UserAccount --> UserProfileRole : role via UserProfile
     UserAccount --> UserStatus : has status
+    UserAccount --> ProfileStatus : has profile status
 
-    %% User Profiles
-    UserAccount "1" --> "0..1" PIN : has
-    UserAccount "1" --> "0..1" CSRRep : has
-    UserAccount "1" --> "0..1" PlatformManager : has
-
-    %% PIN Relationships
-    PIN "1" --> "0..*" Request : creates
-    PIN "1" --> "0..*" Match : receives help
-    PIN --> ProfileStatus : has status
-
-    %% CSRRep Relationships
-    CSRRep "1" --> "0..*" Shortlist : saves
-    CSRRep "1" --> "0..*" VolunteerOffer : makes
-    CSRRep "1" --> "0..*" Match : provides help
-    CSRRep --> ProfileStatus : has status
-    CSRRep --> UserStatus : approval status
+    %% UserAccount Relationships (role-based)
+    UserAccount "1" --> "0..*" Request : creates (when PIN role)
+    UserAccount "1" --> "0..*" Shortlist : saves (when CSR role)
+    UserAccount "1" --> "0..*" VolunteerOffer : makes (when CSR role)
+    UserAccount "1" *-- "0..*" Match : provides help (CSR)
+    UserAccount "1" *-- "0..*" Match : receives help (PIN)
 
     %% Request Relationships
     ServiceCategory "1" --> "0..*" Request : categorizes

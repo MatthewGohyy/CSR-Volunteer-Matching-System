@@ -110,7 +110,7 @@ erDiagram
 
     Notification {
         uuid id PK "Primary Key"
-        uuid userAccountId FK "References UserAccount"
+        uuid userId FK "References UserAccount"
         enum type "VOLUNTEER_OFFER, OFFER_ACCEPTED, etc."
         text message
         boolean isRead "Default false"

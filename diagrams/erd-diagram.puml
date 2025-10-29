@@ -145,7 +145,7 @@ entity Match {
 entity Notification {
     * id : UUID <<PK>>
     --
-    * userAccountId : UUID <<FK>>
+    * userId : UUID <<FK>>
     * type : NotificationType
     * message : TEXT
     * isRead : BOOLEAN

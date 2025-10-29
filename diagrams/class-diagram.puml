@@ -35,7 +35,7 @@ enum UserStatus {
 enum ProfileStatus {
     ACTIVE
     SUSPENDED
-    DELETED
+    DEACTIVATED
 }
 
 enum RequestStatus {
@@ -267,7 +267,7 @@ class Match {
 
 class Notification {
     - id: UUID
-    - userAccountId: UUID
+    - userId: UUID
     - type: NotificationType
     - message: String
     - isRead: Boolean
