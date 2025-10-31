@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus } from '@prisma/client';
@@ -24,14 +23,7 @@ export class SearchCompletedRequestsController {
       const limitNum = parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
 
-      // Get PIN profile
-
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'Person in Need');
-      if (!user) {
-        throw new AppError('PIN profile not found', 404);
-      }
-
-      let allRequests = await RequestEntity.findByPIN(user.id, 1, 1000);
+      let allRequests = await RequestEntity.findByPIN(userId, 1, 1000);
       allRequests = allRequests.filter(r => 
         (r.status === RequestStatus.COMPLETED || r.status === RequestStatus.MATCHED) &&
         (r.title.toLowerCase().includes(q.toLowerCase()) || r.description.toLowerCase().includes(q.toLowerCase()))

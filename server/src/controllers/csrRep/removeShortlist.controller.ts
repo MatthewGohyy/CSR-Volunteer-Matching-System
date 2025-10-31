@@ -1,5 +1,4 @@
 import { Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { ShortlistEntity } from '../../entities/Shortlist.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
@@ -15,13 +14,7 @@ export class RemoveShortlistController {
       const userId = req.user!.userId;
       const { requestId } = req.params;
 
-      // Get CSR Rep profile
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'CSR Representative');
-      if (!user) {
-        throw new AppError('CSR Rep profile not found', 404);
-      }
-
-      await ShortlistEntity.deleteByCSRRepAndRequest(user.id, requestId);
+      await ShortlistEntity.deleteByCSRRepAndRequest(userId, requestId);
       await RequestEntity.incrementShortlistCountDB(requestId);
 
       res.json({ message: 'Request removed from shortlist' });

@@ -17,8 +17,7 @@ export class SubmitOfferController {
       const userId = req.user!.userId;
       const { requestId, message } = req.body;
 
-      // Get CSR Rep profile
-
+      // Get CSR Rep profile for companyName in notification
       const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'CSR Representative');
       if (!user) {
         throw new AppError('CSR Rep profile not found', 404);
@@ -39,7 +38,7 @@ export class SubmitOfferController {
         throw new AppError('PIN not found', 404);
       }
 
-      const offers = await VolunteerOfferEntity.findByCSRRep(user.id, 1, 1000);
+      const offers = await VolunteerOfferEntity.findByCSRRep(userId, 1, 1000);
       const existingOffer = offers.find(o => o.requestId === requestId);
       if (existingOffer) {
         throw new AppError('Offer already submitted', 409);
@@ -47,7 +46,7 @@ export class SubmitOfferController {
 
       // Create offer
       const offer = await VolunteerOfferEntity.create({
-        csrRepId: user.id,
+        csrRepId: userId,
         requestId,
         message,
       });

@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus, UrgencyLevel } from '@prisma/client';
@@ -15,20 +14,15 @@ export class SearchMyRequestsController {
       const userId = (req as any).user!.userId;
       const { query, status, urgency } = req.query;
 
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'Person in Need');
-      if (!user) {
-        throw new AppError('PIN profile not found', 404);
-      }
-
       let requests;
       if (status) {
         requests = await RequestEntity.findByStatus(status as RequestStatus, 1, 100);
-        requests = requests.filter(r => r.pinId === user.id);
+        requests = requests.filter(r => r.pinId === userId);
       } else if (urgency) {
         requests = await RequestEntity.findByUrgency(urgency as UrgencyLevel, 1, 100);
-        requests = requests.filter(r => r.pinId === user.id);
+        requests = requests.filter(r => r.pinId === userId);
       } else {
-        requests = await RequestEntity.findByPIN(user.id, 1, 100);
+        requests = await RequestEntity.findByPIN(userId, 1, 100);
       }
 
       if (query && typeof query === 'string') {

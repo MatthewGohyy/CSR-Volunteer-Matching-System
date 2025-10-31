@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus, UrgencyLevel } from '@prisma/client';
@@ -13,12 +12,6 @@ export class SearchRequestsController {
     try {
       const userId = (req as any).user!.userId;
       const { query, status, urgency, categoryId } = req.query;
-
-
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'CSR Representative');
-      if (!user) {
-        throw new AppError('CSR Rep profile not found', 404);
-      }
 
       // Use searchWithFilters to get only active requests with applied filters
       const requests = await RequestEntity.searchWithFilters({

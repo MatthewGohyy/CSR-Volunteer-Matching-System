@@ -13,7 +13,6 @@ export class GetProfileController {
       const userId = req.user!.userId;
 
       const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'Person in Need');
-
       if (!user) {
         throw new AppError('PIN profile not found', 404);
       }

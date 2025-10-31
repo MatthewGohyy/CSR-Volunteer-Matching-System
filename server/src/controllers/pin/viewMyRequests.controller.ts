@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 
@@ -13,12 +12,7 @@ export class ViewMyRequestsController {
     try {
       const userId = (req as any).user!.userId;
 
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'Person in Need');
-      if (!user) {
-        throw new AppError('PIN profile not found', 404);
-      }
-
-      const requests = await RequestEntity.findByPIN(user.id, 1, 100);
+      const requests = await RequestEntity.findByPIN(userId, 1, 100);
       const total = requests.length;
 
       res.json({ requests, total });

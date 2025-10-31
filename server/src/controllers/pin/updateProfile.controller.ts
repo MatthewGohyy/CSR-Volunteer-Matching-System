@@ -13,11 +13,6 @@ export class UpdateProfileController {
       const userId = req.user!.userId;
       const { name, age, location, phoneNumber, accessibilityNeeds, profilePhoto } = req.body;
 
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'Person in Need');
-      if (!user) {
-        throw new AppError('PIN profile not found', 404);
-      }
-
       const updateData: any = {};
       if (name) updateData.name = name;
       if (age !== undefined) updateData.age = age;

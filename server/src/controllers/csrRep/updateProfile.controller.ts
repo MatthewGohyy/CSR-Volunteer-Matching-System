@@ -13,13 +13,6 @@ export class UpdateProfileController {
       const userId = req.user!.userId;
       const { industry, contactPerson, phoneNumber, companyAddress, companyLogo } = req.body;
 
-      // Get CSR Rep profile
-
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'CSR Representative');
-      if (!user) {
-        throw new AppError('CSR Rep profile not found', 404);
-      }
-
       const updateData: any = {};
       if (industry) updateData.industry = industry;
       if (contactPerson) updateData.contactPerson = contactPerson;

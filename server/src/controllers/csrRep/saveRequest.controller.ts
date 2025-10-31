@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { ShortlistEntity } from '../../entities/Shortlist.entity';
 import { AppError } from '../../middleware/errorHandler';
@@ -14,18 +13,14 @@ export class SaveRequestController {
       const userId = (req as any).user!.userId;
       const { requestId } = req.body;
 
-
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'CSR Representative');
-      if (!user) throw new AppError('CSR Rep profile not found', 404);
-
       const request = await RequestEntity.findById(requestId);
       if (!request) throw new AppError('Request not found', 404);
 
-      const exists = await ShortlistEntity.exists(user.id, requestId);
+      const exists = await ShortlistEntity.exists(userId, requestId);
       if (exists) throw new AppError('Request already shortlisted', 409);
 
       const shortlist = await ShortlistEntity.create({
-        csrRepId: user.id,
+        csrRepId: userId,
         requestId,
       });
 

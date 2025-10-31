@@ -14,12 +14,6 @@ export class UpdateProfileController {
       const userId = req.user!.userId;
       const { fullName, department, phone } = req.body;
 
-      // Get Platform Manager profile
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'Platform Manager');
-      if (!user) {
-        throw new AppError('Platform Manager profile not found', 404);
-      }
-
       const updateData: any = {};
       if (fullName) updateData.name = fullName;
       if (department) updateData.department = department;

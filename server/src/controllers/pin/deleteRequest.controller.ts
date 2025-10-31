@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 
@@ -14,16 +13,11 @@ export class DeleteRequestController {
       const userId = (req as any).user!.userId;
       const { id } = req.params;
 
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'Person in Need');
-      if (!user) {
-        throw new AppError('PIN profile not found', 404);
-      }
-
       const existingRequest = await RequestEntity.findById(id);
       if (!existingRequest) {
         throw new AppError('Request not found', 404);
       }
-      if (existingRequest.pinId !== user.id) {
+      if (existingRequest.pinId !== userId) {
         throw new AppError('Unauthorized to delete this request', 403);
       }
 

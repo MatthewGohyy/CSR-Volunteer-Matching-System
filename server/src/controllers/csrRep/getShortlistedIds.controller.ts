@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { ShortlistEntity } from '../../entities/Shortlist.entity';
 import { AppError } from '../../middleware/errorHandler';
 
@@ -12,12 +11,7 @@ export class GetShortlistedIdsController {
     try {
       const userId = (req as any).user!.userId;
       
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'CSR Representative');
-      if (!user) {
-        throw new AppError('CSR Rep profile not found', 404);
-      }
-
-      const shortlistedIds = await ShortlistEntity.getShortlistedRequestIds(user.id);
+      const shortlistedIds = await ShortlistEntity.getShortlistedRequestIds(userId);
 
       res.json({ shortlistedIds });
     } catch (error) {

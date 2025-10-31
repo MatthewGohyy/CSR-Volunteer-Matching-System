@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { MatchEntity } from '../../entities/Match.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { MatchStatus } from '@prisma/client';
@@ -13,11 +12,7 @@ export class ViewCompletedRequestsController {
     try {
       const userId = (req as any).user!.userId;
 
-
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'CSR Representative');
-      if (!user) throw new AppError('CSR Rep profile not found', 404);
-
-      const allMatches = await MatchEntity.findByCSRRep(user.id, 1, 100);
+      const allMatches = await MatchEntity.findByCSRRep(userId, 1, 100);
       const matches = allMatches.filter(m => m.status === MatchStatus.COMPLETED);
 
       res.json({ matches });

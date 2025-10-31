@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus } from '@prisma/client';
@@ -20,16 +19,9 @@ export class ViewCompletedRequestsController {
       const limitNum = parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
 
-      // Get PIN profile
-
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'Person in Need');
-      if (!user) {
-        throw new AppError('PIN profile not found', 404);
-      }
-
       const completed = await RequestEntity.findByStatus(RequestStatus.COMPLETED, pageNum, limitNum);
       const matched = await RequestEntity.findByStatus(RequestStatus.MATCHED, pageNum, limitNum);
-      const requests = [...completed, ...matched].filter(r => r.pinId === user.id);
+      const requests = [...completed, ...matched].filter(r => r.pinId === userId);
       const total = requests.length;
 
       res.json({
