@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
+import { RequestCategoryEntity } from '../../entities/RequestCategory.entity';
 import { RequestEntity } from '../../entities/Request.entity';
 import { MatchEntity } from '../../entities/Match.entity';
 import { AuthRequest } from '../../middleware/auth';
@@ -22,8 +22,8 @@ export class GetPlatformStatsController {
         completedRequests,
         totalMatches,
       ] = await Promise.all([
-        ServiceCategoryEntity.count(),
-        ServiceCategoryEntity.findActive().then(c => c.length),
+        RequestCategoryEntity.count(),
+        RequestCategoryEntity.findActive().then(c => c.length),
         RequestEntity.count(),
         RequestEntity.countByStatus(RequestStatus.ACTIVE),
         RequestEntity.countByStatus(RequestStatus.COMPLETED),

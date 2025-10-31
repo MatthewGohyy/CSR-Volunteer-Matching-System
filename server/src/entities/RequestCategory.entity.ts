@@ -1,13 +1,13 @@
-import { ServiceCategory as PrismaServiceCategory } from '@prisma/client';
+import { RequestCategory as PrismaRequestCategory } from '@prisma/client';
 import { prisma } from '../config/database';
 
 /**
- * Service Category Entity Class
+ * Request Category Entity Class
  * 
- * Represents a service category for requests with business logic and CRUD methods.
+ * Represents a request category for requests with business logic and CRUD methods.
  * Follows the BCE framework - Entity handles all database operations.
  */
-export class ServiceCategoryEntity implements PrismaServiceCategory {
+export class RequestCategoryEntity implements PrismaRequestCategory {
   id: string;
   name: string;
   description: string | null;
@@ -16,7 +16,7 @@ export class ServiceCategoryEntity implements PrismaServiceCategory {
   createdAt: Date;
   updatedAt: Date;
 
-  constructor(data: PrismaServiceCategory) {
+  constructor(data: PrismaRequestCategory) {
     this.id = data.id;
     this.name = data.name;
     this.description = data.description;
@@ -55,31 +55,31 @@ export class ServiceCategoryEntity implements PrismaServiceCategory {
    * Find all categories (simplified - pagination handled on frontend)
    */
   static async findAll() {
-    const categories = await prisma.serviceCategory.findMany({
+    const categories = await prisma.requestCategory.findMany({
       orderBy: { name: 'asc' },
     });
-    return categories.map(c => new ServiceCategoryEntity(c));
+    return categories.map(c => new RequestCategoryEntity(c));
   }
 
   /**
    * Find active categories only (simplified - pagination handled on frontend)
    */
   static async findActive() {
-    const categories = await prisma.serviceCategory.findMany({
+    const categories = await prisma.requestCategory.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' },
     });
-    return categories.map(c => new ServiceCategoryEntity(c));
+    return categories.map(c => new RequestCategoryEntity(c));
   }
 
   /**
    * Find category by ID
    */
   static async findById(id: string) {
-    const category = await prisma.serviceCategory.findUnique({
+    const category = await prisma.requestCategory.findUnique({
       where: { id },
     });
-    return category ? new ServiceCategoryEntity(category) : null;
+    return category ? new RequestCategoryEntity(category) : null;
   }
 
   /**
@@ -91,13 +91,13 @@ export class ServiceCategoryEntity implements PrismaServiceCategory {
     iconUrl?: string;
     isActive?: boolean;
   }) {
-    const category = await prisma.serviceCategory.create({
+    const category = await prisma.requestCategory.create({
       data: {
         ...data,
         isActive: data.isActive ?? true,
       },
     });
-    return new ServiceCategoryEntity(category);
+    return new RequestCategoryEntity(category);
   }
 
   /**
@@ -109,18 +109,18 @@ export class ServiceCategoryEntity implements PrismaServiceCategory {
     iconUrl: string;
     isActive: boolean;
   }>) {
-    const category = await prisma.serviceCategory.update({
+    const category = await prisma.requestCategory.update({
       where: { id },
       data,
     });
-    return new ServiceCategoryEntity(category);
+    return new RequestCategoryEntity(category);
   }
 
   /**
    * Delete category
    */
   static async delete(id: string): Promise<boolean> {
-    await prisma.serviceCategory.delete({ where: { id } });
+    await prisma.requestCategory.delete({ where: { id } });
     return true;
   }
 
@@ -128,7 +128,7 @@ export class ServiceCategoryEntity implements PrismaServiceCategory {
    * Search categories (simplified - no pagination)
    */
   static async search(query: string) {
-    const categories = await prisma.serviceCategory.findMany({
+    const categories = await prisma.requestCategory.findMany({
       where: {
         OR: [
           { name: { contains: query, mode: 'insensitive' } } // ,
@@ -137,13 +137,14 @@ export class ServiceCategoryEntity implements PrismaServiceCategory {
       },
       orderBy: { name: 'asc' },
     });
-    return categories.map(c => new ServiceCategoryEntity(c));
+    return categories.map(c => new RequestCategoryEntity(c));
   }
 
   /**
    * Count total categories
    */
   static async count(): Promise<number> {
-    return prisma.serviceCategory.count();
+    return prisma.requestCategory.count();
   }
 }
+

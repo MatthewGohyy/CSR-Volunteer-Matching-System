@@ -8,7 +8,7 @@ import api from '../config/api';
 import type { User as UserType } from '../types';
 
 // Types
-interface ServiceCategory {
+interface RequestCategory {
   id: string;
   name: string;
   description: string;
@@ -21,7 +21,7 @@ interface ServiceCategory {
 }
 
 interface CategoriesResponse {
-  categories: ServiceCategory[];
+  categories: RequestCategory[];
 }
 
 interface PlatformStats {
@@ -38,7 +38,7 @@ const PlatformManagerDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'categories' | 'stats'>('categories');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<ServiceCategory | null>(null);
+  const [editingCategory, setEditingCategory] = useState<RequestCategory | null>(null);
 
   // Fetch user profile
   const { data: user, isLoading: userLoading } = useQuery({
@@ -242,7 +242,7 @@ const PlatformManagerDashboard: React.FC = () => {
                   No categories found
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  Create your first service category to get started
+                  Create your first request category to get started
                 </p>
                 <button
                   onClick={() => setShowCreateModal(true)}
@@ -380,7 +380,7 @@ const PlatformManagerDashboard: React.FC = () => {
 
 // Create/Edit Category Modal Component
 interface CreateEditCategoryModalProps {
-  category: ServiceCategory | null;
+  category: RequestCategory | null;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -445,7 +445,7 @@ const CreateEditCategoryModal: React.FC<CreateEditCategoryModalProps> = ({
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                placeholder="Describe this service category..."
+                placeholder="Describe this request category..."
               />
             </div>
 

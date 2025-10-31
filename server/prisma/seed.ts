@@ -136,7 +136,7 @@ async function main() {
   });
   console.log('✅ Platform Manager user account created');
 
-  // 5. SERVICE CATEGORIES
+  // 5. REQUEST CATEGORIES
   const categories = [
     { name: 'Medical', description: 'Medical appointments, healthcare support' },
     { name: 'Transportation', description: 'Rides to appointments, errands' },
@@ -148,13 +148,13 @@ async function main() {
   ];
 
   for (const cat of categories) {
-    await prisma.serviceCategory.upsert({
+    await prisma.requestCategory.upsert({
       where: { name: cat.name },
       update: {},
       create: cat,
     });
   }
-  console.log('✅ Service categories created');
+  console.log('✅ Request categories created');
 
   console.log('\n🎉 Seed complete! Test accounts:');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

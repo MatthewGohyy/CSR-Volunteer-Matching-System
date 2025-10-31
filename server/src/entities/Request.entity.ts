@@ -1,4 +1,4 @@
-import { Request as PrismaRequest, RequestStatus, UrgencyLevel, ServiceCategory } from '@prisma/client';
+import { Request as PrismaRequest, RequestStatus, UrgencyLevel, RequestCategory } from '@prisma/client';
 import { prisma } from '../config/database';
 
 /**
@@ -23,11 +23,11 @@ export class RequestEntity implements PrismaRequest {
   updatedAt: Date;
 
   // Related data
-  category?: ServiceCategory;
+  category?: RequestCategory;
   pin?: any; // UserAccount with profile data
 
   constructor(data: PrismaRequest & {
-    category?: ServiceCategory;
+    category?: RequestCategory;
     pin?: any;
   }) {
     this.id = data.id;

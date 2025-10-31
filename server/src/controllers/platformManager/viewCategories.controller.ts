@@ -1,11 +1,11 @@
 import { Response, NextFunction } from 'express';
-import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
+import { RequestCategoryEntity } from '../../entities/RequestCategory.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
 /**
- * Controller for viewing service categories
- * User Story #36: View service categories
+ * Controller for viewing request categories
+ * User Story #36: View request categories
  * Follows BCE pattern - all database operations through entity class
  */
 export class ViewCategoriesController {
@@ -17,12 +17,12 @@ export class ViewCategoriesController {
       let categories;
       if (search && typeof search === 'string' && search.trim()) {
         // Search categories
-        categories = await ServiceCategoryEntity.search(search.trim());
+        categories = await RequestCategoryEntity.search(search.trim());
       } else {
         // Get all or active categories
         categories = includeInactive === 'true' 
-          ? await ServiceCategoryEntity.findAll()
-          : await ServiceCategoryEntity.findActive();
+          ? await RequestCategoryEntity.findAll()
+          : await RequestCategoryEntity.findActive();
       }
 
       // Filter by active status if needed

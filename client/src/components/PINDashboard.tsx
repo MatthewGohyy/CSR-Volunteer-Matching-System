@@ -31,7 +31,7 @@ interface Request {
   updatedAt: string;
 }
 
-interface ServiceCategory {
+interface RequestCategory {
   id: string;
   name: string;
   description: string;
@@ -84,8 +84,8 @@ const PINDashboard: React.FC = () => {
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useQuery({
     queryKey: ['categories'],
-    queryFn: async (): Promise<ServiceCategory[]> => {
-      const response = await api.get<{ categories: ServiceCategory[] }>('/opportunities/categories');
+    queryFn: async (): Promise<RequestCategory[]> => {
+      const response = await api.get<{ categories: RequestCategory[] }>('/opportunities/categories');
       return response.data.categories;
     },
   });
@@ -387,7 +387,7 @@ const PINDashboard: React.FC = () => {
 // Create/Edit Request Modal Component
 interface CreateEditRequestModalProps {
   request: Request | null;
-  categories: ServiceCategory[];
+  categories: RequestCategory[];
   categoriesLoading?: boolean;
   categoriesError?: Error | null;
   onClose: () => void;

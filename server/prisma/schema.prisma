@@ -13,7 +13,6 @@ enum UserStatus {
   DELETED
 }
 
-
 enum ProfileStatus {
   ACTIVE
   SUSPENDED
@@ -55,37 +54,38 @@ enum NotificationType {
 }
 
 model UserProfile {
-  id          String           @id @default(uuid())
-  name        String           @unique
-  description String?
-  permissions Json?
-  isActive    Boolean          @default(true)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id           String        @id @default(uuid())
+  name         String        @unique
+  description  String?
+  permissions  Json?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   userAccounts UserAccount[]
+
   @@map("user_profiles")
 }
 
 model UserAccount {
-  id           String       @id @default(uuid())
-  email        String       @unique
-  password     String
-  name         String
-  phoneNumber  String?
-  address      String?
-  dateOfBirth  DateTime?
-  status       UserStatus   @default(ACTIVE)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id            String      @id @default(uuid())
+  email         String      @unique
+  password      String
+  name          String
+  phoneNumber   String?
+  address       String?
+  dateOfBirth   DateTime?
+  status        UserStatus  @default(ACTIVE)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   userProfileId String
   userProfile   UserProfile @relation(fields: [userProfileId], references: [id])
-  
+
   // PIN-specific fields
   age                Int?
   location           String?
   accessibilityNeeds String?
   profilePhoto       String?
-  
+
   // CSR Rep-specific fields
   companyName               String?
   companyRegistrationNumber String? @unique
@@ -93,24 +93,25 @@ model UserAccount {
   contactPerson             String?
   companyAddress            String?
   companyLogo               String?
-  
+
   // Platform Manager-specific fields
-  department  String?
-  
+  department String?
+
   // Profile status (for profile operations)
   profileStatus ProfileStatus @default(ACTIVE)
-  
+
   // Relations
-  notifications Notification[]
-  requests      Request[]
-  shortlists    Shortlist[]
+  notifications   Notification[]
+  requests        Request[]
+  shortlists      Shortlist[]
   volunteerOffers VolunteerOffer[]
-  csrMatches    Match[]       @relation("CSRMatches")
-  pinMatches    Match[]       @relation("PINMatches")
+  csrMatches      Match[]          @relation("CSRMatches")
+  pinMatches      Match[]          @relation("PINMatches")
+
   @@map("user_accounts")
 }
 
-model ServiceCategory {
+model RequestCategory {
   id          String    @id @default(uuid())
   name        String    @unique
   description String?
@@ -119,7 +120,8 @@ model ServiceCategory {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   requests    Request[]
-  @@map("service_categories")
+
+  @@map("request_categories")
 }
 
 model Request {
@@ -137,20 +139,22 @@ model Request {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   pin             UserAccount      @relation(fields: [pinId], references: [id], onDelete: Cascade)
-  category        ServiceCategory  @relation(fields: [categoryId], references: [id])
+  category        RequestCategory  @relation(fields: [categoryId], references: [id])
   shortlists      Shortlist[]
   volunteerOffers VolunteerOffer[]
   match           Match?
+
   @@map("requests")
 }
 
 model Shortlist {
-  id        String   @id @default(uuid())
+  id        String      @id @default(uuid())
   csrRepId  String
   requestId String
-  createdAt DateTime @default(now())
+  createdAt DateTime    @default(now())
   csrRep    UserAccount @relation(fields: [csrRepId], references: [id], onDelete: Cascade)
-  request   Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  request   Request     @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
   @@unique([csrRepId, requestId])
   @@map("shortlists")
 }
@@ -165,6 +169,7 @@ model VolunteerOffer {
   updatedAt DateTime    @updatedAt
   csrRep    UserAccount @relation(fields: [csrRepId], references: [id], onDelete: Cascade)
   request   Request     @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
   @@map("volunteer_offers")
 }
 
@@ -181,6 +186,7 @@ model Match {
   request            Request     @relation(fields: [requestId], references: [id], onDelete: Cascade)
   csrRep             UserAccount @relation("CSRMatches", fields: [csrRepId], references: [id], onDelete: Cascade)
   pin                UserAccount @relation("PINMatches", fields: [pinId], references: [id], onDelete: Cascade)
+
   @@map("matches")
 }
 
@@ -192,6 +198,6 @@ model Notification {
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
   user      UserAccount      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("notifications")
 }
-

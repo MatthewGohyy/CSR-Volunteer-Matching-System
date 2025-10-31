@@ -52,7 +52,7 @@ export interface PlatformManagerProfile {
 export type RequestStatus = 'ACTIVE' | 'MATCHED' | 'COMPLETED' | 'CANCELLED';
 export type UrgencyLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 
-export interface ServiceCategory {
+export interface RequestCategory {
   id: string;
   name: string;
   description?: string;
@@ -76,7 +76,7 @@ export interface Request {
   shortlistCount: number;
   createdAt: string;
   updatedAt: string;
-  category?: ServiceCategory;
+  category?: RequestCategory;
   pin?: PINProfile;
 }
 

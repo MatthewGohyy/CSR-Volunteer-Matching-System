@@ -1,10 +1,10 @@
 import { Response, NextFunction } from 'express';
-import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
+import { RequestCategoryEntity } from '../../entities/RequestCategory.entity';
 import { AuthRequest } from '../../middleware/auth';
 
 /**
- * Controller for searching service categories
- * User Story #39: Search service categories
+ * Controller for searching request categories
+ * User Story #39: Search request categories
  */
 export class SearchCategoriesController {
   static async handle(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
@@ -14,9 +14,9 @@ export class SearchCategoriesController {
       // Simplified - get all categories, filter on frontend
       let allCategories;
       if (q && typeof q === 'string' && q.trim()) {
-        allCategories = await ServiceCategoryEntity.search(q.trim());
+        allCategories = await RequestCategoryEntity.search(q.trim());
       } else {
-        allCategories = await ServiceCategoryEntity.findAll();
+        allCategories = await RequestCategoryEntity.findAll();
       }
 
       if (includeInactive !== 'true') {

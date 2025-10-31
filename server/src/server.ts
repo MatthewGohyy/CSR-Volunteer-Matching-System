@@ -46,7 +46,7 @@ app.get('/health', (req, res) => {
 app.get('/api/test-db', async (req, res) => {
   try {
     const userCount = await prisma.userAccount.count();
-    const categoryCount = await prisma.serviceCategory.count();
+    const categoryCount = await prisma.requestCategory.count();
     const requestCount = await prisma.request.count();
     res.json({ 
       status: 'ok', 
