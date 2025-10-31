@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { NotificationEntity } from '../../entities/Notification.entity';
+import { Notification } from '../../entities/Notification.entity';
 import { AuthRequest } from '../../middleware/auth';
 
 /**
@@ -11,7 +11,7 @@ export class MarkAllNotificationsReadController {
     try {
       const userId = req.user!.userId;
 
-      await NotificationEntity.markAllAsRead(userId);
+      await Notification.markAllAsRead(userId);
 
       res.json({ message: 'All notifications marked as read' });
     } catch (error) {

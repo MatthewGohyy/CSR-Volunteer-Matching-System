@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
-import { ShortlistEntity } from '../../entities/Shortlist.entity';
-import { RequestEntity } from '../../entities/Request.entity';
+import { Shortlist } from '../../entities/Shortlist.entity';
+import { Request } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -14,8 +14,8 @@ export class RemoveShortlistController {
       const userId = req.user!.userId;
       const { requestId } = req.params;
 
-      await ShortlistEntity.deleteByCSRRepAndRequest(userId, requestId);
-      await RequestEntity.incrementShortlistCountDB(requestId);
+      await Shortlist.deleteByCSRRepAndRequest(userId, requestId);
+      await Request.incrementShortlistCountDB(requestId);
 
       res.json({ message: 'Request removed from shortlist' });
     } catch (error) {

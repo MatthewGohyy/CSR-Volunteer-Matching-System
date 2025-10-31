@@ -12,13 +12,13 @@ type UserAccountWithProfile = PrismaUserAccount & {
  * Returns user account, token, and role after successful login
  */
 export interface LoginResult {
-  user: UserAccountEntity;
+  user: UserAccount;
   token: string;
   role: string; // Profile name (was UserProfileRole)
 }
 
 /**
- * UserAccount Entity Class
+ * UserAccount Class
  * 
  * Represents a user account in the system with business logic and CRUD methods.
  * Follows the BCE framework - Entity handles all database operations.
@@ -26,7 +26,7 @@ export interface LoginResult {
  * This entity consolidates all user types (PIN, CSR Rep, Platform Manager, User Admin)
  * into a single table with role-specific fields.
  */
-export class UserAccountEntity implements PrismaUserAccount {
+export class UserAccount implements PrismaUserAccount {
   id: string;
   email: string;
   password: string;
@@ -237,7 +237,7 @@ export class UserAccountEntity implements PrismaUserAccount {
         createdAt: 'desc',
       },
     });
-    return users.map(user => new UserAccountEntity(user));
+    return users.map(user => new UserAccount(user));
   }
 
   /**
@@ -250,7 +250,7 @@ export class UserAccountEntity implements PrismaUserAccount {
         userProfile: true,
       },
     });
-    return user ? new UserAccountEntity(user) : null;
+    return user ? new UserAccount(user) : null;
   }
 
   /**
@@ -263,7 +263,7 @@ export class UserAccountEntity implements PrismaUserAccount {
         userProfile: true,
       },
     });
-    return user ? new UserAccountEntity(user) : null;
+    return user ? new UserAccount(user) : null;
   }
 
   /**
@@ -285,7 +285,7 @@ export class UserAccountEntity implements PrismaUserAccount {
       throw new Error('Invalid email or password');
     }
 
-    const user = new UserAccountEntity(userData);
+    const user = new UserAccount(userData);
 
     // Check if user is active
     if (!user.isActive()) {
@@ -331,7 +331,7 @@ export class UserAccountEntity implements PrismaUserAccount {
       },
     });
     if (!user || user.userProfile?.name !== profileName) return null;
-    return new UserAccountEntity(user);
+    return new UserAccount(user);
   }
 
   /**
@@ -360,7 +360,7 @@ export class UserAccountEntity implements PrismaUserAccount {
         createdAt: 'desc',
       },
     });
-    return users.map(user => new UserAccountEntity(user));
+    return users.map(user => new UserAccount(user));
   }
 
   /**
@@ -387,7 +387,7 @@ export class UserAccountEntity implements PrismaUserAccount {
         createdAt: 'desc',
       },
     });
-    return users.map(user => new UserAccountEntity(user));
+    return users.map(user => new UserAccount(user));
   }
 
   /**
@@ -428,7 +428,7 @@ export class UserAccountEntity implements PrismaUserAccount {
         userProfile: true,
       },
     });
-    return new UserAccountEntity(user);
+    return new UserAccount(user);
   }
 
   /**
@@ -463,7 +463,7 @@ export class UserAccountEntity implements PrismaUserAccount {
         userProfile: true,
       },
     });
-    return new UserAccountEntity(user);
+    return new UserAccount(user);
   }
 
   /**
@@ -544,7 +544,7 @@ export class UserAccountEntity implements PrismaUserAccount {
         createdAt: 'desc',
       },
     });
-    return users.map(user => new UserAccountEntity(user));
+    return users.map(user => new UserAccount(user));
   }
 
   /**

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -19,7 +19,7 @@ export class LoginController {
       const { email, password } = req.body;
 
       // Call Entity login method (contains all login logic)
-      const result = await UserAccountEntity.login(email, password);
+      const result = await UserAccount.login(email, password);
 
       // Return success response
       res.json({

@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { RequestEntity } from '../../entities/Request.entity';
+import { Request as ExpressRequest, Response, NextFunction } from 'express';
+import { Request } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -9,11 +9,11 @@ import { AppError } from '../../middleware/errorHandler';
  * so that I can track engagement and progress.
  */
 export class ViewRequestViewsController {
-  static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user!.userId;
 
-      const requests = await RequestEntity.findByPIN(userId, 1, 1000);
+      const requests = await Request.findByPIN(userId, 1, 1000);
 
       res.json({ requests });
     } catch (error) {

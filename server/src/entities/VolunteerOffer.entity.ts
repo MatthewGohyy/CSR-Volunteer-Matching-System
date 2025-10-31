@@ -2,12 +2,12 @@ import { VolunteerOffer as PrismaVolunteerOffer, OfferStatus } from '@prisma/cli
 import { prisma } from '../config/database';
 
 /**
- * Volunteer Offer Entity Class
+ * Volunteer Offer Class
  * 
  * Represents a volunteer offer from a CSR Rep to a PIN request with business logic and CRUD methods.
  * Follows the BCE framework - Entity handles all database operations.
  */
-export class VolunteerOfferEntity implements PrismaVolunteerOffer {
+export class VolunteerOffer implements PrismaVolunteerOffer {
   id: string;
   csrRepId: string;
   requestId: string;
@@ -86,7 +86,7 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
         csrRep: true,
       },
     });
-    return offer ? new VolunteerOfferEntity(offer) : null;
+    return offer ? new VolunteerOffer(offer) : null;
   }
 
   /**
@@ -103,7 +103,7 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
       },
       orderBy: { createdAt: 'desc' },
     });
-    return offers.map(o => new VolunteerOfferEntity(o));
+    return offers.map(o => new VolunteerOffer(o));
   }
 
   /**
@@ -117,7 +117,7 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
       },
       orderBy: { createdAt: 'desc' },
     });
-    return offers.map(o => new VolunteerOfferEntity(o));
+    return offers.map(o => new VolunteerOffer(o));
   }
 
   /**
@@ -135,7 +135,7 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
       },
       orderBy: { createdAt: 'desc' },
     });
-    return offers.map(o => new VolunteerOfferEntity(o));
+    return offers.map(o => new VolunteerOffer(o));
   }
 
   /**
@@ -156,7 +156,7 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
         csrRep: true,
       },
     });
-    return new VolunteerOfferEntity(offer);
+    return new VolunteerOffer(offer);
   }
 
   /**
@@ -174,7 +174,7 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
         csrRep: true,
       },
     });
-    return new VolunteerOfferEntity(offer);
+    return new VolunteerOffer(offer);
   }
 
   /**

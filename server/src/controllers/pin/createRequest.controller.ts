@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { RequestEntity } from '../../entities/Request.entity';
+import { Request as ExpressRequest, Response, NextFunction } from 'express';
+import { Request } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { UrgencyLevel, RequestStatus } from '@prisma/client';
 
@@ -9,12 +9,12 @@ import { UrgencyLevel, RequestStatus } from '@prisma/client';
  * Story #15: As a PIN, I want to create a request so that I can get matched with a CSR Rep.
  */
 export class CreateRequestController {
-  static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user!.userId;
       const { categoryId, title, description, urgency, dateNeeded, location } = req.body;
 
-      const request = await RequestEntity.create({
+      const request = await Request.create({
         pinId: userId, // User account ID is now the PIN ID
         categoryId,
         title,

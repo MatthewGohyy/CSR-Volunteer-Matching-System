@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { RequestCategoryEntity } from '../../entities/RequestCategory.entity';
+import { RequestCategory } from '../../entities/RequestCategory.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -14,13 +14,13 @@ export class DeleteCategoryController {
 
       // Check if category exists
 
-      const category = await RequestCategoryEntity.findById(id);
+      const category = await RequestCategory.findById(id);
 
       if (!category) {
         throw new AppError('Category not found', 404);
       }
 
-      await RequestCategoryEntity.delete(id);
+      await RequestCategory.delete(id);
 
       res.json({
         message: 'Request category deleted successfully',

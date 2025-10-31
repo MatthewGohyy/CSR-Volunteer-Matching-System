@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request as ExpressRequest, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserStatus } from '@prisma/client';
-import { UserAccountEntity } from '../entities/UserAccount.entity';
+import { UserAccount } from '../entities/UserAccount.entity';
 
-export interface AuthRequest extends Request {
+export interface AuthRequest extends ExpressRequest {
   user?: {
     userId: string;
     email: string;
@@ -36,7 +36,7 @@ export const authenticate = async (
     };
 
     // Check if user account exists and is active
-    const user = await UserAccountEntity.findById(decoded.userId);
+    const user = await UserAccount.findById(decoded.userId);
     
     if (!user) {
       res.status(401).json({ error: 'User account not found' });
@@ -103,7 +103,7 @@ export const requireActiveProfile = async (
       return;
     }
 
-    const user = await UserAccountEntity.findById(req.user.userId);
+    const user = await UserAccount.findById(req.user.userId);
     
     if (!user) {
       res.status(401).json({ error: 'User not found' });

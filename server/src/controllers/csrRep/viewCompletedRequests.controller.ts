@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { MatchEntity } from '../../entities/Match.entity';
+import { Match } from '../../entities/Match.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { MatchStatus } from '@prisma/client';
 
@@ -12,7 +12,7 @@ export class ViewCompletedRequestsController {
     try {
       const userId = (req as any).user!.userId;
 
-      const allMatches = await MatchEntity.findByCSRRep(userId, 1, 100);
+      const allMatches = await Match.findByCSRRep(userId, 1, 100);
       const matches = allMatches.filter(m => m.status === MatchStatus.COMPLETED);
 
       res.json({ matches });

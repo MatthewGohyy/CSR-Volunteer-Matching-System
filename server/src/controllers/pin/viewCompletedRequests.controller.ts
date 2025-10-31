@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { RequestEntity } from '../../entities/Request.entity';
+import { Request as ExpressRequest, Response, NextFunction } from 'express';
+import { Request } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus } from '@prisma/client';
 
@@ -10,7 +10,7 @@ import { RequestStatus } from '@prisma/client';
  * so that I can review past help I've received.
  */
 export class ViewCompletedRequestsController {
-  static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user!.userId;
       const { page = '1', limit = '10' } = req.query;
@@ -19,8 +19,8 @@ export class ViewCompletedRequestsController {
       const limitNum = parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
 
-      const completed = await RequestEntity.findByStatus(RequestStatus.COMPLETED, pageNum, limitNum);
-      const matched = await RequestEntity.findByStatus(RequestStatus.MATCHED, pageNum, limitNum);
+      const completed = await Request.findByStatus(RequestStatus.COMPLETED, pageNum, limitNum);
+      const matched = await Request.findByStatus(RequestStatus.MATCHED, pageNum, limitNum);
       const requests = [...completed, ...matched].filter(r => r.pinId === userId);
       const total = requests.length;
 

@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { VolunteerOfferEntity } from '../../entities/VolunteerOffer.entity';
+import { VolunteerOffer } from '../../entities/VolunteerOffer.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -12,7 +12,7 @@ export class ViewOffersController {
     try {
       const userId = req.user!.userId;
 
-      const offers = await VolunteerOfferEntity.findByCSRRep(userId, 1, 100);
+      const offers = await VolunteerOffer.findByCSRRep(userId, 1, 100);
 
       // Calculate statistics
       const total = offers.length;

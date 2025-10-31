@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -12,12 +12,12 @@ export class ActivateUserAccountController {
     try {
       const { id } = req.params;
 
-      const existingUser = await UserAccountEntity.findById(id);
+      const existingUser = await UserAccount.findById(id);
       if (!existingUser) {
         throw new AppError('User not found', 404);
       }
 
-      const user = await UserAccountEntity.activate(id);
+      const user = await UserAccount.activate(id);
 
       res.json({
         message: 'User account activated successfully',

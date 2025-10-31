@@ -2,12 +2,12 @@ import { Match as PrismaMatch, MatchStatus } from '@prisma/client';
 import { prisma } from '../config/database';
 
 /**
- * Match Entity Class
+ * Match Class
  * 
  * Represents a match between a PIN request and CSR Rep with business logic and CRUD methods.
  * Follows the BCE framework - Entity handles all database operations.
  */
-export class MatchEntity implements PrismaMatch {
+export class Match implements PrismaMatch {
   id: string;
   requestId: string;
   csrRepId: string;
@@ -87,7 +87,7 @@ export class MatchEntity implements PrismaMatch {
         pin: true,
       },
     });
-    return match ? new MatchEntity(match) : null;
+    return match ? new Match(match) : null;
   }
 
   /**
@@ -102,7 +102,7 @@ export class MatchEntity implements PrismaMatch {
         pin: true,
       },
     });
-    return match ? new MatchEntity(match) : null;
+    return match ? new Match(match) : null;
   }
 
   /**
@@ -120,7 +120,7 @@ export class MatchEntity implements PrismaMatch {
       },
       orderBy: { matchedAt: 'desc' },
     });
-    return matches.map(m => new MatchEntity(m));
+    return matches.map(m => new Match(m));
   }
 
   /**
@@ -138,7 +138,7 @@ export class MatchEntity implements PrismaMatch {
       },
       orderBy: { matchedAt: 'desc' },
     });
-    return matches.map(m => new MatchEntity(m));
+    return matches.map(m => new Match(m));
   }
 
   /**
@@ -161,7 +161,7 @@ export class MatchEntity implements PrismaMatch {
         pin: true,
       },
     });
-    return new MatchEntity(match);
+    return new Match(match);
   }
 
   /**
@@ -181,7 +181,7 @@ export class MatchEntity implements PrismaMatch {
         pin: true,
       },
     });
-    return new MatchEntity(match);
+    return new Match(match);
   }
 
   /**

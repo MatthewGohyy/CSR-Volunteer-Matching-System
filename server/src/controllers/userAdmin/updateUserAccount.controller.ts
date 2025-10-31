@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -14,14 +14,14 @@ export class UpdateUserAccountController {
       const { email, status } = req.body;
 
       // Check if user exists
-      const existingUser = await UserAccountEntity.findById(id);
+      const existingUser = await UserAccount.findById(id);
       if (!existingUser) {
         throw new AppError('User not found', 404);
       }
 
       // Check if email is being changed and if it already exists
       if (email && email !== existingUser.email) {
-        const emailExists = await UserAccountEntity.findByEmail(email);
+        const emailExists = await UserAccount.findByEmail(email);
         if (emailExists) {
           throw new AppError('Email already in use', 409);
         }
@@ -32,7 +32,7 @@ export class UpdateUserAccountController {
       if (email) updateData.email = email;
       if (status) updateData.status = status;
       
-      const user = await UserAccountEntity.update(id, updateData);
+      const user = await UserAccount.update(id, updateData);
 
       res.json({
         message: 'User account updated successfully',

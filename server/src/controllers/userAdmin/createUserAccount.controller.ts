@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { hashPassword } from '../../utils/password';
 import { AppError } from '../../middleware/errorHandler';
 import { UserStatus } from '@prisma/client';
@@ -15,7 +15,7 @@ export class CreateUserAccountController {
       const { email, password, userProfileId, name, ...profileData } = req.body;
 
       // Check if user already exists
-      const existingUser = await UserAccountEntity.findByEmail(email);
+      const existingUser = await UserAccount.findByEmail(email);
       if (existingUser) {
         throw new AppError('Email already registered', 409);
       }
@@ -24,7 +24,7 @@ export class CreateUserAccountController {
       const hashedPassword = await hashPassword(password);
 
       // Create user account with all profile fields
-      const user = await UserAccountEntity.create({
+      const user = await UserAccount.create({
         email,
         password: hashedPassword,
         name,

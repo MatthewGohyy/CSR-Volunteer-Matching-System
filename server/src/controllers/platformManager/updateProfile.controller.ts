@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 
 /**
  * Update Platform Manager Profile Controller
@@ -19,7 +19,7 @@ export class UpdateProfileController {
       if (department) updateData.department = department;
       if (phone) updateData.phoneNumber = phone;
 
-      const updated = await UserAccountEntity.updatePlatformManagerProfile(userId, updateData);
+      const updated = await UserAccount.updatePlatformManagerProfile(userId, updateData);
 
       res.json({
         message: 'Profile updated successfully',

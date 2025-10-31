@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -15,14 +15,14 @@ export class UpdateUserProfileController {
       const { id } = req.params;
       const profileData = req.body;
 
-      const user = await UserAccountEntity.findById(id);
+      const user = await UserAccount.findById(id);
 
       if (!user) {
         throw new AppError('User not found', 404);
       }
 
       // Update user account with profile data
-      const updatedUser = await UserAccountEntity.update(id, profileData);
+      const updatedUser = await UserAccount.update(id, profileData);
 
       res.json({
         message: 'Profile updated successfully',

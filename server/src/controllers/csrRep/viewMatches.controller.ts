@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { MatchEntity } from '../../entities/Match.entity';
+import { Match } from '../../entities/Match.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -12,7 +12,7 @@ export class ViewMatchesController {
     try {
       const userId = req.user!.userId;
 
-      const matches = await MatchEntity.findByCSRRep(userId, 1, 100);
+      const matches = await Match.findByCSRRep(userId, 1, 100);
 
       // Calculate statistics
       const total = matches.length;

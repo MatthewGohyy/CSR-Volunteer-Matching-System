@@ -2,12 +2,12 @@ import { RequestCategory as PrismaRequestCategory } from '@prisma/client';
 import { prisma } from '../config/database';
 
 /**
- * Request Category Entity Class
+ * Request Category Class
  * 
  * Represents a request category for requests with business logic and CRUD methods.
  * Follows the BCE framework - Entity handles all database operations.
  */
-export class RequestCategoryEntity implements PrismaRequestCategory {
+export class RequestCategory implements PrismaRequestCategory {
   id: string;
   name: string;
   description: string | null;
@@ -58,7 +58,7 @@ export class RequestCategoryEntity implements PrismaRequestCategory {
     const categories = await prisma.requestCategory.findMany({
       orderBy: { name: 'asc' },
     });
-    return categories.map(c => new RequestCategoryEntity(c));
+    return categories.map(c => new RequestCategory(c));
   }
 
   /**
@@ -69,7 +69,7 @@ export class RequestCategoryEntity implements PrismaRequestCategory {
       where: { isActive: true },
       orderBy: { name: 'asc' },
     });
-    return categories.map(c => new RequestCategoryEntity(c));
+    return categories.map(c => new RequestCategory(c));
   }
 
   /**
@@ -79,7 +79,7 @@ export class RequestCategoryEntity implements PrismaRequestCategory {
     const category = await prisma.requestCategory.findUnique({
       where: { id },
     });
-    return category ? new RequestCategoryEntity(category) : null;
+    return category ? new RequestCategory(category) : null;
   }
 
   /**
@@ -97,7 +97,7 @@ export class RequestCategoryEntity implements PrismaRequestCategory {
         isActive: data.isActive ?? true,
       },
     });
-    return new RequestCategoryEntity(category);
+    return new RequestCategory(category);
   }
 
   /**
@@ -113,7 +113,7 @@ export class RequestCategoryEntity implements PrismaRequestCategory {
       where: { id },
       data,
     });
-    return new RequestCategoryEntity(category);
+    return new RequestCategory(category);
   }
 
   /**
@@ -137,7 +137,7 @@ export class RequestCategoryEntity implements PrismaRequestCategory {
       },
       orderBy: { name: 'asc' },
     });
-    return categories.map(c => new RequestCategoryEntity(c));
+    return categories.map(c => new RequestCategory(c));
   }
 
   /**

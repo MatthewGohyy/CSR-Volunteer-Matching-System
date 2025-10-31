@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { RequestCategoryEntity } from '../../entities/RequestCategory.entity';
+import { RequestCategory } from '../../entities/RequestCategory.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -15,14 +15,14 @@ export class UpdateCategoryController {
 
       // Check if category exists
 
-      const existingCategory = await RequestCategoryEntity.findById(id);
+      const existingCategory = await RequestCategory.findById(id);
 
       if (!existingCategory) {
         throw new AppError('Category not found', 404);
       }
 
       if (name && name !== existingCategory.name) {
-        const allCategories = await RequestCategoryEntity.findAll();
+        const allCategories = await RequestCategory.findAll();
         const duplicate = allCategories.find(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== id);
 
         if (duplicate) {
@@ -36,7 +36,7 @@ export class UpdateCategoryController {
       if (iconUrl !== undefined) updateData.iconUrl = iconUrl;
       if (isActive !== undefined) updateData.isActive = isActive;
 
-      const category = await RequestCategoryEntity.update(id, updateData);
+      const category = await RequestCategory.update(id, updateData);
 
       res.json({
         message: 'Request category updated successfully',

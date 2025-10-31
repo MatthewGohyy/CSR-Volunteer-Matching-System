@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { RequestCategoryEntity } from '../../entities/RequestCategory.entity';
+import { RequestCategory } from '../../entities/RequestCategory.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -13,14 +13,14 @@ export class CreateCategoryController {
       const { name, description, iconUrl } = req.body;
 
       // Check if category with same name already exists
-      const allCategories = await RequestCategoryEntity.findAll();
+      const allCategories = await RequestCategory.findAll();
       const existingCategory = allCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
 
       if (existingCategory) {
         throw new AppError('Category with this name already exists', 409);
       }
 
-      const category = await RequestCategoryEntity.create({
+      const category = await RequestCategory.create({
         name,
         description,
         iconUrl,

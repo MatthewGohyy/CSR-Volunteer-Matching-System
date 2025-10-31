@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ShortlistEntity } from '../../entities/Shortlist.entity';
+import { Shortlist } from '../../entities/Shortlist.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -12,7 +12,7 @@ export class SearchShortlistController {
       const userId = (req as any).user!.userId;
       const { query } = req.query;
 
-      const shortlists = await ShortlistEntity.findByCSRRep(userId, 1, 100);
+      const shortlists = await Shortlist.findByCSRRep(userId, 1, 100);
 
       res.json({ shortlists, total: shortlists.length });
     } catch (error) {

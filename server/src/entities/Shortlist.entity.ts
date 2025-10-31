@@ -2,12 +2,12 @@ import { Shortlist as PrismaShortlist } from '@prisma/client';
 import { prisma } from '../config/database';
 
 /**
- * Shortlist Entity Class
+ * Shortlist Class
  * 
  * Represents a CSR Rep's shortlisted request with business logic and CRUD methods.
  * Follows the BCE framework - Entity handles all database operations.
  */
-export class ShortlistEntity implements PrismaShortlist {
+export class Shortlist implements PrismaShortlist {
   id: string;
   csrRepId: string;
   requestId: string;
@@ -51,7 +51,7 @@ export class ShortlistEntity implements PrismaShortlist {
         csrRep: true,
       },
     });
-    return shortlist ? new ShortlistEntity(shortlist) : null;
+    return shortlist ? new Shortlist(shortlist) : null;
   }
 
   /**
@@ -101,7 +101,7 @@ export class ShortlistEntity implements PrismaShortlist {
       },
       orderBy: { createdAt: 'desc' },
     });
-    return shortlists.map(s => new ShortlistEntity(s));
+    return shortlists.map(s => new Shortlist(s));
   }
 
   /**
@@ -118,7 +118,7 @@ export class ShortlistEntity implements PrismaShortlist {
         csrRep: true,
       },
     });
-    return new ShortlistEntity(shortlist);
+    return new Shortlist(shortlist);
   }
 
   /**

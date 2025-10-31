@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { hashPassword, comparePassword } from '../../utils/password';
 import { AppError } from '../../middleware/errorHandler';
 
@@ -13,7 +13,7 @@ export class UpdatePasswordController {
       const userId = (req as any).user.userId;
       const { currentPassword, newPassword } = req.body;
 
-      const user = await UserAccountEntity.findById(userId);
+      const user = await UserAccount.findById(userId);
       if (!user) {
         throw new AppError('User not found', 404);
       }
@@ -25,7 +25,7 @@ export class UpdatePasswordController {
 
       const hashedPassword = await hashPassword(newPassword);
 
-      await UserAccountEntity.update(userId, { password: hashedPassword });
+      await UserAccount.update(userId, { password: hashedPassword });
 
       res.json({ message: 'Password updated successfully' });
     } catch (error) {

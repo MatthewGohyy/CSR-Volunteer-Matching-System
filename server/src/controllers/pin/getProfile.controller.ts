@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -12,7 +12,7 @@ export class GetProfileController {
     try {
       const userId = req.user!.userId;
 
-      const user = await UserAccountEntity.findByUserIdWithProfileName(userId, 'Person in Need');
+      const user = await UserAccount.findByUserIdWithProfileName(userId, 'Person in Need');
       if (!user) {
         throw new AppError('PIN profile not found', 404);
       }

@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { RequestEntity } from '../../entities/Request.entity';
+import { Request as ExpressRequest, Response, NextFunction } from 'express';
+import { Request } from '../../entities/Request.entity';
 import { RequestStatus } from '@prisma/client';
 
 /**
@@ -7,7 +7,7 @@ import { RequestStatus } from '@prisma/client';
  * Story #27: As a CSR Rep, I want to view requests
  */
 export class ViewRequestsController {
-  static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { status, categoryId, urgency } = req.query;
 
@@ -22,7 +22,7 @@ export class ViewRequestsController {
         searchParams.categoryId = categoryId;
       }
 
-      const requests = await RequestEntity.searchWithFilters(searchParams, 1, 100);
+      const requests = await Request.searchWithFilters(searchParams, 1, 100);
       const total = requests.length;
 
       res.json({ requests, total });

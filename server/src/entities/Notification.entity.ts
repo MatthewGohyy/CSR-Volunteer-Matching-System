@@ -2,12 +2,12 @@ import { Notification as PrismaNotification, NotificationType } from '@prisma/cl
 import { prisma } from '../config/database';
 
 /**
- * Notification Entity Class
+ * Notification Class
  * 
  * Represents a user notification with business logic and CRUD methods.
  * Follows the BCE framework - Entity handles all database operations.
  */
-export class NotificationEntity implements PrismaNotification {
+export class Notification implements PrismaNotification {
   id: string;
   userId: string;
   type: NotificationType;
@@ -75,7 +75,7 @@ export class NotificationEntity implements PrismaNotification {
     const notification = await prisma.notification.findUnique({
       where: { id },
     });
-    return notification ? new NotificationEntity(notification) : null;
+    return notification ? new Notification(notification) : null;
   }
 
   /**
@@ -89,7 +89,7 @@ export class NotificationEntity implements PrismaNotification {
       take: limit,
       orderBy: { createdAt: 'desc' },
     });
-    return notifications.map(n => new NotificationEntity(n));
+    return notifications.map(n => new Notification(n));
   }
 
   /**
@@ -100,7 +100,7 @@ export class NotificationEntity implements PrismaNotification {
       where: { userId, isRead: false },
       orderBy: { createdAt: 'desc' },
     });
-    return notifications.map(n => new NotificationEntity(n));
+    return notifications.map(n => new Notification(n));
   }
 
   /**
@@ -117,7 +117,7 @@ export class NotificationEntity implements PrismaNotification {
         isRead: false,
       },
     });
-    return new NotificationEntity(notification);
+    return new Notification(notification);
   }
 
   /**
@@ -128,7 +128,7 @@ export class NotificationEntity implements PrismaNotification {
       where: { id },
       data: { isRead: true },
     });
-    return new NotificationEntity(notification);
+    return new Notification(notification);
   }
 
   /**

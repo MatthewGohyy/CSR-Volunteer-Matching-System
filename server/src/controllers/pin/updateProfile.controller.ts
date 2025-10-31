@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -21,7 +21,7 @@ export class UpdateProfileController {
       if (accessibilityNeeds !== undefined) updateData.accessibilityNeeds = accessibilityNeeds;
       if (profilePhoto) updateData.profilePhoto = profilePhoto;
 
-      const updated = await UserAccountEntity.updatePINProfile(userId, updateData);
+      const updated = await UserAccount.updatePINProfile(userId, updateData);
 
       res.json({
         message: 'Profile updated successfully',

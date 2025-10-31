@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ShortlistEntity } from '../../entities/Shortlist.entity';
+import { Shortlist } from '../../entities/Shortlist.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -11,7 +11,7 @@ export class ViewShortlistController {
     try {
       const userId = (req as any).user!.userId;
 
-      const shortlists = await ShortlistEntity.findByCSRRep(userId, 1, 100);
+      const shortlists = await Shortlist.findByCSRRep(userId, 1, 100);
       const total = shortlists.length;
 
       // Format the response - ensure request data is properly structured

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserProfileEntity } from '../../entities/UserProfile.entity';
+import { UserProfile } from '../../entities/UserProfile.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -14,13 +14,13 @@ export class CreateUserProfileController {
       const { name, description, isActive, permissions } = req.body;
 
       // Check if profile with this name already exists
-      const existingProfile = await UserProfileEntity.findByName(name);
+      const existingProfile = await UserProfile.findByName(name);
       if (existingProfile) {
         throw new AppError('Profile with this name already exists', 409);
       }
 
       // Create new profile
-      const profile = await UserProfileEntity.create({
+      const profile = await UserProfile.create({
         name,
         description,
         isActive: isActive !== undefined ? isActive : true,

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserProfileEntity } from '../../entities/UserProfile.entity';
+import { UserProfile } from '../../entities/UserProfile.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -15,7 +15,7 @@ export class ViewUserProfilesController {
       const { id } = req.params;
 
       if (id) {
-        const profile = await UserProfileEntity.findById(id);
+        const profile = await UserProfile.findById(id);
         if (!profile) {
           throw new AppError('Profile not found', 404);
         }
@@ -25,7 +25,7 @@ export class ViewUserProfilesController {
       }
 
       // Get all role profile definitions
-      const profiles = await UserProfileEntity.findAll();
+      const profiles = await UserProfile.findAll();
 
       res.json({ profiles });
     } catch (error) {

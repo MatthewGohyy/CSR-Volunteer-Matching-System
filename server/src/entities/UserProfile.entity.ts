@@ -2,14 +2,14 @@ import { UserProfile as PrismaUserProfile } from '@prisma/client';
 import { prisma } from '../config/database';
 
 /**
- * UserProfile Entity Class
+ * UserProfile Class
  * 
  * Represents a user profile in the system.
  * Profiles are dynamically created - name serves as the unique identifier.
  * 
  * Follows the BCE framework - Entity handles all database operations.
  */
-export class UserProfileEntity implements PrismaUserProfile {
+export class UserProfile implements PrismaUserProfile {
   id: string;
   name: string;
   description: string | null;
@@ -48,7 +48,7 @@ export class UserProfileEntity implements PrismaUserProfile {
         name: 'asc',
       },
     });
-    return profiles.map(profile => new UserProfileEntity(profile));
+    return profiles.map(profile => new UserProfile(profile));
   }
 
   /**
@@ -58,7 +58,7 @@ export class UserProfileEntity implements PrismaUserProfile {
     const profile = await prisma.userProfile.findUnique({
       where: { id },
     });
-    return profile ? new UserProfileEntity(profile) : null;
+    return profile ? new UserProfile(profile) : null;
   }
 
   /**
@@ -68,7 +68,7 @@ export class UserProfileEntity implements PrismaUserProfile {
     const profile = await prisma.userProfile.findUnique({
       where: { name },
     });
-    return profile ? new UserProfileEntity(profile) : null;
+    return profile ? new UserProfile(profile) : null;
   }
 
   /**
@@ -81,7 +81,7 @@ export class UserProfileEntity implements PrismaUserProfile {
         name: 'asc',
       },
     });
-    return profiles.map(profile => new UserProfileEntity(profile));
+    return profiles.map(profile => new UserProfile(profile));
   }
 
   /**
@@ -99,7 +99,7 @@ export class UserProfileEntity implements PrismaUserProfile {
         isActive: data.isActive ?? true,
       },
     });
-    return new UserProfileEntity(profile);
+    return new UserProfile(profile);
   }
 
   /**
@@ -115,7 +115,7 @@ export class UserProfileEntity implements PrismaUserProfile {
       where: { id },
       data,
     });
-    return new UserProfileEntity(profile);
+    return new UserProfile(profile);
   }
 
   /**

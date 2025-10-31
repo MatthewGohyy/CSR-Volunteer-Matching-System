@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { NotificationEntity } from '../../entities/Notification.entity';
+import { Notification } from '../../entities/Notification.entity';
 import { AuthRequest } from '../../middleware/auth';
 
 /**
@@ -11,7 +11,7 @@ export class GetNotificationsController {
     try {
       const userId = req.user!.userId;
 
-      const notifications = await NotificationEntity.findByUserId(userId, 1, 50);
+      const notifications = await Notification.findByUserId(userId, 1, 50);
 
       res.json({ notifications });
     } catch (error) {

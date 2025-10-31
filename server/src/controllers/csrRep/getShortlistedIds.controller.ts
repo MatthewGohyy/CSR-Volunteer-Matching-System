@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ShortlistEntity } from '../../entities/Shortlist.entity';
+import { Shortlist } from '../../entities/Shortlist.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -11,7 +11,7 @@ export class GetShortlistedIdsController {
     try {
       const userId = (req as any).user!.userId;
       
-      const shortlistedIds = await ShortlistEntity.getShortlistedRequestIds(userId);
+      const shortlistedIds = await Shortlist.getShortlistedRequestIds(userId);
 
       res.json({ shortlistedIds });
     } catch (error) {

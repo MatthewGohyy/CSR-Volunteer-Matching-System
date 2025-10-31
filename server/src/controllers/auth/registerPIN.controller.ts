@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
-import { UserProfileEntity } from '../../entities/UserProfile.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
+import { UserProfile } from '../../entities/UserProfile.entity';
 import { hashPassword } from '../../utils/password';
 import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
@@ -17,7 +17,7 @@ export class RegisterPINController {
       const { email, password, name, age, location, phoneNumber, accessibilityNeeds } = req.body;
 
       // Check if user already exists via Entity
-      const existingUser = await UserAccountEntity.findByEmail(email);
+      const existingUser = await UserAccount.findByEmail(email);
       if (existingUser) {
         throw new AppError('Email already registered', 409);
       }
@@ -26,14 +26,14 @@ export class RegisterPINController {
       const hashedPassword = await hashPassword(password);
 
       // Get PIN profile via entity
-      const pinProfile = await UserProfileEntity.findByName('Person in Need');
+      const pinProfile = await UserProfile.findByName('Person in Need');
 
       if (!pinProfile) {
         throw new AppError('PIN profile not found', 404);
       }
 
       // Create user account with PIN fields
-      const user = await UserAccountEntity.create({
+      const user = await UserAccount.create({
         email,
         password: hashedPassword,
         name,

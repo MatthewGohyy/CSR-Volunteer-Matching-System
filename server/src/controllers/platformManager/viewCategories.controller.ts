@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { RequestCategoryEntity } from '../../entities/RequestCategory.entity';
+import { RequestCategory } from '../../entities/RequestCategory.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -17,12 +17,12 @@ export class ViewCategoriesController {
       let categories;
       if (search && typeof search === 'string' && search.trim()) {
         // Search categories
-        categories = await RequestCategoryEntity.search(search.trim());
+        categories = await RequestCategory.search(search.trim());
       } else {
         // Get all or active categories
         categories = includeInactive === 'true' 
-          ? await RequestCategoryEntity.findAll()
-          : await RequestCategoryEntity.findActive();
+          ? await RequestCategory.findAll()
+          : await RequestCategory.findActive();
       }
 
       // Filter by active status if needed

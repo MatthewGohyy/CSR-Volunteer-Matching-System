@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
-import { UserProfileEntity } from '../../entities/UserProfile.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
+import { UserProfile } from '../../entities/UserProfile.entity';
 import { hashPassword } from '../../utils/password';
 import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
@@ -24,7 +24,7 @@ export class RegisterCSRRepController {
         companyAddress,
       } = req.body;
 
-      const existingUser = await UserAccountEntity.findByEmail(email);
+      const existingUser = await UserAccount.findByEmail(email);
       if (existingUser) {
         throw new AppError('Email already registered', 409);
       }
@@ -33,14 +33,14 @@ export class RegisterCSRRepController {
       const hashedPassword = await hashPassword(password);
 
       // Get CSR Rep profile via entity
-      const csrRepProfile = await UserProfileEntity.findByName('CSR Representative');
+      const csrRepProfile = await UserProfile.findByName('CSR Representative');
 
       if (!csrRepProfile) {
         throw new AppError('CSR Rep profile not found', 404);
       }
 
       // Create user account with CSR Rep fields
-      const user = await UserAccountEntity.create({
+      const user = await UserAccount.create({
         email,
         password: hashedPassword,
         name: contactPerson,

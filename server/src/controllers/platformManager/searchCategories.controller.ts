@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { RequestCategoryEntity } from '../../entities/RequestCategory.entity';
+import { RequestCategory } from '../../entities/RequestCategory.entity';
 import { AuthRequest } from '../../middleware/auth';
 
 /**
@@ -14,9 +14,9 @@ export class SearchCategoriesController {
       // Simplified - get all categories, filter on frontend
       let allCategories;
       if (q && typeof q === 'string' && q.trim()) {
-        allCategories = await RequestCategoryEntity.search(q.trim());
+        allCategories = await RequestCategory.search(q.trim());
       } else {
-        allCategories = await RequestCategoryEntity.findAll();
+        allCategories = await RequestCategory.findAll();
       }
 
       if (includeInactive !== 'true') {

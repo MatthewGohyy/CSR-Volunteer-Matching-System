@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -18,13 +18,13 @@ export class SuspendUserProfileController {
       const { id } = req.params;
 
       // Find the user
-      const user = await UserAccountEntity.findById(id);
+      const user = await UserAccount.findById(id);
       if (!user) {
         throw new AppError('User not found', 404);
       }
 
       // Suspend profile using the new consolidated method
-      await UserAccountEntity.suspendProfile(id);
+      await UserAccount.suspendProfile(id);
 
       res.json({
         message: 'User profile suspended successfully. User can still login but cannot perform role-specific tasks.',

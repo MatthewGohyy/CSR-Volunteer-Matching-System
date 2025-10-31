@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 
 /**
  * Search User Profiles Controller
@@ -14,14 +14,14 @@ export class SearchUserProfilesController {
 
       let users;
       if (query && typeof query === 'string') {
-        users = await UserAccountEntity.search(query, 1, 1000);
+        users = await UserAccount.search(query, 1, 1000);
       } else if (userType) {
-        users = await UserAccountEntity.findByProfileRole(userType as string, 1, 1000);
+        users = await UserAccount.findByProfileRole(userType as string, 1, 1000);
       } else {
-        users = await UserAccountEntity.findAll(1, 1000);
+        users = await UserAccount.findAll(1, 1000);
       }
 
-      const profiles = users.map((user: UserAccountEntity) => ({
+      const profiles = users.map((user: UserAccount) => ({
         user: user.toJSON(),
         role: user.getRole(),
       }));

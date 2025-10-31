@@ -2,12 +2,12 @@ import { Request as PrismaRequest, RequestStatus, UrgencyLevel, RequestCategory 
 import { prisma } from '../config/database';
 
 /**
- * Request Entity Class
+ * Request Class
  * 
  * Represents a help request created by a PIN with business logic and CRUD methods.
  * Follows the BCE framework - Entity handles all database operations.
  */
-export class RequestEntity implements PrismaRequest {
+export class Request implements PrismaRequest {
   id: string;
   pinId: string;
   categoryId: string;
@@ -143,7 +143,7 @@ export class RequestEntity implements PrismaRequest {
         createdAt: 'desc',
       },
     });
-    return requests.map(request => new RequestEntity(request));
+    return requests.map(request => new Request(request));
   }
 
   /**
@@ -157,7 +157,7 @@ export class RequestEntity implements PrismaRequest {
         category: true,
       },
     });
-    return request ? new RequestEntity(request) : null;
+    return request ? new Request(request) : null;
   }
 
   /**
@@ -177,7 +177,7 @@ export class RequestEntity implements PrismaRequest {
         createdAt: 'desc',
       },
     });
-    return requests.map(request => new RequestEntity(request));
+    return requests.map(request => new Request(request));
   }
 
   /**
@@ -197,7 +197,7 @@ export class RequestEntity implements PrismaRequest {
         createdAt: 'desc',
       },
     });
-    return requests.map(request => new RequestEntity(request));
+    return requests.map(request => new Request(request));
   }
 
   /**
@@ -217,7 +217,7 @@ export class RequestEntity implements PrismaRequest {
         createdAt: 'desc',
       },
     });
-    return requests.map(request => new RequestEntity(request));
+    return requests.map(request => new Request(request));
   }
 
   /**
@@ -237,7 +237,7 @@ export class RequestEntity implements PrismaRequest {
         createdAt: 'desc',
       },
     });
-    return requests.map(request => new RequestEntity(request));
+    return requests.map(request => new Request(request));
   }
 
   /**
@@ -271,7 +271,7 @@ export class RequestEntity implements PrismaRequest {
         category: true,
       },
     });
-    return new RequestEntity(request);
+    return new Request(request);
   }
 
   /**
@@ -293,7 +293,7 @@ export class RequestEntity implements PrismaRequest {
         category: true,
       },
     });
-    return new RequestEntity(request);
+    return new Request(request);
   }
 
   /**
@@ -354,7 +354,7 @@ export class RequestEntity implements PrismaRequest {
         createdAt: 'desc',
       },
     });
-    return requests.map(request => new RequestEntity(request));
+    return requests.map(request => new Request(request));
   }
 
   /**
@@ -421,7 +421,7 @@ export class RequestEntity implements PrismaRequest {
         createdAt: 'desc',
       },
     });
-    return requests.map(request => new RequestEntity(request));
+    return requests.map(request => new Request(request));
   }
 
   /**
@@ -440,7 +440,7 @@ export class RequestEntity implements PrismaRequest {
         category: true,
       },
     });
-    return new RequestEntity(request);
+    return new Request(request);
   }
 
   /**
@@ -459,7 +459,7 @@ export class RequestEntity implements PrismaRequest {
         category: true,
       },
     });
-    return new RequestEntity(request);
+    return new Request(request);
   }
 
   /**

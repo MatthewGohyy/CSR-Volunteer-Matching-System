@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { RequestEntity } from '../../entities/Request.entity';
-import { ShortlistEntity } from '../../entities/Shortlist.entity';
+import { Request as ExpressRequest, Response, NextFunction } from 'express';
+import { Request } from '../../entities/Request.entity';
+import { Shortlist } from '../../entities/Shortlist.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -8,23 +8,23 @@ import { AppError } from '../../middleware/errorHandler';
  * Story #28: As a CSR Rep, I want to save requests (shortlist)
  */
 export class SaveRequestController {
-  static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user!.userId;
       const { requestId } = req.body;
 
-      const request = await RequestEntity.findById(requestId);
+      const request = await Request.findById(requestId);
       if (!request) throw new AppError('Request not found', 404);
 
-      const exists = await ShortlistEntity.exists(userId, requestId);
+      const exists = await Shortlist.exists(userId, requestId);
       if (exists) throw new AppError('Request already shortlisted', 409);
 
-      const shortlist = await ShortlistEntity.create({
+      const shortlist = await Shortlist.create({
         csrRepId: userId,
         requestId,
       });
 
-      await RequestEntity.incrementShortlistCountDB(requestId);
+      await Request.incrementShortlistCountDB(requestId);
 
       res.status(201).json({ message: 'Request shortlisted successfully', shortlist });
     } catch (error) {

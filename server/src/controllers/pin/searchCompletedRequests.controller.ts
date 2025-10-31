@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { RequestEntity } from '../../entities/Request.entity';
+import { Request as ExpressRequest, Response, NextFunction } from 'express';
+import { Request } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus } from '@prisma/client';
 
@@ -10,7 +10,7 @@ import { RequestStatus } from '@prisma/client';
  * so that I can review past help I've received.
  */
 export class SearchCompletedRequestsController {
-  static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user!.userId;
       const { q, page = '1', limit = '10' } = req.query;
@@ -23,7 +23,7 @@ export class SearchCompletedRequestsController {
       const limitNum = parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
 
-      let allRequests = await RequestEntity.findByPIN(userId, 1, 1000);
+      let allRequests = await Request.findByPIN(userId, 1, 1000);
       allRequests = allRequests.filter(r => 
         (r.status === RequestStatus.COMPLETED || r.status === RequestStatus.MATCHED) &&
         (r.title.toLowerCase().includes(q.toLowerCase()) || r.description.toLowerCase().includes(q.toLowerCase()))

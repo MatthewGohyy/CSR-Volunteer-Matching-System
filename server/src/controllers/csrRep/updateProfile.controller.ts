@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { UserAccountEntity } from '../../entities/UserAccount.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -20,7 +20,7 @@ export class UpdateProfileController {
       if (companyAddress) updateData.companyAddress = companyAddress;
       if (companyLogo) updateData.companyLogo = companyLogo;
 
-      const updated = await UserAccountEntity.updateCSRRepProfile(userId, updateData);
+      const updated = await UserAccount.updateCSRRepProfile(userId, updateData);
 
       res.json({
         message: 'Profile updated successfully',
