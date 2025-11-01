@@ -5,7 +5,11 @@ import { UserStatus } from '@prisma/client';
 /**
  * Search User Accounts Controller
  * 
+ * Story #4: As a User Admin, I want to view user accounts so that I can update the details.
  * Story #7: As a User Admin, I want to search user accounts so that I can find the correct user account.
+ * 
+ * Handles listing/searching/filtering user accounts with pagination.
+ * Returns all found instances matching the criteria.
  * 
  * Architecture: BCE framework - Uses UserEntity to access database instead of direct Prisma calls
  */
@@ -36,7 +40,7 @@ export class SearchUserAccountsController {
         users = await UserAccount.findByStatus(status as UserStatus, page, limit);
         total = await UserAccount.countByStatus(status as UserStatus);
       }
-      // Get all users
+      // Get all users (Story #4 - View user accounts list)
       else {
         users = await UserAccount.findAll(page, limit);
         total = await UserAccount.count();

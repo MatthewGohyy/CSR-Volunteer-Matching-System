@@ -133,4 +133,37 @@ export class UserProfile implements PrismaUserProfile {
       where: { isActive: true },
     });
   }
+
+  /**
+   * Search profiles by query string
+   * Supports searching by name and description
+   * Filters to active profiles only
+   * @param query - Search query string (optional)
+   */
+  static async search(query?: string | null) {
+    const where: any = {
+      isActive: true,
+    };
+
+    if (query && query.trim()) {
+      const searchOrCondition = [
+        { name: { contains: query.trim(), mode: 'insensitive' } },
+        { description: { contains: query.trim(), mode: 'insensitive' } },
+      ];
+
+      where.AND = [
+        { isActive: true },
+        { OR: searchOrCondition },
+      ];
+      delete where.isActive;
+    }
+
+    const profiles = await prisma.userProfile.findMany({
+      where,
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    return profiles.map(profile => new UserProfile(profile));
+  }
 }

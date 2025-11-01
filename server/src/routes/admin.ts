@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { CreateUserAccountController } from '../controllers/userAdmin/createUserAccount.controller';
-import { ViewUserAccountsController } from '../controllers/userAdmin/viewUserAccounts.controller';
+import { ViewUserAccountController } from '../controllers/userAdmin/viewUserAccount.controller';
 import { UpdateUserAccountController } from '../controllers/userAdmin/updateUserAccount.controller';
 import { SuspendUserAccountController } from '../controllers/userAdmin/suspendUserAccount.controller';
 import { ActivateUserAccountController } from '../controllers/userAdmin/activateUserAccount.controller';
 import { SearchUserAccountsController } from '../controllers/userAdmin/searchUserAccounts.controller';
 import { CreateUserProfileController } from '../controllers/userAdmin/createUserProfile.controller';
-import { ViewUserProfilesController } from '../controllers/userAdmin/viewUserProfiles.controller';
+import { ViewUserProfileController } from '../controllers/userAdmin/viewUserProfile.controller';
 import { UpdateUserProfileController } from '../controllers/userAdmin/updateUserProfile.controller';
 import { SuspendUserProfileController } from '../controllers/userAdmin/suspendUserProfile.controller';
 import { ActivateUserProfileController } from '../controllers/userAdmin/activateUserProfile.controller';
@@ -21,12 +21,12 @@ const router = Router();
 router.use(authenticate, authorize('User Administrator'));
 
 // User Account Management Routes (Stories #3-#7)
-// Story #7: Search user accounts (must be before :id route)
+// Story #4 & #7: View/Search user accounts (list all or filtered)
+router.get('/users', SearchUserAccountsController.handle);
 router.get('/users/search', SearchUserAccountsController.handle);
 
-// Story #4: View user accounts
-router.get('/users', ViewUserAccountsController.handle);
-router.get('/users/:id', ViewUserAccountsController.handle);
+// Story #4: View single user account by ID
+router.get('/users/:id', ViewUserAccountController.handle);
 
 // Story #3: Create user accounts
 router.post('/users', CreateUserAccountController.handle);
@@ -47,12 +47,12 @@ router.put('/users/:id/activate', ActivateUserAccountController.handle);
 router.delete('/users/:id', DeleteUserAccountController.handle);
 
 // Profile Management Routes (Stories #8-#12)
-// Story #12: Search user profiles (must be before :id route)
+// Story #9 & #12: View/Search user profiles (list all or filtered)
+router.get('/profiles', SearchUserProfilesController.handle);
 router.get('/profiles/search', SearchUserProfilesController.handle);
 
-// Story #9: View user profiles
-router.get('/profiles', ViewUserProfilesController.handle);
-router.get('/profiles/:id', ViewUserProfilesController.handle);
+// Story #9: View single user profile by ID
+router.get('/profiles/:id', ViewUserProfileController.handle);
 
 // Story #8: Create user profiles
 router.post('/profiles', CreateUserProfileController.handle);
