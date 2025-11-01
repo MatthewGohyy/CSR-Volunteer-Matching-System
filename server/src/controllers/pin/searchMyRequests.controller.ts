@@ -12,26 +12,18 @@ export class SearchMyRequestsController {
   static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user!.userId;
-      const { query, status, urgency } = req.query;
+      const { query, search, status, urgency } = req.query;
+      
+      // Support both 'query' and 'search' parameters (frontend uses 'search')
+      const searchQuery = query || search;
 
-      let requests;
-      if (status) {
-        requests = await Request.findByStatus(status as RequestStatus, 1, 100);
-        requests = requests.filter(r => r.pinId === userId);
-      } else if (urgency) {
-        requests = await Request.findByUrgency(urgency as UrgencyLevel, 1, 100);
-        requests = requests.filter(r => r.pinId === userId);
-      } else {
-        requests = await Request.findByPIN(userId, 1, 100);
-      }
-
-      if (query && typeof query === 'string') {
-        const lowerQuery = query.toLowerCase();
-        requests = requests.filter(r => 
-          r.title.toLowerCase().includes(lowerQuery) ||
-          r.description.toLowerCase().includes(lowerQuery)
-        );
-      }
+      const requests = await Request.searchByPIN(
+        userId,
+        typeof searchQuery === 'string' && searchQuery.trim() ? searchQuery : null,
+        typeof status === 'string' ? status as RequestStatus : undefined,
+        undefined, // categoryId not used in this controller
+        typeof urgency === 'string' ? urgency as UrgencyLevel : undefined
+      );
 
       res.json({ requests, total: requests.length });
     } catch (error) {

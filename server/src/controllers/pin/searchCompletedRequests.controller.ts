@@ -23,14 +23,22 @@ export class SearchCompletedRequestsController {
       const limitNum = parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
 
-      let allRequests = await Request.findByPIN(userId, 1, 1000);
-      allRequests = allRequests.filter(r => 
-        (r.status === RequestStatus.COMPLETED || r.status === RequestStatus.MATCHED) &&
-        (r.title.toLowerCase().includes(q.toLowerCase()) || r.description.toLowerCase().includes(q.toLowerCase()))
+      // Get all PIN's requests with search query
+      const allRequests = await Request.searchByPIN(
+        userId,
+        q,
+        undefined, // status - we'll filter for COMPLETED/MATCHED after
+        undefined, // categoryId
+        undefined  // urgency
       );
 
-      const total = allRequests.length;
-      const requests = allRequests.slice(skip, skip + limitNum);
+      // Filter by completed or matched status
+      const filteredRequests = allRequests.filter(r => 
+        r.status === RequestStatus.COMPLETED || r.status === RequestStatus.MATCHED
+      );
+
+      const total = filteredRequests.length;
+      const requests = filteredRequests.slice(skip, skip + limitNum);
 
       res.json({
         requests,

@@ -53,6 +53,7 @@ const CSRRepDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [urgencyFilter, setUrgencyFilter] = useState('');
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
 
   // Fetch user profile
   const { data: user, isLoading: userLoading } = useQuery({
@@ -92,11 +93,16 @@ const CSRRepDashboard: React.FC = () => {
   // Fetch completed requests history
   const { data: historyData } = useQuery({
     queryKey: ['csr-history', searchQuery],
-    queryFn: async (): Promise<RequestsResponse> => {
+    queryFn: async (): Promise<{ matches: any[]; total: number }> => {
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
-      const response = await api.get<RequestsResponse>(`/csr/requests/history?${params.toString()}`);
-      return response.data;
+      const response = await api.get(`/organizations/requests/history?${params.toString()}`);
+      // Transform matches to requests for display
+      const matches = response.data.matches || [];
+      return {
+        matches,
+        total: matches.length,
+      };
     },
     enabled: activeTab === 'history',
   });
@@ -202,11 +208,15 @@ const CSRRepDashboard: React.FC = () => {
   if (activeTab === 'browse') {
     displayRequests = requestsData?.requests || [];
   } else if (activeTab === 'shortlist') {
+    // Keep shortlist items with their IDs for modal access
     displayRequests = shortlistData?.shortlist
       ?.filter(s => s.request) // Filter out any null/undefined requests
-      .map(s => s.request) || [];
+      .map(s => ({ ...s.request, shortlistId: s.id })) || [];
   } else if (activeTab === 'history') {
-    displayRequests = historyData?.requests || [];
+    // Transform matches to requests for display, keeping matchId for modal
+    displayRequests = historyData?.matches
+      ?.filter((m: any) => m.request)
+      .map((m: any) => ({ ...m.request, matchId: m.id })) || [];
   }
 
   return (
@@ -400,7 +410,20 @@ const CSRRepDashboard: React.FC = () => {
         ) : displayRequests.length > 0 ? (
           <div className="grid gap-4">
             {displayRequests.map((request) => (
-              <div key={request.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div 
+                key={request.id} 
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={(e) => {
+                  // Prevent clicking on star button from opening modal
+                  if ((e.target as HTMLElement).closest('button')) {
+                    return;
+                  }
+                  
+                  // For shortlist, use shortlistId; for history, use matchId; for browse, use request.id
+                  const idToUse = (request as any).shortlistId || (request as any).matchId || request.id;
+                  setSelectedRequestId(idToUse);
+                }}
+              >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{request.title}</h3>

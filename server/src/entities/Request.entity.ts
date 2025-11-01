@@ -84,20 +84,6 @@ export class Request implements PrismaRequest {
   }
 
   /**
-   * Increment view count
-   */
-  incrementViewCount(): number {
-    return this.viewCount + 1;
-  }
-
-  /**
-   * Increment shortlist count
-   */
-  incrementShortlistCount(): number {
-    return this.shortlistCount + 1;
-  }
-
-  /**
    * Serialize request for JSON response (ensures dates are formatted correctly)
    */
   toJSON() {
@@ -128,25 +114,6 @@ export class Request implements PrismaRequest {
   // ============================================
 
   /**
-   * Find all requests with pagination
-   */
-  static async findAll(page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
-    const requests = await prisma.request.findMany({
-      skip,
-      take: limit,
-      include: {
-        pin: true,
-        category: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-    return requests.map(request => new Request(request));
-  }
-
-  /**
    * Find request by ID
    */
   static async findById(id: string) {
@@ -161,14 +128,68 @@ export class Request implements PrismaRequest {
   }
 
   /**
-   * Find requests by PIN
+   * Search requests by PIN with optional filters
+   * @param pinId - PIN ID
+   * @param query - Search query (null/undefined = return all)
+   * @param status - Request status filter (optional)
+   * @param categoryId - Category filter (optional)
+   * @param urgency - Urgency filter (optional)
    */
-  static async findByPIN(pinId: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
+  static async searchByPIN(
+    pinId: string,
+    query: string | null = null,
+    status?: RequestStatus,
+    categoryId?: string,
+    urgency?: UrgencyLevel
+  ) {
+    const where: any = { pinId };
+
+    // Add status filter if provided
+    if (status) {
+      where.status = status;
+    }
+
+    // Add urgency filter
+    if (urgency) {
+      where.urgency = urgency;
+    }
+
+    // Add category filter
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+
+    // Add search query filter if provided
+    if (query && query.trim()) {
+      const searchOrCondition = [
+        { title: { contains: query.trim(), mode: 'insensitive' } },
+        { description: { contains: query.trim(), mode: 'insensitive' } },
+        { location: { contains: query.trim(), mode: 'insensitive' } },
+      ];
+
+      // Build AND conditions array if we have status/urgency/category
+      if (status || urgency || categoryId) {
+        const andConditions: any[] = [
+          { pinId },
+          { OR: searchOrCondition },
+        ];
+
+        if (status) andConditions.push({ status });
+        if (urgency) andConditions.push({ urgency });
+        if (categoryId) andConditions.push({ categoryId });
+
+        where.AND = andConditions;
+        delete where.pinId;
+        delete where.status;
+        delete where.urgency;
+        delete where.categoryId;
+      } else {
+        where.OR = searchOrCondition;
+      }
+    }
+
     const requests = await prisma.request.findMany({
-      where: { pinId },
-      skip,
-      take: limit,
+      where,
       include: {
         pin: true,
         category: true,
@@ -201,26 +222,6 @@ export class Request implements PrismaRequest {
   }
 
   /**
-   * Find requests by category
-   */
-  static async findByCategory(categoryId: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
-    const requests = await prisma.request.findMany({
-      where: { categoryId },
-      skip,
-      take: limit,
-      include: {
-        pin: true,
-        category: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-    return requests.map(request => new Request(request));
-  }
-
-  /**
    * Find requests by urgency
    */
   static async findByUrgency(urgency: UrgencyLevel, page: number = 1, limit: number = 10) {
@@ -238,13 +239,6 @@ export class Request implements PrismaRequest {
       },
     });
     return requests.map(request => new Request(request));
-  }
-
-  /**
-   * Find active requests
-   */
-  static async findActive(page: number = 1, limit: number = 10) {
-    return this.findByStatus(RequestStatus.ACTIVE, page, limit);
   }
 
   /**
@@ -323,83 +317,51 @@ export class Request implements PrismaRequest {
   }
 
   /**
-   * Count requests by PIN
+   * Search requests with optional filters
+   * @param query - Search query (null/undefined = return all matching status)
+   * @param status - Request status filter (default: ACTIVE)
+   * @param categoryId - Category filter (optional)
+   * @param urgency - Urgency filter (optional)
    */
-  static async countByPIN(pinId: string): Promise<number> {
-    return prisma.request.count({
-      where: { pinId },
-    });
-  }
-
-  /**
-   * Search requests
-   */
-  static async search(query: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
-    const requests = await prisma.request.findMany({
-      where: {
-        OR: [
-          { title: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
-          { location: { contains: query, mode: 'insensitive' } },
-        ],
-      },
-      skip,
-      take: limit,
-      include: {
-        pin: true,
-        category: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-    return requests.map(request => new Request(request));
-  }
-
-  /**
-   * Search and filter requests (for CSR Rep)
-   */
-  static async searchWithFilters(params: {
-    query?: string;
-    status?: RequestStatus;
-    urgency?: UrgencyLevel;
-    categoryId?: string;
-  }, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
+  static async search(
+    query: string | null = null,
+    status: RequestStatus = RequestStatus.ACTIVE,
+    categoryId?: string,
+    urgency?: UrgencyLevel
+  ) {
     const where: any = {
-      status: RequestStatus.ACTIVE, // Only return active requests for CSR Reps
+      status, // Default to ACTIVE, but can be overridden
     };
 
     // Add urgency filter
-    if (params.urgency) {
-      where.urgency = params.urgency;
+    if (urgency) {
+      where.urgency = urgency;
     }
 
     // Add category filter
-    if (params.categoryId) {
-      where.categoryId = params.categoryId;
+    if (categoryId) {
+      where.categoryId = categoryId;
     }
 
-    // Add search query filter using OR (but combine with other filters using AND)
-    if (params.query) {
+    // Add search query filter if provided
+    if (query && query.trim()) {
       const searchOrCondition = [
-        { title: { contains: params.query, mode: 'insensitive' } },
-        { description: { contains: params.query, mode: 'insensitive' } },
-        { location: { contains: params.query, mode: 'insensitive' } },
+        { title: { contains: query.trim(), mode: 'insensitive' } },
+        { description: { contains: query.trim(), mode: 'insensitive' } },
+        { location: { contains: query.trim(), mode: 'insensitive' } },
       ];
 
       // Build AND conditions array to combine status + search + other filters
       const andConditions: any[] = [
-        { status: RequestStatus.ACTIVE },
+        { status },
         { OR: searchOrCondition },
       ];
 
-      if (params.urgency) {
-        andConditions.push({ urgency: params.urgency });
+      if (urgency) {
+        andConditions.push({ urgency });
       }
-      if (params.categoryId) {
-        andConditions.push({ categoryId: params.categoryId });
+      if (categoryId) {
+        andConditions.push({ categoryId });
       }
 
       where.AND = andConditions;
@@ -411,8 +373,6 @@ export class Request implements PrismaRequest {
 
     const requests = await prisma.request.findMany({
       where,
-      skip,
-      take: limit,
       include: {
         pin: true,
         category: true,
@@ -462,10 +422,4 @@ export class Request implements PrismaRequest {
     return new Request(request);
   }
 
-  /**
-   * Change request status
-   */
-  static async changeStatus(id: string, status: RequestStatus) {
-    return this.update(id, { status });
-  }
 }

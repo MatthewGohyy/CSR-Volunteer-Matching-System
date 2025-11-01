@@ -3,19 +3,16 @@ import { Request } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
- * View Request Views Controller
+ * View My Request Controller (Singular)
  * 
- * Story #20: As a PIN, I want to view the number of views of my requests 
- * so that I can track engagement and progress.
+ * Story #16: As a PIN, I want to view my request so that I can monitor its status and progress.
  */
-export class ViewRequestViewsController {
+export class ViewMyRequestController {
   static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = (req as any).user!.userId;
-
-      const requests = await Request.findByPIN(userId, 1, 1000);
-
-      res.json({ requests });
+      const { id } = req.params;
+      const request = await Request.findById(id);
+      res.json({ request });
     } catch (error) {
       next(error);
     }

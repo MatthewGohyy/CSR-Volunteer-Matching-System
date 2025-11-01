@@ -3,19 +3,17 @@ import { Request } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
- * View Request Shortlists Controller
+ * View Request Shortlist Controller (Singular)
  * 
- * Story #21: As a PIN, I want to view the number of shortlists of my requests 
+ * Story #21: As a PIN, I want to view the number of shortlists of my request 
  * so that I can track interest from CSR Reps.
  */
-export class ViewRequestShortlistsController {
+export class ViewRequestShortlistController {
   static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = (req as any).user!.userId;
-
-      const requests = await Request.findByPIN(userId, 1, 1000);
-
-      res.json({ requests });
+      const { id } = req.params;
+      const request = await Request.findById(id);
+      res.json({ request });
     } catch (error) {
       next(error);
     }

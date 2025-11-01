@@ -38,9 +38,8 @@ export class SubmitOfferController {
         throw new AppError('PIN not found', 404);
       }
 
-      const offers = await VolunteerOffer.findByCSRRep(userId, 1, 1000);
-      const existingOffer = offers.find(o => o.requestId === requestId);
-      if (existingOffer) {
+      const exists = await VolunteerOffer.exists(userId, requestId);
+      if (exists) {
         throw new AppError('Offer already submitted', 409);
       }
 

@@ -91,29 +91,29 @@ export class Match implements PrismaMatch {
   }
 
   /**
-   * Find match by request ID
+   * Search matches by PIN with optional query filter
+   * Filters by request title and description
+   * @param pinId - PIN ID
+   * @param query - Search query (null/undefined = return all)
    */
-  static async findByRequestId(requestId: string) {
-    const match = await prisma.match.findUnique({
-      where: { requestId },
-      include: {
-        request: { include: { pin: true, category: true } },
-        csrRep: true,
-        pin: true,
-      },
-    });
-    return match ? new Match(match) : null;
-  }
+  static async searchByPIN(
+    pinId: string,
+    query: string | null = null
+  ) {
+    const where: any = { pinId };
 
-  /**
-   * Find matches by PIN
-   */
-  static async findByPIN(pinId: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
+    // Add search query filter if provided
+    if (query && query.trim()) {
+      where.request = {
+        OR: [
+          { title: { contains: query.trim(), mode: 'insensitive' } },
+          { description: { contains: query.trim(), mode: 'insensitive' } },
+        ],
+      };
+    }
+
     const matches = await prisma.match.findMany({
-      where: { pinId },
-      skip,
-      take: limit,
+      where,
       include: {
         request: { include: { pin: true, category: true } },
         csrRep: true,
@@ -124,14 +124,36 @@ export class Match implements PrismaMatch {
   }
 
   /**
-   * Find matches by CSR Rep
+   * Search matches by CSR Rep with optional query and status filter
+   * Filters by request title and description
+   * @param csrRepId - CSR Rep ID
+   * @param query - Search query (null/undefined = return all matching status)
+   * @param status - Match status filter (default: COMPLETED for history)
    */
-  static async findByCSRRep(csrRepId: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
+  static async search(
+    csrRepId: string,
+    query: string | null = null,
+    status: MatchStatus | null = null
+  ) {
+    const where: any = { csrRepId };
+
+    // Add status filter if provided
+    if (status) {
+      where.status = status;
+    }
+
+    // Add search query filter if provided
+    if (query && query.trim()) {
+      where.request = {
+        OR: [
+          { title: { contains: query.trim(), mode: 'insensitive' } },
+          { description: { contains: query.trim(), mode: 'insensitive' } },
+        ],
+      };
+    }
+
     const matches = await prisma.match.findMany({
-      where: { csrRepId },
-      skip,
-      take: limit,
+      where,
       include: {
         request: { include: { pin: true, category: true } },
         pin: true,
@@ -190,20 +212,6 @@ export class Match implements PrismaMatch {
   static async delete(id: string): Promise<boolean> {
     await prisma.match.delete({ where: { id } });
     return true;
-  }
-
-  /**
-   * Count matches by PIN
-   */
-  static async countByPIN(pinId: string): Promise<number> {
-    return prisma.match.count({ where: { pinId } });
-  }
-
-  /**
-   * Count matches by CSR Rep
-   */
-  static async countByCSRRep(csrRepId: string): Promise<number> {
-    return prisma.match.count({ where: { csrRepId } });
   }
 
   /**

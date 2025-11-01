@@ -90,45 +90,42 @@ export class VolunteerOffer implements PrismaVolunteerOffer {
   }
 
   /**
-   * Find offers by CSR Rep
+   * Check if offer exists for CSR Rep and request
    */
-  static async findByCSRRep(csrRepId: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
-    const offers = await prisma.volunteerOffer.findMany({
-      where: { csrRepId },
-      skip,
-      take: limit,
-      include: {
-        request: { include: { pin: true, category: true } },
+  static async exists(csrRepId: string, requestId: string): Promise<boolean> {
+    const offer = await prisma.volunteerOffer.findFirst({
+      where: {
+        csrRepId,
+        requestId,
       },
-      orderBy: { createdAt: 'desc' },
     });
-    return offers.map(o => new VolunteerOffer(o));
+    return !!offer;
   }
 
   /**
-   * Find offers by request
+   * Search offers by CSR Rep with optional query filter
+   * Filters by request title and description
+   * @param csrRepId - CSR Rep ID
+   * @param query - Search query (null/undefined = return all)
    */
-  static async findByRequest(requestId: string) {
-    const offers = await prisma.volunteerOffer.findMany({
-      where: { requestId },
-      include: {
-        csrRep: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    return offers.map(o => new VolunteerOffer(o));
-  }
+  static async search(
+    csrRepId: string,
+    query: string | null = null
+  ) {
+    const where: any = { csrRepId };
 
-  /**
-   * Find offers by status
-   */
-  static async findByStatus(status: OfferStatus, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
+    // Add search query filter if provided
+    if (query && query.trim()) {
+      where.request = {
+        OR: [
+          { title: { contains: query.trim(), mode: 'insensitive' } },
+          { description: { contains: query.trim(), mode: 'insensitive' } },
+        ],
+      };
+    }
+
     const offers = await prisma.volunteerOffer.findMany({
-      where: { status },
-      skip,
-      take: limit,
+      where,
       include: {
         request: { include: { pin: true, category: true } },
         csrRep: true,
@@ -185,24 +182,4 @@ export class VolunteerOffer implements PrismaVolunteerOffer {
     return true;
   }
 
-  /**
-   * Count offers by CSR Rep
-   */
-  static async countByCSRRep(csrRepId: string): Promise<number> {
-    return prisma.volunteerOffer.count({ where: { csrRepId } });
-  }
-
-  /**
-   * Count offers by request
-   */
-  static async countByRequest(requestId: string): Promise<number> {
-    return prisma.volunteerOffer.count({ where: { requestId } });
-  }
-
-  /**
-   * Count offers by status
-   */
-  static async countByStatus(status: OfferStatus): Promise<number> {
-    return prisma.volunteerOffer.count({ where: { status } });
-  }
 }

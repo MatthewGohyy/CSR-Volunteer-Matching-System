@@ -51,32 +51,11 @@ export class Shortlist implements PrismaShortlist {
         csrRep: true,
       },
     });
-    return shortlist ? new Shortlist(shortlist) : null;
-  }
-
-  /**
-   * Find shortlists by CSR Rep
-   */
-  static async findByCSRRep(csrRepId: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
-    const shortlists = await prisma.shortlist.findMany({
-      where: { csrRepId },
-      skip,
-      take: limit,
-      include: {
-        request: { 
-          include: { 
-            pin: true, 
-            category: true 
-          } 
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    return shortlists.map(s => ({
-      ...s,
-      request: s.request,
-    }));
+    // Return as object to preserve relations (request, csrRep)
+    return shortlist ? {
+      ...shortlist,
+      request: shortlist.request,
+    } : null;
   }
 
   /**
@@ -88,20 +67,6 @@ export class Shortlist implements PrismaShortlist {
       select: { requestId: true },
     });
     return shortlists.map(s => s.requestId);
-  }
-
-  /**
-   * Find shortlists by request
-   */
-  static async findByRequest(requestId: string) {
-    const shortlists = await prisma.shortlist.findMany({
-      where: { requestId },
-      include: {
-        csrRep: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    return shortlists.map(s => new Shortlist(s));
   }
 
   /**
@@ -119,14 +84,6 @@ export class Shortlist implements PrismaShortlist {
       },
     });
     return new Shortlist(shortlist);
-  }
-
-  /**
-   * Delete shortlist by ID
-   */
-  static async delete(id: string): Promise<boolean> {
-    await prisma.shortlist.delete({ where: { id } });
-    return true;
   }
 
   /**
@@ -154,16 +111,42 @@ export class Shortlist implements PrismaShortlist {
   }
 
   /**
-   * Count shortlists by CSR Rep
+   * Search shortlists by CSR Rep with optional query filter
+   * Filters by request title and description
+   * @param csrRepId - CSR Rep ID
+   * @param query - Search query (null/undefined = return all)
    */
-  static async countByCSRRep(csrRepId: string): Promise<number> {
-    return prisma.shortlist.count({ where: { csrRepId } });
-  }
+  static async search(
+    csrRepId: string,
+    query: string | null = null
+  ) {
+    const where: any = { csrRepId };
 
-  /**
-   * Count shortlists by request
-   */
-  static async countByRequest(requestId: string): Promise<number> {
-    return prisma.shortlist.count({ where: { requestId } });
+    // Add search query filter if provided
+    if (query && query.trim()) {
+      where.request = {
+        OR: [
+          { title: { contains: query.trim(), mode: 'insensitive' } },
+          { description: { contains: query.trim(), mode: 'insensitive' } },
+        ],
+      };
+    }
+
+    const shortlists = await prisma.shortlist.findMany({
+      where,
+      include: {
+        request: {
+          include: {
+            pin: true,
+            category: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return shortlists.map(s => ({
+      ...s,
+      request: s.request,
+    }));
   }
 }

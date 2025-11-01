@@ -12,7 +12,7 @@ export class ViewMatchesController {
     try {
       const userId = req.user!.userId;
 
-      const matches = await Match.findByPIN(userId, 1, 100);
+      const matches = await Match.searchByPIN(userId, null);
 
       // Calculate statistics
       const total = matches.length;

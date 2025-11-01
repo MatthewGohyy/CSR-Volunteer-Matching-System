@@ -1,14 +1,14 @@
 import { Router } from 'express';
 import { GetCategoriesController } from '../controllers/common/getCategories.controller';
 import { CreateRequestController } from '../controllers/pin/createRequest.controller';
-import { ViewMyRequestsController } from '../controllers/pin/viewMyRequests.controller';
+import { ViewMyRequestController } from '../controllers/pin/viewMyRequest.controller';
 import { UpdateRequestController } from '../controllers/pin/updateRequest.controller';
 import { DeleteRequestController } from '../controllers/pin/deleteRequest.controller';
 import { SearchMyRequestsController } from '../controllers/pin/searchMyRequests.controller';
-import { ViewRequestViewsController } from '../controllers/pin/viewRequestViews.controller';
-import { ViewRequestShortlistsController } from '../controllers/pin/viewRequestShortlists.controller';
+import { ViewRequestViewController } from '../controllers/pin/viewRequestViewController';
+import { ViewRequestShortlistController } from '../controllers/pin/viewRequestShortlist.controller';
 import { SearchRequestsController as CSRSearchRequestsController } from '../controllers/csrRep/searchRequests.controller';
-import { ViewRequestsController as CSRViewRequestsController } from '../controllers/csrRep/viewRequests.controller';
+import { ViewRequestController } from '../controllers/csrRep/viewRequest.controller';
 import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validation';
 import {
@@ -23,28 +23,24 @@ const router = Router();
 router.get('/categories', GetCategoriesController.handle);
 
 // CSR Rep routes - Search and view requests (Stories #26, #27)
-router.get(
-  '/search',
-  authenticate,
-  authorize('CSR Representative'),
-  CSRSearchRequestsController.handle
-);
+// Story #26: Search requests (listing/search with optional filters)
 router.get(
   '/',
   authenticate,
   authorize('CSR Representative'),
-  CSRViewRequestsController.handle
+  CSRSearchRequestsController.handle
 );
+// Story #27: View single request by ID (for modal/detail view)
 router.get(
   '/:id',
   authenticate,
   authorize('CSR Representative'),
   validate(requestIdValidation),
-  CSRViewRequestsController.handle
+  ViewRequestController.handle
 );
 
 // PIN routes - My requests management (Stories #15-#21)
-// Story #19: Search my requests
+// Story #19: Search my requests (with query parameters)
 router.get(
   '/my/search',
   authenticate,
@@ -52,12 +48,21 @@ router.get(
   SearchMyRequestsController.handle
 );
 
-// Story #16: View my requests
+// Story #16: View my requests (list all, can have search query)
 router.get(
   '/my/requests',
   authenticate,
   authorize('Person in Need'),
-  ViewMyRequestsController.handle
+  SearchMyRequestsController.handle
+);
+
+// Story #16: View my request (singular by ID)
+router.get(
+  '/my/requests/:id',
+  authenticate,
+  authorize('Person in Need'),
+  validate(requestIdValidation),
+  ViewMyRequestController.handle
 );
 
 // Story #20: View request views count
@@ -66,7 +71,7 @@ router.get(
   authenticate,
   authorize('Person in Need'),
   validate(requestIdValidation),
-  ViewRequestViewsController.handle
+  ViewRequestViewController.handle
 );
 
 // Story #21: View request shortlists count
@@ -75,7 +80,7 @@ router.get(
   authenticate,
   authorize('Person in Need'),
   validate(requestIdValidation),
-  ViewRequestShortlistsController.handle
+  ViewRequestShortlistController.handle
 );
 
 // Story #15: Create request
