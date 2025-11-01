@@ -8,6 +8,7 @@ import api from '../config/api';
 import type { User as UserType } from '../types';
 import OffersList from './OffersList';
 import MatchesList from './MatchesList';
+import RequestModal from './RequestModal';
 
 // Types
 interface Request {
@@ -48,6 +49,7 @@ const PINDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingRequest, setEditingRequest] = useState<Request | null>(null);
+  const [selectedCompletedRequestId, setSelectedCompletedRequestId] = useState<string | null>(null);
 
   // Fetch user profile
   const { data: user, isLoading: userLoading } = useQuery({
@@ -85,9 +87,16 @@ const PINDashboard: React.FC = () => {
   const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useQuery({
     queryKey: ['categories'],
     queryFn: async (): Promise<RequestCategory[]> => {
-      const response = await api.get<{ categories: RequestCategory[] }>('/opportunities/categories');
-      return response.data.categories;
+      try {
+        const response = await api.get<{ categories: RequestCategory[] }>('/opportunities/categories');
+        return response.data.categories;
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        throw error;
+      }
     },
+    retry: 2, // Retry failed requests twice
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
   });
 
   // Delete request mutation
@@ -261,7 +270,15 @@ const PINDashboard: React.FC = () => {
         ) : displayRequests && displayRequests.length > 0 ? (
           <div className="grid gap-4">
             {displayRequests.map((request) => (
-              <div key={request.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div 
+                key={request.id} 
+                className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-shadow ${
+                  activeTab === 'history' 
+                    ? 'cursor-pointer hover:shadow-md' 
+                    : 'hover:shadow-md'
+                }`}
+                onClick={activeTab === 'history' ? () => setSelectedCompletedRequestId(request.id) : undefined}
+              >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{request.title}</h3>
@@ -300,7 +317,16 @@ const PINDashboard: React.FC = () => {
                   {activeTab === 'my-requests' && request.status !== 'COMPLETED' && (
                     <div className="flex gap-2 ml-4">
                       <button
-                        onClick={() => setEditingRequest(request)}
+                        onClick={async () => {
+                          try {
+                            const response = await api.get<{ request: Request }>(`/opportunities/my/requests/${request.id}`);
+                            setEditingRequest(response.data.request);
+                          } catch (error) {
+                            console.error('Failed to fetch request:', error);
+                            // Fallback to using list data if fetch fails
+                            setEditingRequest(request);
+                          }
+                        }}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
                         title="Edit"
                       >
@@ -361,6 +387,15 @@ const PINDashboard: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* View Completed Request Modal */}
+      {selectedCompletedRequestId && (
+        <RequestModal
+          requestId={selectedCompletedRequestId}
+          onClose={() => setSelectedCompletedRequestId(null)}
+          type="completed"
+        />
+      )}
 
       {/* Create/Edit Request Modal */}
       {(showCreateModal || editingRequest) && (
@@ -478,14 +513,16 @@ const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
                   value={formData.categoryId}
                   onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                  disabled={categoriesLoading}
+                  disabled={categoriesLoading || !!categoriesError}
                 >
                   <option value="">
                     {categoriesLoading 
                       ? 'Loading categories...' 
                       : categoriesError 
                         ? 'Failed to load categories' 
-                        : 'Select category'}
+                        : request?.categoryId 
+                          ? `Current: ${request.category?.name || 'Category'}` 
+                          : 'Select category'}
                   </option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -494,8 +531,10 @@ const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
                   ))}
                 </select>
                 {categoriesError && (
-                  <p className="mt-1 text-sm text-red-600">
-                    Failed to load categories. Please try again.
+                  <p className="mt-1 text-sm text-yellow-600">
+                    {request 
+                      ? 'Cannot load categories. You can still save with current category.' 
+                      : 'Failed to load categories. Please refresh the page and try again.'}
                   </p>
                 )}
               </div>

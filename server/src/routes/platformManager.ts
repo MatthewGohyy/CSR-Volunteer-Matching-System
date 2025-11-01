@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { CreateCategoryController } from '../controllers/platformManager/createCategory.controller';
-import { ViewCategoriesController } from '../controllers/platformManager/viewCategories.controller';
+import { ViewCategoryController } from '../controllers/platformManager/viewCategory.controller';
 import { UpdateCategoryController } from '../controllers/platformManager/updateCategory.controller';
 import { DeleteCategoryController } from '../controllers/platformManager/deleteCategory.controller';
 import { SearchCategoriesController } from '../controllers/platformManager/searchCategories.controller';
@@ -38,8 +38,11 @@ router.use(authenticate, authorize('Platform Manager'));
 // Story #39: Search categories (must be before :id route to avoid conflicts)
 router.get('/categories/search', SearchCategoriesController.handle);
 
-// Story #36: View categories
-router.get('/categories', ViewCategoriesController.handle);
+// Story #36: View all/filtered categories (handled by SearchCategoriesController)
+router.get('/categories', SearchCategoriesController.handle);
+
+// Story #36: View single category details (by ID)
+router.get('/categories/:id', validate(categoryIdValidation), ViewCategoryController.handle);
 
 // Story #35: Create category
 router.post('/categories', validate(createCategoryValidation), CreateCategoryController.handle);

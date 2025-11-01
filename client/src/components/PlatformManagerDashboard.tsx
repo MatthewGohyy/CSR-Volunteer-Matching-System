@@ -213,7 +213,16 @@ const PlatformManagerDashboard: React.FC = () => {
 
                       <div className="flex gap-2 ml-4">
                         <button
-                          onClick={() => setEditingCategory(category)}
+                          onClick={async () => {
+                            try {
+                              const response = await api.get<{ category: RequestCategory }>(`/platform-manager/categories/${category.id}`);
+                              setEditingCategory(response.data.category);
+                            } catch (error) {
+                              console.error('Failed to fetch category:', error);
+                              // Fallback to using list data if fetch fails
+                              setEditingCategory(category);
+                            }
+                          }}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
                           title="Edit"
                         >

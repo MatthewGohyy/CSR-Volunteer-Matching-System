@@ -125,16 +125,40 @@ export class RequestCategory implements PrismaRequestCategory {
   }
 
   /**
-   * Search categories (simplified - no pagination)
+   * Search categories with optional query and active status filter
+   * Encapsulates all search and filtering logic
+   * @param query - Search query (null/undefined = return all matching filters)
+   * @param includeInactive - If true, include inactive categories (default: false)
    */
-  static async search(query: string) {
+  static async search(query: string | null = null, includeInactive: boolean = false) {
+    const where: any = {};
+
+    // Add active status filter if not including inactive
+    if (!includeInactive) {
+      where.isActive = true;
+    }
+
+    // Add search query filter if provided
+    if (query && query.trim()) {
+      const searchOrCondition = [
+        { name: { contains: query.trim(), mode: 'insensitive' } },
+        // { description: { contains: query.trim(), mode: 'insensitive' } },
+      ];
+
+      // If we already have isActive filter, combine with AND
+      if (where.isActive !== undefined) {
+        where.AND = [
+          { isActive: true },
+          { OR: searchOrCondition },
+        ];
+        delete where.isActive;
+      } else {
+        where.OR = searchOrCondition;
+      }
+    }
+
     const categories = await prisma.requestCategory.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } } // ,
-          // { description: { contains: query, mode: 'insensitive' } },
-        ],
-      },
+      where,
       orderBy: { name: 'asc' },
     });
     return categories.map(c => new RequestCategory(c));

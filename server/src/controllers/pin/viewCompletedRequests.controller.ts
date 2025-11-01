@@ -4,29 +4,37 @@ import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus } from '@prisma/client';
 
 /**
- * View Completed Requests Controller
+ * View Completed Request Controller (Singular)
  * 
  * Story #23: As a PIN, I want to view the history of previously completed requests 
  * so that I can review past help I've received.
+ * Follows BCE pattern - all database operations through entity class
+ * Used when PIN clicks into a completed request to view details
  */
 export class ViewCompletedRequestsController {
   static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      const { id } = req.params;
       const userId = (req as any).user!.userId;
-      const { page = '1', limit = '10' } = req.query;
 
-      const pageNum = parseInt(page as string);
-      const limitNum = parseInt(limit as string);
-      const skip = (pageNum - 1) * limitNum;
+      const request = await Request.findById(id);
 
-      const completed = await Request.findByStatus(RequestStatus.COMPLETED, pageNum, limitNum);
-      const matched = await Request.findByStatus(RequestStatus.MATCHED, pageNum, limitNum);
-      const requests = [...completed, ...matched].filter(r => r.pinId === userId);
-      const total = requests.length;
+      if (!request) {
+        throw new AppError('Request not found', 404);
+      }
+
+      // Verify request belongs to the PIN
+      if (request.pinId !== userId) {
+        throw new AppError('Unauthorized access to this request', 403);
+      }
+
+      // Verify request is completed or matched
+      if (request.status !== RequestStatus.COMPLETED && request.status !== RequestStatus.MATCHED) {
+        throw new AppError('This request is not in completed history', 400);
+      }
 
       res.json({
-        requests,
-        total,
+        request,
       });
     } catch (error) {
       next(error);

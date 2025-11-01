@@ -6,7 +6,7 @@ import api from '../config/api';
 interface RequestModalProps {
   requestId: string;
   onClose: () => void;
-  type?: 'request' | 'shortlist' | 'match' | 'offer';
+  type?: 'request' | 'shortlist' | 'match' | 'offer' | 'completed';
 }
 
 interface Request {
@@ -68,6 +68,8 @@ const RequestModal: React.FC<RequestModalProps> = ({ requestId, onClose, type = 
         return `/organizations/matches/${requestId}`;
       case 'offer':
         return `/organizations/offers/${requestId}`;
+      case 'completed':
+        return `/volunteers/requests/history/${requestId}`;
       default:
         return `/opportunities/${requestId}`;
     }
@@ -86,6 +88,8 @@ const RequestModal: React.FC<RequestModalProps> = ({ requestId, onClose, type = 
         return response.data.match.request;
       } else if (type === 'offer' && response.data.offer) {
         return response.data.offer.request;
+      } else if (type === 'completed' && response.data.request) {
+        return response.data.request;
       } else if (response.data.request) {
         return response.data.request;
       }

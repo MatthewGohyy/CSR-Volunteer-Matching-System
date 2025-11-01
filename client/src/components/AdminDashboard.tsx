@@ -319,9 +319,17 @@ const AdminDashboard: React.FC = () => {
                 <li key={user.id} className="px-4 py-4 sm:px-6">
                   <div 
                     className="flex items-center justify-between cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors duration-150"
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setShowUserModal(true);
+                    onClick={async () => {
+                      try {
+                        const response = await api.get<{ user: AdminUser }>(`/admin/users/${user.id}`);
+                        setSelectedUser(response.data.user);
+                        setShowUserModal(true);
+                      } catch (error) {
+                        console.error('Failed to fetch user:', error);
+                        // Fallback to using list data if fetch fails
+                        setSelectedUser(user);
+                        setShowUserModal(true);
+                      }
                     }}
                   >
                     <div className="flex items-center">

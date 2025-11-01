@@ -222,6 +222,56 @@ export class Request implements PrismaRequest {
   }
 
   /**
+   * Find completed requests by PIN (COMPLETED or MATCHED status)
+   * Used for viewing/searching request history
+   * @param pinId - PIN ID
+   * @param query - Search query (null/undefined = return all)
+   * @returns Array of completed/matched requests
+   */
+  static async findCompletedByPIN(
+    pinId: string,
+    query: string | null = null
+  ) {
+    const where: any = {
+      pinId,
+      status: {
+        in: [RequestStatus.COMPLETED, RequestStatus.MATCHED],
+      },
+    };
+
+    // Add search query filter if provided
+    if (query && query.trim()) {
+      const searchOrCondition = [
+        { title: { contains: query.trim(), mode: 'insensitive' } },
+        { description: { contains: query.trim(), mode: 'insensitive' } },
+        { location: { contains: query.trim(), mode: 'insensitive' } },
+      ];
+
+      where.AND = [
+        { pinId },
+        {
+          status: {
+            in: [RequestStatus.COMPLETED, RequestStatus.MATCHED],
+          },
+        },
+        { OR: searchOrCondition },
+      ];
+    }
+
+    const requests = await prisma.request.findMany({
+      where,
+      include: {
+        pin: true,
+        category: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    return requests.map(request => new Request(request));
+  }
+
+  /**
    * Find requests by urgency
    */
   static async findByUrgency(urgency: UrgencyLevel, page: number = 1, limit: number = 10) {

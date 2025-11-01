@@ -11,6 +11,8 @@ import { ViewOffersController } from '../controllers/pin/viewOffers.controller';
 import { AcceptOfferController } from '../controllers/pin/acceptOffer.controller';
 import { DeclineOfferController } from '../controllers/pin/declineOffer.controller';
 import { authenticate, authorize } from '../middleware/auth';
+import { validate } from '../middleware/validation';
+import { requestIdValidation } from '../validators/request.validator';
 
 const router = Router();
 
@@ -35,10 +37,13 @@ router.put('/notifications/:notificationId/read', MarkNotificationReadController
 router.put('/notifications/read-all', MarkAllNotificationsReadController.handle);
 
 // Request history (Stories #22, #23)
-// Story #22: Search completed requests history
+// Story #22: Search completed requests history (must be before :id route)
 router.get('/requests/history/search', SearchCompletedRequestsController.handle);
 
-// Story #23: View completed requests history
-router.get('/requests/history', ViewCompletedRequestsController.handle);
+// Story #23: View all completed requests history (handled by SearchCompletedRequestsController when no query)
+router.get('/requests/history', SearchCompletedRequestsController.handle);
+
+// Story #23: View single completed request details (by ID)
+router.get('/requests/history/:id', validate(requestIdValidation), ViewCompletedRequestsController.handle);
 
 export default router;

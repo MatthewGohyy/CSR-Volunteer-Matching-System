@@ -5,27 +5,23 @@ import { AuthRequest } from '../../middleware/auth';
 /**
  * Controller for searching request categories
  * User Story #39: Search request categories
+ * Also handles viewing all/filtered categories (moved from ViewCategoriesController)
+ * Follows BCE pattern - all database operations through entity class
  */
 export class SearchCategoriesController {
   static async handle(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { q, includeInactive } = req.query;
+      const { search } = req.query;
 
-      // Simplified - get all categories, filter on frontend
-      let allCategories;
-      if (q && typeof q === 'string' && q.trim()) {
-        allCategories = await RequestCategory.search(q.trim());
-      } else {
-        allCategories = await RequestCategory.findAll();
-      }
+      // Extract and normalize query parameter
+      const searchQuery = typeof search === 'string' && search.trim() ? search.trim() : null;
 
-      if (includeInactive !== 'true') {
-        allCategories = allCategories.filter(c => c.isActive);
-      }
+      // All logic encapsulated in entity method (default: active categories only)
+      const categories = await RequestCategory.search(searchQuery);
 
       res.json({
-        query: q,
-        categories: allCategories,
+        query: searchQuery,
+        categories,
       });
     } catch (error) {
       next(error);
