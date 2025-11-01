@@ -8,7 +8,6 @@ import api from '../config/api';
 import type { User as UserType } from '../types';
 import OffersList from './OffersList';
 import MatchesList from './MatchesList';
-import RequestModal from './RequestModal';
 
 // Types
 interface Request {
@@ -49,7 +48,6 @@ const PINDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingRequest, setEditingRequest] = useState<Request | null>(null);
-  const [selectedCompletedRequestId, setSelectedCompletedRequestId] = useState<string | null>(null);
 
   // Fetch user profile
   const { data: user, isLoading: userLoading } = useQuery({
@@ -277,7 +275,29 @@ const PINDashboard: React.FC = () => {
                     ? 'cursor-pointer hover:shadow-md' 
                     : 'hover:shadow-md'
                 }`}
-                onClick={activeTab === 'history' ? () => setSelectedCompletedRequestId(request.id) : undefined}
+                onClick={() => {
+                  if (activeTab === 'history') {
+                    // Fetch the completed request and open in view mode
+                    api.get<{ request: Request }>(`/volunteers/requests/history/${request.id}`)
+                      .then((response) => {
+                        setEditingRequest(response.data.request);
+                      })
+                      .catch((error) => {
+                        console.error('Failed to fetch completed request:', error);
+                        setEditingRequest(request);
+                      });
+                  } else if (activeTab === 'my-requests') {
+                    // Fetch the request and open in view mode (with counts)
+                    api.get<{ request: Request }>(`/opportunities/my/requests/${request.id}`)
+                      .then((response) => {
+                        setEditingRequest(response.data.request);
+                      })
+                      .catch((error) => {
+                        console.error('Failed to fetch request:', error);
+                        setEditingRequest(request);
+                      });
+                  }
+                }}
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
@@ -314,8 +334,8 @@ const PINDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  {activeTab === 'my-requests' && request.status !== 'COMPLETED' && (
-                    <div className="flex gap-2 ml-4">
+                  {activeTab === 'my-requests' && (
+                    <div className="flex gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={async () => {
                           try {
@@ -328,7 +348,7 @@ const PINDashboard: React.FC = () => {
                           }
                         }}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
-                        title="Edit"
+                        title={request.status === 'COMPLETED' ? 'View' : 'View/Edit'}
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
@@ -388,14 +408,6 @@ const PINDashboard: React.FC = () => {
         )}
       </main>
 
-      {/* View Completed Request Modal */}
-      {selectedCompletedRequestId && (
-        <RequestModal
-          requestId={selectedCompletedRequestId}
-          onClose={() => setSelectedCompletedRequestId(null)}
-          type="completed"
-        />
-      )}
 
       {/* Create/Edit Request Modal */}
       {(showCreateModal || editingRequest) && (
@@ -419,7 +431,7 @@ const PINDashboard: React.FC = () => {
   );
 };
 
-// Create/Edit Request Modal Component
+// Create/Edit/View Request Modal Component
 interface CreateEditRequestModalProps {
   request: Request | null;
   categories: RequestCategory[];
@@ -437,6 +449,28 @@ const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  // View mode by default for existing requests (including completed history)
+  const [isEditMode, setIsEditMode] = useState(!request || request.status === 'COMPLETED');
+  
+  // Fetch counts for existing requests (Story #20 & #21)
+  const { data: viewCount } = useQuery({
+    queryKey: ['request-views', request?.id],
+    queryFn: async () => {
+      const response = await api.get<{ viewCount: number }>(`/opportunities/my/${request!.id}/views`);
+      return response.data.viewCount;
+    },
+    enabled: !!request && !isEditMode,
+  });
+
+  const { data: shortlistCount } = useQuery({
+    queryKey: ['request-shortlists', request?.id],
+    queryFn: async () => {
+      const response = await api.get<{ shortlistCount: number }>(`/opportunities/my/${request!.id}/shortlists`);
+      return response.data.shortlistCount;
+    },
+    enabled: !!request && !isEditMode,
+  });
+
   const [formData, setFormData] = useState({
     title: request?.title || '',
     description: request?.description || '',
@@ -454,7 +488,13 @@ const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
         await api.post('/opportunities', data);
       }
     },
-    onSuccess,
+    onSuccess: () => {
+      // Exit edit mode after successful save
+      if (request) {
+        setIsEditMode(false);
+      }
+      onSuccess();
+    },
     onError: (error: any) => {
       console.error('Error creating/updating request:', error);
       // Error will be displayed via the mutation error state
@@ -470,11 +510,105 @@ const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            {request ? 'Edit Request' : 'Create New Request'}
-          </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {request 
+                ? (isEditMode ? 'Edit Request' : 'View Request')
+                : 'Create New Request'}
+            </h2>
+            {request && !isEditMode && request.status !== 'COMPLETED' && (
+              <button
+                type="button"
+                onClick={() => setIsEditMode(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md font-medium transition-colors"
+              >
+                <Edit2 className="h-4 w-4" />
+                Edit
+              </button>
+            )}
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Display counts in view mode (Story #20 & #21) */}
+          {request && !isEditMode && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex gap-6">
+                <div className="flex items-center text-sm text-gray-700">
+                  <Eye className="h-4 w-4 mr-2 text-gray-600" />
+                  <span className="font-medium">{viewCount !== undefined ? viewCount : request.viewCount}</span>
+                  <span className="ml-1 text-gray-600">views</span>
+                </div>
+                <div className="flex items-center text-sm text-gray-700">
+                  <Star className="h-4 w-4 mr-2 text-gray-600" />
+                  <span className="font-medium">{shortlistCount !== undefined ? shortlistCount : request.shortlistCount}</span>
+                  <span className="ml-1 text-gray-600">shortlisted</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* View Mode - Display read-only fields */}
+          {request && !isEditMode ? (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900">
+                  {request.title}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900 min-h-[100px]">
+                  {request.description}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900">
+                    {request.category?.name || 'N/A'}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Urgency Level</label>
+                  <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900">
+                    {request.urgency || request.urgencyLevel || 'MEDIUM'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900">
+                    {request.location}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Date</label>
+                  <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900">
+                    {request.dateNeeded || request.preferredDate 
+                      ? new Date(request.dateNeeded || request.preferredDate!).toLocaleDateString()
+                      : 'N/A'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Title *
@@ -606,13 +740,20 @@ const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
               </button>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => {
+                  if (request && isEditMode) {
+                    setIsEditMode(false);
+                  } else {
+                    onClose();
+                  }
+                }}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               >
-                Cancel
+                {request && isEditMode ? 'Cancel' : 'Close'}
               </button>
             </div>
           </form>
+          )}
         </div>
       </div>
     </div>

@@ -472,4 +472,51 @@ export class Request implements PrismaRequest {
     return new Request(request);
   }
 
+  /**
+   * Get view count for a request owned by a PIN
+   * Story #20: View request views count
+   * @param pinId - PIN ID (for authorization)
+   * @param requestId - Request ID
+   * @returns View count of the request
+   */
+  static async getViewCount(pinId: string, requestId: string): Promise<number> {
+    const request = await prisma.request.findUnique({
+      where: { id: requestId },
+      select: { pinId: true, viewCount: true },
+    });
+
+    if (!request) {
+      throw new Error('Request not found');
+    }
+
+    if (request.pinId !== pinId) {
+      throw new Error('Unauthorized access to this request');
+    }
+
+    return request.viewCount;
+  }
+
+  /**
+   * Get shortlist count for a request owned by a PIN
+   * Story #21: View request shortlists count
+   * @param pinId - PIN ID (for authorization)
+   * @param requestId - Request ID
+   * @returns Shortlist count of the request
+   */
+  static async getShortlistCount(pinId: string, requestId: string): Promise<number> {
+    const request = await prisma.request.findUnique({
+      where: { id: requestId },
+      select: { pinId: true, shortlistCount: true },
+    });
+
+    if (!request) {
+      throw new Error('Request not found');
+    }
+
+    if (request.pinId !== pinId) {
+      throw new Error('Unauthorized access to this request');
+    }
+
+    return request.shortlistCount;
+  }
 }
