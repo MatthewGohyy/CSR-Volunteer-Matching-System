@@ -1,44 +1,31 @@
 import { Response, NextFunction } from 'express';
-import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
+import { RequestCategory } from '../../entities/RequestCategory.entity';
 import { AuthRequest } from '../../middleware/auth';
 
 /**
- * Controller for searching service categories
- * User Story #39: Search service categories
+ * Controller for searching request categories
+ * User Story #39: Search request categories
  */
 export class SearchCategoriesController {
   static async handle(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { q, includeInactive, page = '1', limit = '20' } = req.query;
+      const { q, includeInactive } = req.query;
 
-      const pageNum = parseInt(page as string);
-      const limitNum = parseInt(limit as string);
-      const skip = (pageNum - 1) * limitNum;
-
-
+      // Simplified - get all categories, filter on frontend
       let allCategories;
       if (q && typeof q === 'string' && q.trim()) {
-        allCategories = await ServiceCategoryEntity.search(q.trim(), 1, 1000);
+        allCategories = await RequestCategory.search(q.trim());
       } else {
-        allCategories = await ServiceCategoryEntity.findAll(1, 1000);
+        allCategories = await RequestCategory.findAll();
       }
 
       if (includeInactive !== 'true') {
         allCategories = allCategories.filter(c => c.isActive);
       }
 
-      const total = allCategories.length;
-      const categories = allCategories.slice(skip, skip + limitNum);
-
       res.json({
         query: q,
-        categories,
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total,
-          pages: Math.ceil(total / limitNum),
-        },
+        categories: allCategories,
       });
     } catch (error) {
       next(error);

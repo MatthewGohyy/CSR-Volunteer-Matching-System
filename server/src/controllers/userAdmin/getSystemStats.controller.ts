@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
-import { UserEntity } from '../../entities/User.entity';
-import { RequestEntity } from '../../entities/Request.entity';
-import { MatchEntity } from '../../entities/Match.entity';
+import { Request as ExpressRequest, Response, NextFunction } from 'express';
+import { UserAccount } from '../../entities/UserAccount.entity';
+import { Request } from '../../entities/Request.entity';
+import { Match } from '../../entities/Match.entity';
 import { UserStatus, RequestStatus, MatchStatus } from '@prisma/client';
 
 /**
@@ -10,7 +10,7 @@ import { UserStatus, RequestStatus, MatchStatus } from '@prisma/client';
  * Utility: Get overall system statistics (not part of user stories)
  */
 export class GetSystemStatsController {
-  static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
 
       const [
@@ -21,12 +21,12 @@ export class GetSystemStatsController {
         activeRequests,
         totalMatches,
       ] = await Promise.all([
-        UserEntity.count(),
-        UserEntity.countByStatus(UserStatus.ACTIVE),
-        UserEntity.countByStatus(UserStatus.SUSPENDED),
-        RequestEntity.count(),
-        RequestEntity.countByStatus(RequestStatus.ACTIVE),
-        MatchEntity.count(),
+        UserAccount.count(),
+        UserAccount.countByStatus(UserStatus.ACTIVE),
+        UserAccount.countByStatus(UserStatus.SUSPENDED),
+        Request.count(),
+        Request.countByStatus(RequestStatus.ACTIVE),
+        Match.count(),
       ]);
 
       res.json({

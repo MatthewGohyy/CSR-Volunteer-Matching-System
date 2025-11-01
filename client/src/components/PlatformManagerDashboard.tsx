@@ -8,7 +8,7 @@ import api from '../config/api';
 import type { User as UserType } from '../types';
 
 // Types
-interface ServiceCategory {
+interface RequestCategory {
   id: string;
   name: string;
   description: string;
@@ -21,8 +21,7 @@ interface ServiceCategory {
 }
 
 interface CategoriesResponse {
-  categories: ServiceCategory[];
-  total: number;
+  categories: RequestCategory[];
 }
 
 interface PlatformStats {
@@ -39,7 +38,7 @@ const PlatformManagerDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'categories' | 'stats'>('categories');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<ServiceCategory | null>(null);
+  const [editingCategory, setEditingCategory] = useState<RequestCategory | null>(null);
 
   // Fetch user profile
   const { data: user, isLoading: userLoading } = useQuery({
@@ -139,7 +138,7 @@ const PlatformManagerDashboard: React.FC = () => {
                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
               >
                 <FolderOpen className="h-4 w-4 mr-2" />
-                Service Categories ({categoriesData?.total || 0})
+                Service Categories ({categoriesData?.categories?.length || 0})
               </button>
               <button
                 onClick={() => setActiveTab('stats')}
@@ -243,7 +242,7 @@ const PlatformManagerDashboard: React.FC = () => {
                   No categories found
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  Create your first service category to get started
+                  Create your first request category to get started
                 </p>
                 <button
                   onClick={() => setShowCreateModal(true)}
@@ -381,7 +380,7 @@ const PlatformManagerDashboard: React.FC = () => {
 
 // Create/Edit Category Modal Component
 interface CreateEditCategoryModalProps {
-  category: ServiceCategory | null;
+  category: RequestCategory | null;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -446,7 +445,7 @@ const CreateEditCategoryModal: React.FC<CreateEditCategoryModalProps> = ({
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                placeholder="Describe this service category..."
+                placeholder="Describe this request category..."
               />
             </div>
 

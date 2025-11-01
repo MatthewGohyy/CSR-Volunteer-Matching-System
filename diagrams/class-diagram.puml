@@ -1,0 +1,349 @@
+@startuml CSR_Volunteer_Matching_System_Class_Diagram
+
+!define ENTITY_COLOR #E8F5E9
+!define ENUM_COLOR #FFF9C4
+!define RELATION_COLOR #90CAF9
+
+skinparam class {
+    BackgroundColor ENTITY_COLOR
+    BorderColor #4CAF50
+    ArrowColor RELATION_COLOR
+}
+
+skinparam enum {
+    BackgroundColor ENUM_COLOR
+    BorderColor #FBC02D
+}
+
+' ====================
+' ENUMS
+' ====================
+
+enum UserProfileRole {
+    PIN
+    CSR_REP
+    USER_ADMIN
+    PLATFORM_MANAGER
+}
+
+enum UserStatus {
+    ACTIVE
+    SUSPENDED
+    DELETED
+}
+
+enum ProfileStatus {
+    ACTIVE
+    SUSPENDED
+    DEACTIVATED
+}
+
+enum RequestStatus {
+    ACTIVE
+    MATCHED
+    COMPLETED
+    CANCELLED
+}
+
+enum UrgencyLevel {
+    LOW
+    MEDIUM
+    HIGH
+}
+
+enum OfferStatus {
+    PENDING
+    ACCEPTED
+    DECLINED
+}
+
+enum MatchStatus {
+    ACTIVE
+    COMPLETED
+    CANCELLED
+}
+
+enum NotificationType {
+    VOLUNTEER_OFFER
+    OFFER_ACCEPTED
+    OFFER_DECLINED
+    MATCH_CONFIRMED
+    MATCH_CANCELLED
+    REQUEST_UPDATED
+}
+
+' ====================
+' CORE ENTITIES
+' ====================
+
+class UserAccount {
+    - id: UUID
+    - email: String {unique}
+    - password: String
+    - name: String
+    - phoneNumber: String
+    - address: String
+    - dateOfBirth: DateTime
+    - status: UserStatus
+    - userProfileId: UUID
+    --
+    ' PIN-specific fields (nullable)
+    - age: Integer
+    - location: String
+    - accessibilityNeeds: String
+    - profilePhoto: String
+    --
+    ' CSR Rep-specific fields (nullable)
+    - companyName: String
+    - companyRegistrationNumber: String {unique}
+    - industry: String
+    - contactPerson: String
+    - companyAddress: String
+    - companyLogo: String
+    --
+    ' Platform Manager-specific fields (nullable)
+    - department: String
+    --
+    - profileStatus: ProfileStatus
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    + isActive(): Boolean
+    + isSuspended(): Boolean
+    + isPIN(): Boolean
+    + isCSRRep(): Boolean
+    + isPlatformManager(): Boolean
+    + isUserAdmin(): Boolean
+    + hasRole(role: String): Boolean
+    + getProfile(): UserProfile
+    + isSenior(): Boolean
+    + hasAccessibilityNeeds(): Boolean
+    + hasLogo(): Boolean
+    + isApproved(): Boolean
+    + toJSON(): Object
+    --
+    {static} + findById(id: UUID): UserAccount
+    {static} + findByEmail(email: String): UserAccount
+    {static} + findByRole(role: String): UserAccount[]
+    {static} + create(data: Object): UserAccount
+    {static} + update(id: UUID, data: Object): UserAccount
+    {static} + suspend(id: UUID): UserAccount
+    {static} + activate(id: UUID): UserAccount
+}
+
+class UserProfile {
+    - id: UUID
+    - role: UserProfileRole {unique}
+    - name: String
+    - description: String
+    - permissions: JSON
+    - isActive: Boolean
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    + hasPermission(permission: String): Boolean
+    + isActiveRole(): Boolean
+    --
+    {static} + findByRole(role: UserProfileRole): UserProfile
+    {static} + getAllProfiles(): UserProfile[]
+    --
+    <<Note: Only 4 static records exist>>
+}
+
+
+' ====================
+' SERVICE MANAGEMENT
+' ====================
+
+class ServiceCategory {
+    - id: UUID
+    - name: String {unique}
+    - description: String
+    - iconUrl: String
+    - isActive: Boolean
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    + isActive(): Boolean
+    --
+    {static} + findById(id: UUID): ServiceCategory
+    {static} + findAll(): ServiceCategory[]
+    {static} + create(data: Object): ServiceCategory
+    {static} + update(id: UUID, data: Object): ServiceCategory
+}
+
+class Request {
+    - id: UUID
+    - pinId: UUID
+    - categoryId: UUID
+    - title: String
+    - description: String
+    - urgency: UrgencyLevel
+    - dateNeeded: DateTime
+    - location: String
+    - status: RequestStatus
+    - viewCount: Integer
+    - shortlistCount: Integer
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    + isActive(): Boolean
+    + isMatched(): Boolean
+    + isCompleted(): Boolean
+    + isUrgent(): Boolean
+    + canBeUpdated(): Boolean
+    + incrementViewCount(): void
+    + incrementShortlistCount(): void
+    --
+    {static} + findById(id: UUID): Request
+    {static} + findByPinId(pinId: UUID): Request[]
+    {static} + create(data: Object): Request
+    {static} + update(id: UUID, data: Object): Request
+    {static} + cancel(id: UUID): Request
+}
+
+' ====================
+' MATCHING SYSTEM
+' ====================
+
+class Shortlist {
+    - id: UUID
+    - csrRepId: UUID
+    - requestId: UUID
+    - createdAt: DateTime
+    --
+    {static} + findById(id: UUID): Shortlist
+    {static} + findByCsrRepId(csrRepId: UUID): Shortlist[]
+    {static} + create(data: Object): Shortlist
+    {static} + delete(id: UUID): void
+}
+
+class VolunteerOffer {
+    - id: UUID
+    - csrRepId: UUID
+    - requestId: UUID
+    - message: String
+    - status: OfferStatus
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    + isPending(): Boolean
+    + isAccepted(): Boolean
+    + isDeclined(): Boolean
+    --
+    {static} + findById(id: UUID): VolunteerOffer
+    {static} + findByRequestId(requestId: UUID): VolunteerOffer[]
+    {static} + create(data: Object): VolunteerOffer
+    {static} + accept(id: UUID): VolunteerOffer
+    {static} + decline(id: UUID): VolunteerOffer
+}
+
+class Match {
+    - id: UUID
+    - requestId: UUID {unique}
+    - csrRepId: UUID
+    - pinId: UUID
+    - status: MatchStatus
+    - matchedAt: DateTime
+    - completedAt: DateTime
+    - cancellationReason: String
+    - updatedAt: DateTime
+    --
+    + isActive(): Boolean
+    + isCompleted(): Boolean
+    + isCancelled(): Boolean
+    + canBeCompleted(): Boolean
+    --
+    {static} + findById(id: UUID): Match
+    {static} + findByPinId(pinId: UUID): Match[]
+    {static} + create(data: Object): Match
+    {static} + complete(id: UUID): Match
+    {static} + cancel(id: UUID, reason: String): Match
+}
+
+' ====================
+' NOTIFICATIONS
+' ====================
+
+class Notification {
+    - id: UUID
+    - userId: UUID
+    - type: NotificationType
+    - message: String
+    - isRead: Boolean
+    - createdAt: DateTime
+    --
+    + markAsRead(): void
+    + isUnread(): Boolean
+    --
+    {static} + findById(id: UUID): Notification
+    {static} + findByUserId(userId: UUID): Notification[]
+    {static} + create(data: Object): Notification
+    {static} + markAllAsRead(userId: UUID): void
+}
+
+' ====================
+' RELATIONSHIPS
+' ====================
+
+' UserProfile -> UserAccount (1:M)
+UserProfile "1" -- "0..*" UserAccount : has >
+UserProfile::role -- UserProfileRole
+
+
+' UserAccount Status
+UserAccount::status -- UserStatus
+
+' UserAccount Relationships (role-based)
+UserAccount "1" -- "0..*" Request : creates (PIN role) >
+UserAccount "1" -- "0..*" Shortlist : saves (CSR role) >
+UserAccount "1" -- "0..*" VolunteerOffer : makes (CSR role) >
+UserAccount "1" -- "0..*" Match : involved in >
+UserAccount::profileStatus -- ProfileStatus
+
+' Request Relationships
+ServiceCategory "1" -- "0..*" Request : categorizes >
+Request "1" -- "0..*" Shortlist : saved by >
+Request "1" -- "0..*" VolunteerOffer : receives >
+Request "1" -- "0..1" Match : matched with >
+Request::status -- RequestStatus
+Request::urgency -- UrgencyLevel
+
+' Match Relationships
+Match::status -- MatchStatus
+
+' Volunteer Offer
+VolunteerOffer::status -- OfferStatus
+
+' Notification
+UserAccount "1" -- "0..*" Notification : receives >
+Notification::type -- NotificationType
+
+note right of UserProfile
+  **IMPORTANT**: This table contains 
+  exactly 4 static records:
+  - PIN
+  - CSR_REP
+  - USER_ADMIN
+  - PLATFORM_MANAGER
+  
+  All UserAccounts reference one
+  of these 4 records via userProfileId.
+end note
+
+note right of UserAccount
+  **Single Table Inheritance**:
+  - ALL role-specific fields in ONE class
+  - Role determined by userProfile reference
+  - PIN users use: age, location, accessibilityNeeds
+  - CSR users use: companyName, companyRegistrationNumber
+  - Platform Managers use: department
+  - Unused fields are NULL
+  
+  **Methods handle role logic**:
+  - isPIN(), isCSRRep(), etc.
+  - Business logic varies by role
+end note with UserProfile
+end note
+
+@enduml

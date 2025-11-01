@@ -1,0 +1,20 @@
+@startuml Search Product BCE Diagram
+
+left to right direction
+
+class SearchProductPage {
+}
+
+class SearchProductController {
+  + searchProduct(query: string): Product[]
+}
+
+class Product {
+  + searchProduct(query: string): Product[]
+}
+
+SearchProductPage --> SearchProductController
+SearchProductController --> Product
+
+@enduml
+

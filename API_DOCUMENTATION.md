@@ -13,11 +13,11 @@ Authorization: Bearer <token>
 
 1. [Authentication](#authentication)
 2. [Admin Endpoints](#admin-endpoints)
-3. [PIN (Volunteer) Endpoints](#pin-endpoints)
+3. [PIN (Volunteer) Endpoints](#pin-endpoints) ⭐ **Updated Oct 28**
 4. [CSR Rep (Organization) Endpoints](#csr-rep-endpoints)
 5. [Platform Manager Endpoints](#platform-manager-endpoints)
 6. [Opportunities/Requests](#opportunities)
-7. [Matches](#matches)
+7. [Match Endpoints](#match-endpoints) ⭐ **New Oct 28**
 8. [Enums & Status Codes](#enums)
 
 ---
@@ -224,6 +224,75 @@ GET /api/volunteers/profile
 PUT /api/volunteers/profile
 ```
 
+### Volunteer Offers (NEW - Oct 28, 2025)
+```http
+GET /api/volunteers/offers
+```
+**Description:** View all offers received on your requests  
+**Response:**
+```json
+{
+  "offers": [
+    {
+      "id": "uuid",
+      "requestId": "uuid",
+      "csrRep": {
+        "id": "uuid",
+        "name": "Company Name",
+        "email": "csr@company.com",
+        "companyName": "TechCorp"
+      },
+      "message": "We would like to help",
+      "status": "PENDING",
+      "createdAt": "2025-10-28T10:00:00Z",
+      "request": {
+        "id": "uuid",
+        "title": "Request title"
+      }
+    }
+  ],
+  "total": 5,
+  "pending": 3,
+  "accepted": 1,
+  "declined": 1
+}
+```
+
+```http
+PUT /api/volunteers/offers/:id/accept
+```
+**Description:** Accept an offer (creates a Match automatically, updates Request status to MATCHED, auto-declines other pending offers)  
+**Response:**
+```json
+{
+  "message": "Offer accepted successfully",
+  "offer": { "id": "uuid", "status": "ACCEPTED" },
+  "match": {
+    "id": "uuid",
+    "requestId": "uuid",
+    "csrRepId": "uuid",
+    "pinId": "uuid",
+    "status": "ACTIVE",
+    "matchedAt": "2025-10-28T10:00:00Z"
+  }
+}
+```
+
+```http
+PUT /api/volunteers/offers/:id/decline
+```
+**Description:** Decline an offer (notifies CSR)  
+**Response:**
+```json
+{
+  "message": "Offer declined successfully",
+  "offer": {
+    "id": "uuid",
+    "status": "DECLINED"
+  }
+}
+```
+
 ### Matches
 ```http
 GET /api/volunteers/matches
@@ -405,6 +474,61 @@ PUT /api/matches/:matchId/cancel
 
 ---
 
+## 🤝 Match Endpoints (Both PIN and CSR)
+
+**Base:** `/api/matches`  
+**Auth:** PIN or CSR who is part of the match
+
+### Complete Match (NEW - Oct 28, 2025)
+```http
+PUT /api/matches/:id/complete
+```
+**Description:** Mark a match as completed (either party can complete)  
+**Response:**
+```json
+{
+  "message": "Match completed successfully",
+  "match": {
+    "id": "uuid",
+    "requestId": "uuid",
+    "csrRepId": "uuid",
+    "pinId": "uuid",
+    "status": "COMPLETED",
+    "matchedAt": "2025-10-28T10:00:00Z",
+    "completedAt": "2025-10-28T15:00:00Z"
+  }
+}
+```
+
+### Cancel Match (NEW - Oct 28, 2025)
+```http
+PUT /api/matches/:id/cancel
+```
+**Description:** Cancel a match and reopen the request for new offers  
+**Body:**
+```json
+{
+  "reason": "Plans changed"
+}
+```
+**Response:**
+```json
+{
+  "message": "Match cancelled successfully",
+  "match": {
+    "id": "uuid",
+    "status": "CANCELLED",
+    "cancellationReason": "Plans changed"
+  },
+  "request": {
+    "id": "uuid",
+    "status": "ACTIVE"
+  }
+}
+```
+
+---
+
 ## 📊 Enums
 
 ### UserType
@@ -464,4 +588,21 @@ PUT /api/matches/:matchId/cancel
 
 ---
 
-**Last Updated:** 2025-10-21
+---
+
+## 📝 Changelog
+
+### October 28, 2025
+- ✅ Added PIN offer management endpoints (view, accept, decline)
+- ✅ Added match management endpoints (complete, cancel)
+- ✅ Complete match workflow now documented
+- ✅ Total endpoints: 47
+
+### October 21, 2025
+- Initial API documentation
+
+---
+
+**Last Updated:** October 28, 2025  
+**Total Endpoints:** 47  
+**Status:** Complete & Current

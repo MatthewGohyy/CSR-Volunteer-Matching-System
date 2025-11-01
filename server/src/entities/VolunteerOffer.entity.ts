@@ -2,12 +2,12 @@ import { VolunteerOffer as PrismaVolunteerOffer, OfferStatus } from '@prisma/cli
 import { prisma } from '../config/database';
 
 /**
- * Volunteer Offer Entity Class
+ * Volunteer Offer Class
  * 
  * Represents a volunteer offer from a CSR Rep to a PIN request with business logic and CRUD methods.
  * Follows the BCE framework - Entity handles all database operations.
  */
-export class VolunteerOfferEntity implements PrismaVolunteerOffer {
+export class VolunteerOffer implements PrismaVolunteerOffer {
   id: string;
   csrRepId: string;
   requestId: string;
@@ -16,7 +16,7 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
   createdAt: Date;
   updatedAt: Date;
 
-  constructor(data: PrismaVolunteerOffer) {
+  constructor(data: any) {
     this.id = data.id;
     this.csrRepId = data.csrRepId;
     this.requestId = data.requestId;
@@ -24,6 +24,14 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
     this.status = data.status;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
+    
+    // Preserve related data if included
+    if (data.request) {
+      (this as any).request = data.request;
+    }
+    if (data.csrRep) {
+      (this as any).csrRep = data.csrRep;
+    }
   }
 
   /**
@@ -78,56 +86,53 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
         csrRep: true,
       },
     });
-    return offer ? new VolunteerOfferEntity(offer) : null;
+    return offer ? new VolunteerOffer(offer) : null;
   }
 
   /**
-   * Find offers by CSR Rep
+   * Check if offer exists for CSR Rep and request
    */
-  static async findByCSRRep(csrRepId: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
-    const offers = await prisma.volunteerOffer.findMany({
-      where: { csrRepId },
-      skip,
-      take: limit,
-      include: {
-        request: { include: { pin: true, category: true } },
+  static async exists(csrRepId: string, requestId: string): Promise<boolean> {
+    const offer = await prisma.volunteerOffer.findFirst({
+      where: {
+        csrRepId,
+        requestId,
       },
-      orderBy: { createdAt: 'desc' },
     });
-    return offers.map(o => new VolunteerOfferEntity(o));
+    return !!offer;
   }
 
   /**
-   * Find offers by request
+   * Search offers by CSR Rep with optional query filter
+   * Filters by request title and description
+   * @param csrRepId - CSR Rep ID
+   * @param query - Search query (null/undefined = return all)
    */
-  static async findByRequest(requestId: string) {
-    const offers = await prisma.volunteerOffer.findMany({
-      where: { requestId },
-      include: {
-        csrRep: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    return offers.map(o => new VolunteerOfferEntity(o));
-  }
+  static async search(
+    csrRepId: string,
+    query: string | null = null
+  ) {
+    const where: any = { csrRepId };
 
-  /**
-   * Find offers by status
-   */
-  static async findByStatus(status: OfferStatus, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
+    // Add search query filter if provided
+    if (query && query.trim()) {
+      where.request = {
+        OR: [
+          { title: { contains: query.trim(), mode: 'insensitive' } },
+          { description: { contains: query.trim(), mode: 'insensitive' } },
+        ],
+      };
+    }
+
     const offers = await prisma.volunteerOffer.findMany({
-      where: { status },
-      skip,
-      take: limit,
+      where,
       include: {
         request: { include: { pin: true, category: true } },
         csrRep: true,
       },
       orderBy: { createdAt: 'desc' },
     });
-    return offers.map(o => new VolunteerOfferEntity(o));
+    return offers.map(o => new VolunteerOffer(o));
   }
 
   /**
@@ -148,7 +153,7 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
         csrRep: true,
       },
     });
-    return new VolunteerOfferEntity(offer);
+    return new VolunteerOffer(offer);
   }
 
   /**
@@ -166,7 +171,7 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
         csrRep: true,
       },
     });
-    return new VolunteerOfferEntity(offer);
+    return new VolunteerOffer(offer);
   }
 
   /**
@@ -177,24 +182,4 @@ export class VolunteerOfferEntity implements PrismaVolunteerOffer {
     return true;
   }
 
-  /**
-   * Count offers by CSR Rep
-   */
-  static async countByCSRRep(csrRepId: string): Promise<number> {
-    return prisma.volunteerOffer.count({ where: { csrRepId } });
-  }
-
-  /**
-   * Count offers by request
-   */
-  static async countByRequest(requestId: string): Promise<number> {
-    return prisma.volunteerOffer.count({ where: { requestId } });
-  }
-
-  /**
-   * Count offers by status
-   */
-  static async countByStatus(status: OfferStatus): Promise<number> {
-    return prisma.volunteerOffer.count({ where: { status } });
-  }
 }

@@ -1,6 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { PINEntity } from '../../entities/PIN.entity';
-import { MatchEntity } from '../../entities/Match.entity';
+import { Match } from '../../entities/Match.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -13,14 +12,21 @@ export class ViewMatchesController {
     try {
       const userId = req.user!.userId;
 
-      const pin = await PINEntity.findByUserId(userId);
-      if (!pin) {
-        throw new AppError('PIN profile not found', 404);
-      }
+      const matches = await Match.searchByPIN(userId, null);
 
-      const matches = await MatchEntity.findByPIN(pin.id, 1, 100);
+      // Calculate statistics
+      const total = matches.length;
+      const active = matches.filter(m => m.status === 'ACTIVE').length;
+      const completed = matches.filter(m => m.status === 'COMPLETED').length;
+      const cancelled = matches.filter(m => m.status === 'CANCELLED').length;
 
-      res.json({ matches });
+      res.json({ 
+        matches,
+        total,
+        active,
+        completed,
+        cancelled
+      });
     } catch (error) {
       next(error);
     }

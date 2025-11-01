@@ -1,13 +1,11 @@
 import { Response, NextFunction } from 'express';
-import { CSRRepEntity } from '../../entities/CSRRep.entity';
-import { RequestEntity } from '../../entities/Request.entity';
-import { VolunteerOfferEntity } from '../../entities/VolunteerOffer.entity';
-import { NotificationEntity } from '../../entities/Notification.entity';
-import { PINEntity } from '../../entities/PIN.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
+import { Request } from '../../entities/Request.entity';
+import { VolunteerOffer } from '../../entities/VolunteerOffer.entity';
+import { Notification } from '../../entities/Notification.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
-import { OfferStatus, RequestStatus, NotificationType } from '@prisma/client';
-import { prisma } from '../../config/database';
+import { RequestStatus, NotificationType } from '@prisma/client';
 
 /**
  * Controller for submitting a volunteer offer to a request
@@ -19,14 +17,13 @@ export class SubmitOfferController {
       const userId = req.user!.userId;
       const { requestId, message } = req.body;
 
-      // Get CSR Rep profile
-
-      const csrRep = await CSRRepEntity.findByUserId(userId);
-      if (!csrRep) {
+      // Get CSR Rep profile for companyName in notification
+      const user = await UserAccount.findByUserIdWithProfileName(userId, 'CSR Representative');
+      if (!user) {
         throw new AppError('CSR Rep profile not found', 404);
       }
 
-      const request = await RequestEntity.findById(requestId);
+      const request = await Request.findById(requestId);
       if (!request) {
         throw new AppError('Request not found', 404);
       }
@@ -36,51 +33,28 @@ export class SubmitOfferController {
       }
 
       // Get PIN for notification
-      const pin = await PINEntity.findById(request.pinId);
-      if (!pin) {
+      const pinUser = await UserAccount.findById(request.pinId);
+      if (!pinUser) {
         throw new AppError('PIN not found', 404);
       }
 
-      const offers = await VolunteerOfferEntity.findByCSRRep(csrRep.id, 1, 1000);
-      const existingOffer = offers.find(o => o.requestId === requestId);
-      if (existingOffer) {
+      const exists = await VolunteerOffer.exists(userId, requestId);
+      if (exists) {
         throw new AppError('Offer already submitted', 409);
       }
 
       // Create offer
-      const offer = await prisma.$transaction(async (tx) => {
-        const newOffer = await tx.volunteerOffer.create({
-          data: {
-            csrRepId: csrRep.id,
-            requestId,
-            message,
-            status: OfferStatus.PENDING,
-          },
-          include: {
-            csrRep: {
-              select: {
-                companyName: true,
-                contactPerson: true,
-              },
-            },
-            request: {
-              include: {
-                category: true,
-              },
-            },
-          },
-        });
+      const offer = await VolunteerOffer.create({
+        csrRepId: userId,
+        requestId,
+        message,
+      });
 
-        // Create notification for PIN
-        await tx.notification.create({
-          data: {
-            userId: pin.userId,
-            type: 'VOLUNTEER_OFFER',
-            message: `${csrRep.companyName} has offered to help with your request: ${request.title}`,
-          },
-        });
-
-        return newOffer;
+      // Create notification (supplementary logic)
+      await Notification.create({
+        userId: pinUser.id,
+        type: NotificationType.VOLUNTEER_OFFER,
+        message: `${user.companyName} has offered to help with your request: ${request.title}`,
       });
 
       res.status(201).json({

@@ -25,21 +25,26 @@ const LoginPage: React.FC = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      // Redirect based on user type
-      switch (data.user.userType) {
-        case 'PIN':
+      // Redirect based on user role
+      const role = data.user.role;
+      console.log('Login response:', data); // Debug log
+      console.log('User role:', role);
+      
+      switch (role) {
+        case 'Person in Need':
           navigate('/pin/dashboard');
           break;
-        case 'CSR_REP':
+        case 'CSR Representative':
           navigate('/csr/dashboard');
           break;
-        case 'PLATFORM_MANAGER':
+        case 'Platform Manager':
           navigate('/platform-manager/dashboard');
           break;
-        case 'ADMIN':
+        case 'User Administrator':
           navigate('/admin/dashboard');
           break;
         default:
+          console.log('Unknown role:', role);
           navigate('/');
       }
     },

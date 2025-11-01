@@ -1,12 +1,11 @@
 import { Response, NextFunction } from 'express';
-import { ServiceCategoryEntity } from '../../entities/ServiceCategory.entity';
+import { RequestCategory } from '../../entities/RequestCategory.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
-import { prisma } from '../../config/database';
 
 /**
- * Controller for deleting a service category
- * User Story #38: Delete service category
+ * Controller for deleting a request category
+ * User Story #38: Delete request category
  */
 export class DeleteCategoryController {
   static async handle(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
@@ -15,16 +14,16 @@ export class DeleteCategoryController {
 
       // Check if category exists
 
-      const category = await ServiceCategoryEntity.findById(id);
+      const category = await RequestCategory.findById(id);
 
       if (!category) {
         throw new AppError('Category not found', 404);
       }
 
-      await ServiceCategoryEntity.delete(id);
+      await RequestCategory.delete(id);
 
       res.json({
-        message: 'Service category deleted successfully',
+        message: 'Request category deleted successfully',
       });
     } catch (error) {
       next(error);

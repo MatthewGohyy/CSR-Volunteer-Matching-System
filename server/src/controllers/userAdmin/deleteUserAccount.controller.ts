@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserEntity } from '../../entities/User.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -12,12 +12,12 @@ export class DeleteUserAccountController {
     try {
       const { id } = req.params;
 
-      const user = await UserEntity.findById(id);
+      const user = await UserAccount.findById(id);
       if (!user) {
         throw new AppError('User not found', 404);
       }
 
-      await UserEntity.delete(id);
+      await UserAccount.delete(id);
 
       res.json({ message: 'User deleted successfully' });
     } catch (error) {

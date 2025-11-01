@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { CSRRepEntity } from '../../entities/CSRRep.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -13,13 +13,6 @@ export class UpdateProfileController {
       const userId = req.user!.userId;
       const { industry, contactPerson, phoneNumber, companyAddress, companyLogo } = req.body;
 
-      // Get CSR Rep profile
-
-      const csrRep = await CSRRepEntity.findByUserId(userId);
-      if (!csrRep) {
-        throw new AppError('CSR Rep profile not found', 404);
-      }
-
       const updateData: any = {};
       if (industry) updateData.industry = industry;
       if (contactPerson) updateData.contactPerson = contactPerson;
@@ -27,7 +20,7 @@ export class UpdateProfileController {
       if (companyAddress) updateData.companyAddress = companyAddress;
       if (companyLogo) updateData.companyLogo = companyLogo;
 
-      const updated = await CSRRepEntity.updateByUserId(userId, updateData);
+      const updated = await UserAccount.updateCSRRepProfile(userId, updateData);
 
       res.json({
         message: 'Profile updated successfully',

@@ -38,20 +38,42 @@ This project uses **PostgreSQL** as the database with **Prisma ORM** for type-sa
 
 ### 👤 Users & Authentication
 
-#### User (Main Authentication Table)
-**Purpose:** Base user model for authentication across all user types
+#### UserAccount (Main Authentication Table)
+**Purpose:** Base user account model for authentication and personal information
 
 **Fields:**
 - `id` - UUID (Primary Key)
 - `email` - String (Unique)
 - `password` - String (Bcrypt hashed)
-- `userType` - Enum: `PIN`, `CSR_REP`, `ADMIN`, `PLATFORM_MANAGER`
-- `status` - Enum: `ACTIVE`, `SUSPENDED`, `DEACTIVATED`
+- `name` - String
+- `phoneNumber` - String (Optional)
+- `address` - String (Optional)
+- `dateOfBirth` - DateTime (Optional)
+- `status` - Enum: `ACTIVE`, `SUSPENDED`, `DELETED`
+- `userProfileId` - UUID (Foreign Key → UserProfile)
 - `createdAt`, `updatedAt` - Timestamps
 
 **Relations:**
+- Many-to-one with UserProfile (role definition)
 - One-to-one with PIN, CSRRep, or PlatformManager profile
 - One-to-many with Notifications
+
+#### UserProfile (Role Definition Table)
+**Purpose:** Defines user roles and permissions (exactly 4 static records)
+
+**Fields:**
+- `id` - UUID (Primary Key)
+- `role` - Enum (Unique): `PIN`, `CSR_REP`, `USER_ADMIN`, `PLATFORM_MANAGER`
+- `name` - String (e.g., "Person in Need", "CSR Representative")
+- `description` - String (Optional)
+- `permissions` - JSON (Optional - for future RBAC)
+- `isActive` - Boolean (Default: true)
+- `createdAt`, `updatedAt` - Timestamps
+
+**Relations:**
+- One-to-many with UserAccount
+
+**Note:** This table contains exactly 4 records (one for each role). New users reference one of these records via `userProfileId`.
 
 ---
 
@@ -62,7 +84,7 @@ This project uses **PostgreSQL** as the database with **Prisma ORM** for type-sa
 
 **Fields:**
 - `id` - UUID (Primary Key)
-- `userId` - UUID (Foreign Key → User, Unique)
+- `userAccountId` - UUID (Foreign Key → UserAccount, Unique)
 - `name` - String
 - `age` - Integer (Optional)
 - `location` - String (Optional)
@@ -82,7 +104,7 @@ This project uses **PostgreSQL** as the database with **Prisma ORM** for type-sa
 
 **Fields:**
 - `id` - UUID (Primary Key)
-- `userId` - UUID (Foreign Key → User, Unique)
+- `userAccountId` - UUID (Foreign Key → UserAccount, Unique)
 - `companyName` - String
 - `companyRegistrationNumber` - String (Unique)
 - `industry` - String (Optional)
@@ -104,7 +126,7 @@ This project uses **PostgreSQL** as the database with **Prisma ORM** for type-sa
 
 **Fields:**
 - `id` - UUID (Primary Key)
-- `userId` - UUID (Foreign Key → User, Unique)
+- `userAccountId` - UUID (Foreign Key → UserAccount, Unique)
 - `fullName` - String
 - `department` - String (Optional)
 - `phone` - String (Optional)
@@ -243,10 +265,11 @@ This project uses **PostgreSQL** as the database with **Prisma ORM** for type-sa
 ## Entity Relationships
 
 ```
-User (1) ──── (0..1) PIN
-User (1) ──── (0..1) CSRRep
-User (1) ──── (0..1) PlatformManager
-User (1) ──── (0..*) Notification
+UserProfile (1) ──── (0..*) UserAccount
+UserAccount (1) ──── (0..1) PIN
+UserAccount (1) ──── (0..1) CSRRep
+UserAccount (1) ──── (0..1) PlatformManager
+UserAccount (1) ──── (0..*) Notification
 
 PIN (1) ──── (0..*) Request
 PIN (1) ──── (0..*) Match
@@ -266,16 +289,23 @@ Request (1) ──── (0..1) Match
 
 ## Enums
 
-### UserType
+### UserProfileRole (New!)
 - `PIN` - Person In Need
 - `CSR_REP` - CSR Representative
-- `ADMIN` - Administrator
+- `USER_ADMIN` - User Administrator
 - `PLATFORM_MANAGER` - Platform Manager
 
-### UserStatus & ProfileStatus
+**Note:** Only 4 records exist in UserProfile table with these roles.
+
+### UserStatus
 - `ACTIVE` - Normal operation
 - `SUSPENDED` - Temporarily restricted
-- `DEACTIVATED` - Permanently disabled
+- `DELETED` - Permanently deleted (changed from DEACTIVATED)
+
+### ProfileStatus
+- `ACTIVE` - Normal operation
+- `SUSPENDED` - Temporarily restricted
+- `DELETED` - Permanently deleted
 
 ### RequestStatus
 - `ACTIVE` - Open for offers
@@ -370,4 +400,23 @@ DATABASE_URL="postgresql://csr_user:csr_password@localhost:5432/csr_db"
 
 ---
 
-**Last Updated:** October 21, 2025
+---
+
+## 🔄 Schema Refactoring (October 2025)
+
+### Major Changes:
+1. **User → UserAccount**: Renamed for clarity
+2. **UserProfile Table Added**: Separates role definition from user accounts
+3. **UserType → UserProfileRole**: Changed enum name
+4. **Relationship Change**: UserAccount now references UserProfile (many-to-one)
+5. **Status Enum Update**: `DEACTIVATED` → `DELETED`
+
+### Benefits:
+- **Clear Separation**: User identity vs. role/authorization
+- **Scalability**: Easy to add new roles
+- **Maintainability**: Role permissions in one place
+- **Data Integrity**: Foreign key ensures valid roles
+
+---
+
+**Last Updated:** October 28, 2025

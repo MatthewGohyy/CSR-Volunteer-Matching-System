@@ -1,6 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { PINEntity } from '../../entities/PIN.entity';
-import { RequestEntity } from '../../entities/Request.entity';
+import { Request as ExpressRequest, Response, NextFunction } from 'express';
+import { Request } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -9,25 +8,20 @@ import { AppError } from '../../middleware/errorHandler';
  * Story #18: As a PIN, I want to delete my request so that I no longer get matched with a CSR Representative.
  */
 export class DeleteRequestController {
-  static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user!.userId;
       const { id } = req.params;
 
-      const pin = await PINEntity.findByUserId(userId);
-      if (!pin) {
-        throw new AppError('PIN profile not found', 404);
-      }
-
-      const existingRequest = await RequestEntity.findById(id);
+      const existingRequest = await Request.findById(id);
       if (!existingRequest) {
         throw new AppError('Request not found', 404);
       }
-      if (existingRequest.pinId !== pin.id) {
+      if (existingRequest.pinId !== userId) {
         throw new AppError('Unauthorized to delete this request', 403);
       }
 
-      await RequestEntity.delete(id);
+      await Request.delete(id);
 
       res.json({ message: 'Request deleted successfully' });
     } catch (error) {

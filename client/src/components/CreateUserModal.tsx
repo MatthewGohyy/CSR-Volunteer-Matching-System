@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { X, User, Building2, Mail, Lock, Phone, MapPin, Calendar, Settings } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { X, User, Building2, Mail, Lock, Phone, MapPin, Calendar, Settings, Shield } from 'lucide-react';
 import api from '../config/api';
-import { CreateUserData, AdminUser } from '../types';
+import { CreateUserData, AdminUser, UserProfile } from '../types';
 
 interface CreateUserModalProps {
   onClose: () => void;
@@ -10,29 +10,39 @@ interface CreateUserModalProps {
 }
 
 const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess }) => {
-  const [formData, setFormData] = useState<CreateUserData>({
+  const [formData, setFormData] = useState<any>({
     email: '',
     password: '',
-    userType: 'PIN',
-    // PIN fields
+    userProfileId: '',
     name: '',
+    // Additional fields
     age: undefined,
     location: '',
     phoneNumber: '',
     accessibilityNeeds: '',
-    // CSR Rep fields
     companyName: '',
     companyRegistrationNumber: '',
     industry: '',
     contactPerson: '',
     companyAddress: '',
-    // Platform Manager fields
-    fullName: '',
     department: '',
-    phone: '',
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // Fetch available profiles
+  const { data: profilesData } = useQuery({
+    queryKey: ['admin-profiles'],
+    queryFn: async () => {
+      const response = await api.get<{ profiles: UserProfile[] }>('/admin/profiles');
+      return response.data;
+    },
+  });
+  
+  const profiles = profilesData?.profiles || [];
+  
+  // Get selected profile to determine which fields to show
+  const selectedProfile = profiles.find(p => p.id === formData.userProfileId);
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: CreateUserData): Promise<AdminUser> => {
@@ -51,7 +61,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
     
     // Clear specific field error when user starts typing
     if (errors[name]) {
@@ -74,35 +84,13 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
-
-    // PIN specific validation
-    if (formData.userType === 'PIN') {
-      if (!formData.name?.trim()) {
-        newErrors.name = 'Name is required';
-      }
+    
+    if (!formData.userProfileId) {
+      newErrors.userProfileId = 'Please select a user profile';
     }
 
-    // CSR Rep specific validation
-    if (formData.userType === 'CSR_REP') {
-      if (!formData.companyName?.trim()) {
-        newErrors.companyName = 'Company name is required';
-      }
-      if (!formData.companyRegistrationNumber?.trim()) {
-        newErrors.companyRegistrationNumber = 'Company registration number is required';
-      }
-      if (!formData.contactPerson?.trim()) {
-        newErrors.contactPerson = 'Contact person is required';
-      }
-      if (!formData.phoneNumber?.trim()) {
-        newErrors.phoneNumber = 'Phone number is required';
-      }
-    }
-
-    // Platform Manager specific validation
-    if (formData.userType === 'PLATFORM_MANAGER') {
-      if (!formData.fullName?.trim()) {
-        newErrors.fullName = 'Full name is required';
-      }
+    if (!formData.name?.trim()) {
+      newErrors.name = 'Name is required';
     }
 
     setErrors(newErrors);
@@ -118,31 +106,25 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
 
     setErrors({});
     
-    // Prepare data based on user type
-    const submitData: CreateUserData = {
+    // Prepare data - send all form data
+    const submitData: any = {
       email: formData.email,
       password: formData.password,
-      userType: formData.userType,
+      userProfileId: formData.userProfileId,
+      name: formData.name,
+      ...(formData.age && { age: parseInt(formData.age.toString()) }),
+      ...(formData.location && { location: formData.location }),
+      ...(formData.phoneNumber && { phoneNumber: formData.phoneNumber }),
+      ...(formData.accessibilityNeeds && { accessibilityNeeds: formData.accessibilityNeeds }),
+      ...(formData.companyName && { companyName: formData.companyName }),
+      ...(formData.companyRegistrationNumber && { companyRegistrationNumber: formData.companyRegistrationNumber }),
+      ...(formData.industry && { industry: formData.industry }),
+      ...(formData.contactPerson && { contactPerson: formData.contactPerson }),
+      ...(formData.companyAddress && { companyAddress: formData.companyAddress }),
+      ...(formData.fullName && { fullName: formData.fullName }),
+      ...(formData.department && { department: formData.department }),
+      ...(formData.phone && { phone: formData.phone }),
     };
-
-    if (formData.userType === 'PIN') {
-      submitData.name = formData.name;
-      submitData.age = formData.age ? parseInt(formData.age.toString()) : undefined;
-      submitData.location = formData.location;
-      submitData.phoneNumber = formData.phoneNumber;
-      submitData.accessibilityNeeds = formData.accessibilityNeeds;
-    } else if (formData.userType === 'CSR_REP') {
-      submitData.companyName = formData.companyName;
-      submitData.companyRegistrationNumber = formData.companyRegistrationNumber;
-      submitData.industry = formData.industry;
-      submitData.contactPerson = formData.contactPerson;
-      submitData.phoneNumber = formData.phoneNumber;
-      submitData.companyAddress = formData.companyAddress;
-    } else if (formData.userType === 'PLATFORM_MANAGER') {
-      submitData.fullName = formData.fullName;
-      submitData.department = formData.department;
-      submitData.phone = formData.phone;
-    }
 
     createUserMutation.mutate(submitData);
   };
@@ -168,66 +150,81 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
             </div>
           )}
 
-          {/* User Type Selection */}
+          {/* User Profile Selection - Aesthetic Card Layout */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              User Type
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Select User Profile *
             </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <label className={`relative flex items-center p-4 border rounded-lg cursor-pointer ${
-                formData.userType === 'PIN' ? 'border-primary-500 bg-primary-50' : 'border-gray-300'
-              }`}>
-                <input
-                  type="radio"
-                  name="userType"
-                  value="PIN"
-                  checked={formData.userType === 'PIN'}
-                  onChange={handleInputChange}
-                  className="sr-only"
-                />
-                <User className="h-5 w-5 text-primary-600 mr-3" />
-                <div>
-                  <div className="text-sm font-medium text-gray-900">Person in Need</div>
-                  <div className="text-sm text-gray-500">Individual seeking help</div>
-                </div>
-              </label>
-
-              <label className={`relative flex items-center p-4 border rounded-lg cursor-pointer ${
-                formData.userType === 'CSR_REP' ? 'border-primary-500 bg-primary-50' : 'border-gray-300'
-              }`}>
-                <input
-                  type="radio"
-                  name="userType"
-                  value="CSR_REP"
-                  checked={formData.userType === 'CSR_REP'}
-                  onChange={handleInputChange}
-                  className="sr-only"
-                />
-                <Building2 className="h-5 w-5 text-primary-600 mr-3" />
-                <div>
-                  <div className="text-sm font-medium text-gray-900">CSR Representative</div>
-                  <div className="text-sm text-gray-500">Corporate volunteer</div>
-                </div>
-              </label>
-
-              <label className={`relative flex items-center p-4 border rounded-lg cursor-pointer ${
-                formData.userType === 'PLATFORM_MANAGER' ? 'border-primary-500 bg-primary-50' : 'border-gray-300'
-              }`}>
-                <input
-                  type="radio"
-                  name="userType"
-                  value="PLATFORM_MANAGER"
-                  checked={formData.userType === 'PLATFORM_MANAGER'}
-                  onChange={handleInputChange}
-                  className="sr-only"
-                />
-                <Settings className="h-5 w-5 text-primary-600 mr-3" />
-                <div>
-                  <div className="text-sm font-medium text-gray-900">Platform Manager</div>
-                  <div className="text-sm text-gray-500">Platform administrator</div>
-                </div>
-              </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {profiles.map((profile) => (
+                <label
+                  key={profile.id}
+                  className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                    formData.userProfileId === profile.id
+                      ? 'border-primary-500 bg-primary-50 shadow-md'
+                      : 'border-gray-300 bg-white hover:border-primary-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="userProfileId"
+                    value={profile.id}
+                    checked={formData.userProfileId === profile.id}
+                    onChange={handleInputChange}
+                    className="sr-only"
+                  />
+                  <Shield className={`h-5 w-5 mr-3 ${
+                    formData.userProfileId === profile.id ? 'text-primary-600' : 'text-gray-400'
+                  }`} />
+                  <div className="flex-1">
+                    <div className={`text-sm font-medium ${
+                      formData.userProfileId === profile.id ? 'text-primary-900' : 'text-gray-900'
+                    }`}>
+                      {profile.name}
+                    </div>
+                    {profile.description && (
+                      <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                        {profile.description}
+                      </div>
+                    )}
+                  </div>
+                  {formData.userProfileId === profile.id && (
+                    <div className="absolute top-2 right-2">
+                      <div className="h-2 w-2 bg-primary-600 rounded-full"></div>
+                    </div>
+                  )}
+                </label>
+              ))}
             </div>
+            {errors.userProfileId && (
+              <p className="mt-2 text-sm text-red-600">{errors.userProfileId}</p>
+            )}
+          </div>
+
+          {/* Name Field */}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              Full Name *
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                id="name"
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={handleInputChange}
+                className={`block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 sm:text-sm ${
+                  errors.name
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
+                }`}
+                placeholder="Enter full name"
+              />
+            </div>
+            {errors.name && (
+              <p className="mt-2 text-sm text-red-600">{errors.name}</p>
+            )}
           </div>
 
           {/* Common Fields */}
@@ -283,116 +280,98 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
             </div>
           </div>
 
-          {/* PIN Specific Fields */}
-          {formData.userType === 'PIN' && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className={`block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 sm:text-sm ${
-                        errors.name
-                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                          : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
-                      }`}
-                      placeholder="Enter full name"
-                    />
-                  </div>
-                  {errors.name && (
-                    <p className="mt-2 text-sm text-red-600">{errors.name}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
-                    Age
-                  </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      id="age"
-                      name="age"
-                      type="number"
-                      min="1"
-                      max="120"
-                      value={formData.age || ''}
-                      onChange={handleInputChange}
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                      placeholder="Enter age"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
-                    Location
-                  </label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      id="location"
-                      name="location"
-                      type="text"
-                      value={formData.location}
-                      onChange={handleInputChange}
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                      placeholder="Enter location"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      type="tel"
-                      value={formData.phoneNumber}
-                      onChange={handleInputChange}
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                </div>
-              </div>
-
+          {/* Dynamic Profile-Specific Fields */}
+          {selectedProfile && (
+            <div className="border-t pt-4 mt-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">
+                {selectedProfile.name} Information
+              </h4>
               <div>
-                <label htmlFor="accessibilityNeeds" className="block text-sm font-medium text-gray-700 mb-2">
-                  Accessibility Needs
-                </label>
-                <textarea
-                  id="accessibilityNeeds"
-                  name="accessibilityNeeds"
-                  rows={3}
-                  value={formData.accessibilityNeeds}
-                  onChange={handleInputChange}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  placeholder="Describe any accessibility needs"
-                />
-              </div>
-            </>
-          )}
+              {/* Person in Need specific fields */}
+              {(selectedProfile.name === 'Person in Need' || selectedProfile.name === 'PIN') && (
+                <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
+                      Age
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        id="age"
+                        name="age"
+                        type="number"
+                        min="1"
+                        max="120"
+                        value={formData.age || ''}
+                        onChange={handleInputChange}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                        placeholder="Enter age"
+                      />
+                    </div>
+                  </div>
 
-          {/* CSR Rep Specific Fields */}
-          {formData.userType === 'CSR_REP' && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                  <div>
+                    <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+                      Location
+                    </label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        id="location"
+                        name="location"
+                        type="text"
+                        value={formData.location}
+                        onChange={handleInputChange}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                        placeholder="Enter location"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        type="tel"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                        placeholder="Enter phone number"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="accessibilityNeeds" className="block text-sm font-medium text-gray-700 mb-2">
+                      Accessibility Needs
+                    </label>
+                    <textarea
+                      id="accessibilityNeeds"
+                      name="accessibilityNeeds"
+                      rows={2}
+                      value={formData.accessibilityNeeds}
+                      onChange={handleInputChange}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      placeholder="Describe any accessibility needs"
+                    />
+                  </div>
+                </div>
+                </>
+              )}
+
+              {/* CSR Representative specific fields */}
+              {(selectedProfile.name === 'CSR Representative' || selectedProfile.name === 'CSR_REP') && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
                   <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
                     Company Name
                   </label>
@@ -526,72 +505,30 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onSuccess })
                   </div>
                 </div>
               </div>
-            </>
-          )}
+              </div>
+              )}
 
-          {/* Platform Manager Specific Fields */}
-          {formData.userType === 'PLATFORM_MANAGER' && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              {/* Platform Manager specific fields */}
+              {(selectedProfile.name === 'Platform Manager' || selectedProfile.name === 'PLATFORM_MANAGER') && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
+                      Department
+                    </label>
                     <input
-                      id="fullName"
-                      name="fullName"
+                      id="department"
+                      name="department"
                       type="text"
-                      value={formData.fullName}
+                      value={formData.department}
                       onChange={handleInputChange}
-                      className={`block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 sm:text-sm ${
-                        errors.fullName
-                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                          : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
-                      }`}
-                      placeholder="Enter full name"
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      placeholder="Enter department"
                     />
                   </div>
-                  {errors.fullName && (
-                    <p className="mt-2 text-sm text-red-600">{errors.fullName}</p>
-                  )}
                 </div>
-
-                <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
-                    Department
-                  </label>
-                  <input
-                    id="department"
-                    name="department"
-                    type="text"
-                    value={formData.department}
-                    onChange={handleInputChange}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    placeholder="Enter department"
-                  />
-                </div>
+              )}
               </div>
-
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    placeholder="Enter phone number"
-                  />
-                </div>
-              </div>
-            </>
+            </div>
           )}
 
           {/* Submit Buttons */}

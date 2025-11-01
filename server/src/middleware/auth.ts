@@ -1,13 +1,13 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request as ExpressRequest, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { UserType, UserStatus } from '@prisma/client';
-import { UserEntity } from '../entities/User.entity';
+import { UserStatus } from '@prisma/client';
+import { UserAccount } from '../entities/UserAccount.entity';
 
-export interface AuthRequest extends Request {
+export interface AuthRequest extends ExpressRequest {
   user?: {
     userId: string;
     email: string;
-    userType: UserType;
+    role: string; // Profile name (was UserProfileRole)
   };
 }
 
@@ -32,11 +32,11 @@ export const authenticate = async (
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
       userId: string;
       email: string;
-      userType: UserType;
+      role: string;
     };
 
     // Check if user account exists and is active
-    const user = await UserEntity.findById(decoded.userId);
+    const user = await UserAccount.findById(decoded.userId);
     
     if (!user) {
       res.status(401).json({ error: 'User account not found' });
@@ -51,10 +51,10 @@ export const authenticate = async (
       return;
     }
 
-    if (user.status === UserStatus.DEACTIVATED) {
+    if (user.status === UserStatus.DELETED) {
       res.status(403).json({ 
-        error: 'Account deactivated', 
-        message: 'Your account has been deactivated. Please contact support.' 
+        error: 'Account deleted', 
+        message: 'Your account has been deleted. Please contact support.' 
       });
       return;
     }
@@ -71,14 +71,14 @@ export const authenticate = async (
  * This only checks the USER TYPE, not the profile status
  * For profile-specific actions, use requireActiveProfile middleware
  */
-export const authorize = (...allowedRoles: UserType[]) => {
+export const authorize = (...allowedRoles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Authentication required' });
       return;
     }
 
-    if (!allowedRoles.includes(req.user.userType)) {
+    if (!allowedRoles.includes(req.user.role)) {
       res.status(403).json({ error: 'Insufficient permissions' });
       return;
     }
@@ -103,26 +103,15 @@ export const requireActiveProfile = async (
       return;
     }
 
-    const user = await UserEntity.findById(req.user.userId);
+    const user = await UserAccount.findById(req.user.userId);
     
     if (!user) {
       res.status(401).json({ error: 'User not found' });
       return;
     }
 
-    // Check profile status based on user type
-    const profile = user.getProfile();
-    
-    if (!profile) {
-      res.status(403).json({ 
-        error: 'Profile not found',
-        message: 'Your user profile is not set up. Please contact support.' 
-      });
-      return;
-    }
-
-    // Check if profile has a status field (it should after migration)
-    if ('status' in profile && profile.status !== 'ACTIVE') {
+    // Check profile status
+    if (user.profileStatus !== 'ACTIVE') {
       res.status(403).json({ 
         error: 'Profile suspended',
         message: 'Your profile has been suspended. You can login but cannot perform role-specific actions. Please contact support.' 

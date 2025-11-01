@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserEntity } from '../../entities/User.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
+import { UserProfile } from '../../entities/UserProfile.entity';
 import { hashPassword } from '../../utils/password';
 import { generateToken } from '../../utils/jwt';
 import { AppError } from '../../middleware/errorHandler';
-import { UserType, UserStatus } from '@prisma/client';
-import { prisma } from '../../config/database';
+import { UserStatus } from '@prisma/client';
 
 /**
  * Controller for PIN user registration
@@ -17,7 +17,7 @@ export class RegisterPINController {
       const { email, password, name, age, location, phoneNumber, accessibilityNeeds } = req.body;
 
       // Check if user already exists via Entity
-      const existingUser = await UserEntity.findByEmail(email);
+      const existingUser = await UserAccount.findByEmail(email);
       if (existingUser) {
         throw new AppError('Email already registered', 409);
       }
@@ -25,33 +25,32 @@ export class RegisterPINController {
       // Hash password
       const hashedPassword = await hashPassword(password);
 
-      // Create user and PIN profile
-      const user = await prisma.user.create({
-        data: {
-          email,
-          password: hashedPassword,
-          userType: UserType.PIN,
-          status: UserStatus.ACTIVE,
-          pin: {
-            create: {
-              name,
-              age,
-              location,
-              phoneNumber,
-              accessibilityNeeds,
-            },
-          },
-        },
-        include: {
-          pin: true,
-        },
+      // Get PIN profile via entity
+      const pinProfile = await UserProfile.findByName('Person in Need');
+
+      if (!pinProfile) {
+        throw new AppError('PIN profile not found', 404);
+      }
+
+      // Create user account with PIN fields
+      const user = await UserAccount.create({
+        email,
+        password: hashedPassword,
+        name,
+        userProfileId: pinProfile.id,
+        status: UserStatus.ACTIVE,
+        phoneNumber,
+        age,
+        location,
+        accessibilityNeeds,
       });
 
       // Generate token
+      const role = user.getRole();
       const token = generateToken({
         userId: user.id,
         email: user.email,
-        userType: user.userType,
+        role: role!,
       });
 
       res.status(201).json({
@@ -59,8 +58,8 @@ export class RegisterPINController {
         user: {
           id: user.id,
           email: user.email,
-          userType: user.userType,
-          profile: user.pin,
+          role,
+          name: user.name,
         },
         token,
       });

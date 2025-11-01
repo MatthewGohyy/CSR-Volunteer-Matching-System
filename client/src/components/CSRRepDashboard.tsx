@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Building2, LogOut, Search, Star, History, Eye, MapPin,
-  Calendar, AlertCircle, Clock, Bookmark, BookmarkCheck, X
+  Calendar, AlertCircle, Clock, X, Mail, Users
 } from 'lucide-react';
 import api from '../config/api';
 import type { User as UserType } from '../types';
+import CSROffersList from './CSROffersList';
+import MatchesList from './MatchesList';
+import SubmitOfferModal from './SubmitOfferModal';
 
 // Types
 interface Request {
@@ -17,14 +20,16 @@ interface Request {
     id: string;
     name: string;
   };
-  urgencyLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  urgency?: 'LOW' | 'MEDIUM' | 'HIGH';
+  urgencyLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
   location: string;
   preferredDate?: string;
-  status: 'PENDING' | 'MATCHED' | 'COMPLETED' | 'CANCELLED';
+  dateNeeded?: string | null;
+  status: 'PENDING' | 'ACTIVE' | 'MATCHED' | 'COMPLETED' | 'CANCELLED';
   viewCount: number;
   shortlistCount: number;
   createdAt: string;
-  pin: {
+  pin?: {
     name: string;
     location?: string;
   };
@@ -43,10 +48,12 @@ interface Shortlist {
 
 const CSRRepDashboard: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'browse' | 'shortlist' | 'history'>('browse');
+  const [activeTab, setActiveTab] = useState<'browse' | 'shortlist' | 'offers' | 'matches' | 'history'>('browse');
+  const [offerModalRequest, setOfferModalRequest] = useState<Request | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [urgencyFilter, setUrgencyFilter] = useState('');
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
 
   // Fetch user profile
   const { data: user, isLoading: userLoading } = useQuery({
@@ -62,10 +69,10 @@ const CSRRepDashboard: React.FC = () => {
     queryKey: ['available-requests', searchQuery, categoryFilter, urgencyFilter],
     queryFn: async (): Promise<RequestsResponse> => {
       const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
-      if (categoryFilter) params.append('category', categoryFilter);
+      if (searchQuery) params.append('query', searchQuery);
+      if (categoryFilter) params.append('categoryId', categoryFilter);
       if (urgencyFilter) params.append('urgency', urgencyFilter);
-      const response = await api.get<RequestsResponse>(`/csr/requests?${params.toString()}`);
+      const response = await api.get<RequestsResponse>(`/opportunities?${params.toString()}`);
       return response.data;
     },
     enabled: activeTab === 'browse',
@@ -77,7 +84,7 @@ const CSRRepDashboard: React.FC = () => {
     queryFn: async (): Promise<{ shortlist: Shortlist[]; total: number }> => {
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
-      const response = await api.get(`/csr/shortlist?${params.toString()}`);
+      const response = await api.get(`/organizations/shortlists?${params.toString()}`);
       return response.data;
     },
     enabled: activeTab === 'shortlist',
@@ -86,11 +93,16 @@ const CSRRepDashboard: React.FC = () => {
   // Fetch completed requests history
   const { data: historyData } = useQuery({
     queryKey: ['csr-history', searchQuery],
-    queryFn: async (): Promise<RequestsResponse> => {
+    queryFn: async (): Promise<{ matches: any[]; total: number }> => {
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
-      const response = await api.get<RequestsResponse>(`/csr/requests/history?${params.toString()}`);
-      return response.data;
+      const response = await api.get(`/organizations/requests/history?${params.toString()}`);
+      // Transform matches to requests for display
+      const matches = response.data.matches || [];
+      return {
+        matches,
+        total: matches.length,
+      };
     },
     enabled: activeTab === 'history',
   });
@@ -99,30 +111,61 @@ const CSRRepDashboard: React.FC = () => {
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const response = await api.get('/common/categories');
+      const response = await api.get('/opportunities/categories');
       return response.data.categories;
+    },
+  });
+
+  // Fetch submitted offers to track which requests already have offers
+  const { data: submittedOffers } = useQuery({
+    queryKey: ['csr-offers-list'],
+    queryFn: async () => {
+      const response = await api.get('/organizations/offers');
+      return response.data.offers || [];
+    },
+  });
+
+  // Create a set of request IDs that already have offers
+  const requestsWithOffers = new Set(
+    submittedOffers?.map((offer: any) => offer.requestId) || []
+  );
+
+  // Fetch shortlisted IDs
+  const { data: shortlistedIds } = useQuery({
+    queryKey: ['shortlisted-ids'],
+    queryFn: async (): Promise<string[]> => {
+      const response = await api.get('/organizations/shortlist/ids');
+      return response.data.shortlistedIds;
     },
   });
 
   // Save to shortlist mutation
   const saveToShortlistMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      await api.post('/csr/shortlist', { requestId });
+      await api.post('/organizations/shortlist', { requestId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['available-requests'] });
       queryClient.invalidateQueries({ queryKey: ['shortlist'] });
+      queryClient.invalidateQueries({ queryKey: ['shortlisted-ids'] });
+    },
+    onError: (error: any) => {
+      console.error('Error saving to shortlist:', error);
     },
   });
 
   // Remove from shortlist mutation
   const removeFromShortlistMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      await api.delete(`/csr/shortlist/${requestId}`);
+      await api.delete(`/organizations/shortlist/${requestId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['available-requests'] });
       queryClient.invalidateQueries({ queryKey: ['shortlist'] });
+      queryClient.invalidateQueries({ queryKey: ['shortlisted-ids'] });
+    },
+    onError: (error: any) => {
+      console.error('Error removing from shortlist:', error);
     },
   });
 
@@ -137,7 +180,6 @@ const CSRRepDashboard: React.FC = () => {
       LOW: 'bg-blue-100 text-blue-800',
       MEDIUM: 'bg-yellow-100 text-yellow-800',
       HIGH: 'bg-orange-100 text-orange-800',
-      CRITICAL: 'bg-red-100 text-red-800',
     };
     return colors[urgency as keyof typeof colors] || colors.LOW;
   };
@@ -166,9 +208,15 @@ const CSRRepDashboard: React.FC = () => {
   if (activeTab === 'browse') {
     displayRequests = requestsData?.requests || [];
   } else if (activeTab === 'shortlist') {
-    displayRequests = shortlistData?.shortlist.map(s => s.request) || [];
+    // Keep shortlist items with their IDs for modal access
+    displayRequests = shortlistData?.shortlist
+      ?.filter(s => s.request) // Filter out any null/undefined requests
+      .map(s => ({ ...s.request, shortlistId: s.id })) || [];
   } else if (activeTab === 'history') {
-    displayRequests = historyData?.requests || [];
+    // Transform matches to requests for display, keeping matchId for modal
+    displayRequests = historyData?.matches
+      ?.filter((m: any) => m.request)
+      .map((m: any) => ({ ...m.request, matchId: m.id })) || [];
   }
 
   return (
@@ -235,6 +283,34 @@ const CSRRepDashboard: React.FC = () => {
               </button>
               <button
                 onClick={() => {
+                  setActiveTab('offers');
+                  setSearchQuery('');
+                }}
+                className={`${
+                  activeTab === 'offers'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                My Offers
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('matches');
+                  setSearchQuery('');
+                }}
+                className={`${
+                  activeTab === 'matches'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Matches
+              </button>
+              <button
+                onClick={() => {
                   setActiveTab('history');
                   setSearchQuery('');
                 }}
@@ -289,7 +365,6 @@ const CSRRepDashboard: React.FC = () => {
                   <option value="LOW">Low</option>
                   <option value="MEDIUM">Medium</option>
                   <option value="HIGH">High</option>
-                  <option value="CRITICAL">Critical</option>
                 </select>
               </>
             )}
@@ -323,15 +398,32 @@ const CSRRepDashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Requests List */}
-        {isLoading ? (
+        {/* Tab Content */}
+        {activeTab === 'offers' ? (
+          <CSROffersList />
+        ) : activeTab === 'matches' ? (
+          <MatchesList userType="CSR_REP" />
+        ) : isLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           </div>
         ) : displayRequests.length > 0 ? (
           <div className="grid gap-4">
             {displayRequests.map((request) => (
-              <div key={request.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div 
+                key={request.id} 
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={(e) => {
+                  // Prevent clicking on star button from opening modal
+                  if ((e.target as HTMLElement).closest('button')) {
+                    return;
+                  }
+                  
+                  // For shortlist, use shortlistId; for history, use matchId; for browse, use request.id
+                  const idToUse = (request as any).shortlistId || (request as any).matchId || request.id;
+                  setSelectedRequestId(idToUse);
+                }}
+              >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{request.title}</h3>
@@ -341,8 +433,8 @@ const CSRRepDashboard: React.FC = () => {
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
                         {request.status}
                       </span>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUrgencyColor(request.urgencyLevel)}`}>
-                        {request.urgencyLevel}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUrgencyColor(request.urgency || request.urgencyLevel || 'MEDIUM')}`}>
+                        {request.urgency || request.urgencyLevel || 'MEDIUM'}
                       </span>
                       {request.category && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -356,22 +448,41 @@ const CSRRepDashboard: React.FC = () => {
                         <MapPin className="h-4 w-4 mr-1" />
                         {request.location}
                       </div>
-                      {request.preferredDate && (
+                      {(request.dateNeeded || request.preferredDate) && (
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
-                          {new Date(request.preferredDate).toLocaleDateString()}
+                          {new Date(request.dateNeeded || request.preferredDate!).toLocaleDateString()}
                         </div>
                       )}
                     </div>
 
-                    <div className="text-sm text-gray-600">
-                      <strong>Requested by:</strong> {request.pin.name}
-                      {request.pin.location && ` • ${request.pin.location}`}
-                    </div>
+                    {request.pin && (
+                      <div className="text-sm text-gray-600">
+                        <strong>Requested by:</strong> {request.pin.name}
+                        {request.pin.location && ` • ${request.pin.location}`}
+                      </div>
+                    )}
                   </div>
 
-                  {activeTab !== 'history' && request.status === 'PENDING' && (
-                    <div className="ml-4">
+                  {activeTab !== 'history' && request.status === 'ACTIVE' && (
+                    <div className="ml-4 flex gap-2">
+                      {requestsWithOffers.has(request.id) ? (
+                        <button
+                          disabled
+                          className="px-4 py-2 bg-gray-300 text-gray-600 rounded-md cursor-not-allowed text-sm font-medium"
+                          title="You already submitted an offer on this request"
+                        >
+                          ✓ Offer Submitted
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setOfferModalRequest(request)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+                          title="Submit volunteer offer"
+                        >
+                          Submit Offer
+                        </button>
+                      )}
                       {activeTab === 'shortlist' ? (
                         <button
                           onClick={() => removeFromShortlistMutation.mutate(request.id)}
@@ -379,16 +490,27 @@ const CSRRepDashboard: React.FC = () => {
                           className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-md"
                           title="Remove from shortlist"
                         >
-                          <BookmarkCheck className="h-5 w-5" />
+                          <Star className="h-5 w-5 fill-current" />
                         </button>
                       ) : (
                         <button
-                          onClick={() => saveToShortlistMutation.mutate(request.id)}
-                          disabled={saveToShortlistMutation.isPending}
-                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
-                          title="Save to shortlist"
+                          onClick={() => {
+                            const isShortlisted = shortlistedIds?.includes(request.id);
+                            if (isShortlisted) {
+                              removeFromShortlistMutation.mutate(request.id);
+                            } else {
+                              saveToShortlistMutation.mutate(request.id);
+                            }
+                          }}
+                          disabled={saveToShortlistMutation.isPending || removeFromShortlistMutation.isPending}
+                          className={`p-2 rounded-md transition-colors ${
+                            shortlistedIds?.includes(request.id)
+                              ? 'text-blue-600 hover:bg-blue-50'
+                              : 'text-gray-600 hover:bg-gray-100 hover:text-blue-600'
+                          }`}
+                          title={shortlistedIds?.includes(request.id) ? 'Remove from shortlist' : 'Save to shortlist'}
                         >
-                          <Bookmark className="h-5 w-5" />
+                          <Star className={`h-5 w-5 ${shortlistedIds?.includes(request.id) ? 'fill-current' : ''}`} />
                         </button>
                       )}
                     </div>
@@ -429,6 +551,14 @@ const CSRRepDashboard: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Submit Offer Modal */}
+      {offerModalRequest && (
+        <SubmitOfferModal
+          request={offerModalRequest}
+          onClose={() => setOfferModalRequest(null)}
+        />
+      )}
     </div>
   );
 };

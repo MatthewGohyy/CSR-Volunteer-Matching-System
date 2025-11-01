@@ -1,9 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
-import { PINEntity } from '../../entities/PIN.entity';
-import { RequestEntity } from '../../entities/Request.entity';
+import { Request as ExpressRequest, Response, NextFunction } from 'express';
+import { Request } from '../../entities/Request.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { RequestStatus, UrgencyLevel } from '@prisma/client';
-import { prisma } from '../../config/database';
 
 /**
  * Search My Requests Controller
@@ -11,34 +9,21 @@ import { prisma } from '../../config/database';
  * Story #19: As a PIN, I want to search my request so that I can quickly find a specific one.
  */
 export class SearchMyRequestsController {
-  static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async handle(req: ExpressRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user!.userId;
-      const { query, status, urgency } = req.query;
+      const { query, search, status, urgency } = req.query;
+      
+      // Support both 'query' and 'search' parameters (frontend uses 'search')
+      const searchQuery = query || search;
 
-      const pin = await PINEntity.findByUserId(userId);
-      if (!pin) {
-        throw new AppError('PIN profile not found', 404);
-      }
-
-      let requests;
-      if (status) {
-        requests = await RequestEntity.findByStatus(status as RequestStatus, 1, 100);
-        requests = requests.filter(r => r.pinId === pin.id);
-      } else if (urgency) {
-        requests = await RequestEntity.findByUrgency(urgency as UrgencyLevel, 1, 100);
-        requests = requests.filter(r => r.pinId === pin.id);
-      } else {
-        requests = await RequestEntity.findByPIN(pin.id, 1, 100);
-      }
-
-      if (query && typeof query === 'string') {
-        const lowerQuery = query.toLowerCase();
-        requests = requests.filter(r => 
-          r.title.toLowerCase().includes(lowerQuery) ||
-          r.description.toLowerCase().includes(lowerQuery)
-        );
-      }
+      const requests = await Request.searchByPIN(
+        userId,
+        typeof searchQuery === 'string' && searchQuery.trim() ? searchQuery : null,
+        typeof status === 'string' ? status as RequestStatus : undefined,
+        undefined, // categoryId not used in this controller
+        typeof urgency === 'string' ? urgency as UrgencyLevel : undefined
+      );
 
       res.json({ requests, total: requests.length });
     } catch (error) {

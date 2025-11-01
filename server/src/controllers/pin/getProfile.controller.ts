@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { PINEntity } from '../../entities/PIN.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -12,13 +12,23 @@ export class GetProfileController {
     try {
       const userId = req.user!.userId;
 
-      const pin = await PINEntity.findByUserId(userId);
-
-      if (!pin) {
+      const user = await UserAccount.findByUserIdWithProfileName(userId, 'Person in Need');
+      if (!user) {
         throw new AppError('PIN profile not found', 404);
       }
 
-      res.json({ profile: pin });
+      res.json({ 
+        profile: {
+          id: user.id,
+          name: user.name,
+          age: user.age,
+          location: user.location,
+          phoneNumber: user.phoneNumber,
+          accessibilityNeeds: user.accessibilityNeeds,
+          profilePhoto: user.profilePhoto,
+          status: user.profileStatus,
+        }
+      });
     } catch (error) {
       next(error);
     }

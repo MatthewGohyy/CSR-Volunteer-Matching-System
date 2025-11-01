@@ -9,7 +9,6 @@ import { GetProfileController } from '../controllers/platformManager/getProfile.
 import { UpdateProfileController } from '../controllers/platformManager/updateProfile.controller';
 import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validation';
-import { UserType } from '@prisma/client';
 import { body, param, query } from 'express-validator';
 
 const router = Router();
@@ -33,7 +32,7 @@ const categoryIdValidation = [
 ];
 
 // All routes require Platform Manager authentication
-router.use(authenticate, authorize(UserType.PLATFORM_MANAGER));
+router.use(authenticate, authorize('Platform Manager'));
 
 // Category management routes (Stories #35-#39)
 // Story #39: Search categories (must be before :id route to avoid conflicts)
@@ -41,7 +40,6 @@ router.get('/categories/search', SearchCategoriesController.handle);
 
 // Story #36: View categories
 router.get('/categories', ViewCategoriesController.handle);
-router.get('/categories/:id', validate(categoryIdValidation), ViewCategoriesController.handle);
 
 // Story #35: Create category
 router.post('/categories', validate(createCategoryValidation), CreateCategoryController.handle);

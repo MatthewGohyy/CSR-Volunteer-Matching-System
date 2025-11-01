@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserEntity } from '../../entities/User.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -12,12 +12,12 @@ export class SuspendUserAccountController {
     try {
       const { id } = req.params;
 
-      const existingUser = await UserEntity.findById(id);
+      const existingUser = await UserAccount.findById(id);
       if (!existingUser) {
         throw new AppError('User not found', 404);
       }
 
-      const user = await UserEntity.suspend(id);
+      const user = await UserAccount.suspend(id);
 
       res.json({
         message: 'User account suspended successfully',

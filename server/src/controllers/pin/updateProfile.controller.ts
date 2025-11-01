@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { PINEntity } from '../../entities/PIN.entity';
+import { UserAccount } from '../../entities/UserAccount.entity';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
 
@@ -13,11 +13,6 @@ export class UpdateProfileController {
       const userId = req.user!.userId;
       const { name, age, location, phoneNumber, accessibilityNeeds, profilePhoto } = req.body;
 
-      const pin = await PINEntity.findByUserId(userId);
-      if (!pin) {
-        throw new AppError('PIN profile not found', 404);
-      }
-
       const updateData: any = {};
       if (name) updateData.name = name;
       if (age !== undefined) updateData.age = age;
@@ -26,11 +21,20 @@ export class UpdateProfileController {
       if (accessibilityNeeds !== undefined) updateData.accessibilityNeeds = accessibilityNeeds;
       if (profilePhoto) updateData.profilePhoto = profilePhoto;
 
-      const updated = await PINEntity.updateByUserId(userId, updateData);
+      const updated = await UserAccount.updatePINProfile(userId, updateData);
 
       res.json({
         message: 'Profile updated successfully',
-        profile: updated,
+        profile: {
+          id: updated.id,
+          name: updated.name,
+          age: updated.age,
+          location: updated.location,
+          phoneNumber: updated.phoneNumber,
+          accessibilityNeeds: updated.accessibilityNeeds,
+          profilePhoto: updated.profilePhoto,
+          status: updated.profileStatus,
+        },
       });
     } catch (error) {
       next(error);

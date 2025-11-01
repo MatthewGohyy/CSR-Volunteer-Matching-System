@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AppError } from '../../middleware/errorHandler';
 import { AuthRequest } from '../../middleware/auth';
-import { prisma } from '../../config/database';
+import { UserAccount } from '../../entities/UserAccount.entity';
 
 /**
  * Update Platform Manager Profile Controller
@@ -14,25 +14,22 @@ export class UpdateProfileController {
       const userId = req.user!.userId;
       const { fullName, department, phone } = req.body;
 
-      // Get Platform Manager profile
-      const platformManager = await prisma.platformManager.findUnique({ where: { userId } });
-      if (!platformManager) {
-        throw new AppError('Platform Manager profile not found', 404);
-      }
+      const updateData: any = {};
+      if (fullName) updateData.name = fullName;
+      if (department) updateData.department = department;
+      if (phone) updateData.phoneNumber = phone;
 
-      // Update profile
-      const updated = await prisma.platformManager.update({
-        where: { id: platformManager.id },
-        data: {
-          ...(fullName && { fullName }),
-          ...(department && { department }),
-          ...(phone && { phone }),
-        },
-      });
+      const updated = await UserAccount.updatePlatformManagerProfile(userId, updateData);
 
       res.json({
         message: 'Profile updated successfully',
-        profile: updated,
+        profile: {
+          id: updated.id,
+          name: updated.name,
+          department: updated.department,
+          phoneNumber: updated.phoneNumber,
+          status: updated.profileStatus,
+        },
       });
     } catch (error) {
       next(error);

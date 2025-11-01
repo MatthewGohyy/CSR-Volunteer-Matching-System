@@ -1,12 +1,14 @@
 // User Types
-export type UserType = 'PIN' | 'CSR_REP' | 'ADMIN' | 'PLATFORM_MANAGER';
-export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
-export type ProfileStatus = 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
+export type UserRole = 'Person in Need' | 'CSR Representative' | 'User Administrator' | 'Platform Manager';
+export type UserType = UserRole; // Legacy alias
+export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+export type ProfileStatus = 'ACTIVE' | 'SUSPENDED';
 
 export interface User {
   id: string;
   email: string;
-  userType: UserType;
+  role: UserRole;
+  name?: string;
   status: UserStatus;
   createdAt: string;
   updatedAt: string;
@@ -50,7 +52,7 @@ export interface PlatformManagerProfile {
 export type RequestStatus = 'ACTIVE' | 'MATCHED' | 'COMPLETED' | 'CANCELLED';
 export type UrgencyLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 
-export interface ServiceCategory {
+export interface RequestCategory {
   id: string;
   name: string;
   description?: string;
@@ -74,7 +76,7 @@ export interface Request {
   shortlistCount: number;
   createdAt: string;
   updatedAt: string;
-  category?: ServiceCategory;
+  category?: RequestCategory;
   pin?: PINProfile;
 }
 
@@ -167,8 +169,8 @@ export interface AuthResponse {
   user: {
     id: string;
     email: string;
-    userType: UserType;
-    profile: PINProfile | CSRRepProfile | PlatformManagerProfile | null;
+    role: UserRole;
+    name?: string;
   };
   token: string;
 }
@@ -177,9 +179,10 @@ export interface AuthResponse {
 export interface CreateUserData {
   email: string;
   password: string;
-  userType: UserType;
-  // PIN specific fields
   name?: string;
+  userProfileId?: string;
+  role?: UserRole;
+  // PIN specific fields
   age?: number;
   location?: string;
   phoneNumber?: string;
@@ -196,7 +199,14 @@ export interface CreateUserData {
   phone?: string;
 }
 
-export interface AdminUser extends User {
+export interface AdminUser extends Omit<User, 'updatedAt' | 'name'> {
+  // Basic account fields
+  name?: string;
+  phoneNumber?: string;
+  address?: string;
+  dateOfBirth?: string;
+  updatedAt?: string;
+  
   pin?: {
     id: string;
     name: string;
@@ -231,5 +241,20 @@ export interface UsersResponse {
   total: number;
   page: number;
   limit: number;
+}
+
+// UserProfile types (dynamically created profiles)
+export interface UserProfile {
+  id: string;
+  name: string; // Unique identifier
+  description: string | null;
+  permissions: any; // JSON type
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserProfilesResponse {
+  profiles: UserProfile[];
 }
 

@@ -1,13 +1,13 @@
-import { Request as PrismaRequest, RequestStatus, UrgencyLevel, PIN, ServiceCategory } from '@prisma/client';
+import { Request as PrismaRequest, RequestStatus, UrgencyLevel, RequestCategory } from '@prisma/client';
 import { prisma } from '../config/database';
 
 /**
- * Request Entity Class
+ * Request Class
  * 
  * Represents a help request created by a PIN with business logic and CRUD methods.
  * Follows the BCE framework - Entity handles all database operations.
  */
-export class RequestEntity implements PrismaRequest {
+export class Request implements PrismaRequest {
   id: string;
   pinId: string;
   categoryId: string;
@@ -23,12 +23,12 @@ export class RequestEntity implements PrismaRequest {
   updatedAt: Date;
 
   // Related data
-  pin?: PIN;
-  category?: ServiceCategory;
+  category?: RequestCategory;
+  pin?: any; // UserAccount with profile data
 
   constructor(data: PrismaRequest & {
-    pin?: PIN;
-    category?: ServiceCategory;
+    category?: RequestCategory;
+    pin?: any;
   }) {
     this.id = data.id;
     this.pinId = data.pinId;
@@ -43,8 +43,8 @@ export class RequestEntity implements PrismaRequest {
     this.shortlistCount = data.shortlistCount;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
-    this.pin = data.pin;
     this.category = data.category;
+    this.pin = (data as any).pin;
   }
 
   /**
@@ -84,41 +84,34 @@ export class RequestEntity implements PrismaRequest {
   }
 
   /**
-   * Increment view count
+   * Serialize request for JSON response (ensures dates are formatted correctly)
    */
-  incrementViewCount(): number {
-    return this.viewCount + 1;
-  }
-
-  /**
-   * Increment shortlist count
-   */
-  incrementShortlistCount(): number {
-    return this.shortlistCount + 1;
+  toJSON() {
+    return {
+      id: this.id,
+      pinId: this.pinId,
+      categoryId: this.categoryId,
+      title: this.title,
+      description: this.description,
+      urgency: this.urgency,
+      dateNeeded: this.dateNeeded?.toISOString() || null,
+      location: this.location,
+      status: this.status,
+      viewCount: this.viewCount,
+      shortlistCount: this.shortlistCount,
+      createdAt: this.createdAt.toISOString(),
+      updatedAt: this.updatedAt.toISOString(),
+      category: this.category,
+      pin: this.pin ? {
+        name: this.pin.name,
+        location: this.pin.location || this.pin.address,
+      } : null,
+    };
   }
 
   // ============================================
   // CRUD Methods (Static) - Database Operations
   // ============================================
-
-  /**
-   * Find all requests with pagination
-   */
-  static async findAll(page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
-    const requests = await prisma.request.findMany({
-      skip,
-      take: limit,
-      include: {
-        pin: true,
-        category: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-    return requests.map(request => new RequestEntity(request));
-  }
 
   /**
    * Find request by ID
@@ -131,18 +124,72 @@ export class RequestEntity implements PrismaRequest {
         category: true,
       },
     });
-    return request ? new RequestEntity(request) : null;
+    return request ? new Request(request) : null;
   }
 
   /**
-   * Find requests by PIN
+   * Search requests by PIN with optional filters
+   * @param pinId - PIN ID
+   * @param query - Search query (null/undefined = return all)
+   * @param status - Request status filter (optional)
+   * @param categoryId - Category filter (optional)
+   * @param urgency - Urgency filter (optional)
    */
-  static async findByPIN(pinId: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
+  static async searchByPIN(
+    pinId: string,
+    query: string | null = null,
+    status?: RequestStatus,
+    categoryId?: string,
+    urgency?: UrgencyLevel
+  ) {
+    const where: any = { pinId };
+
+    // Add status filter if provided
+    if (status) {
+      where.status = status;
+    }
+
+    // Add urgency filter
+    if (urgency) {
+      where.urgency = urgency;
+    }
+
+    // Add category filter
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+
+    // Add search query filter if provided
+    if (query && query.trim()) {
+      const searchOrCondition = [
+        { title: { contains: query.trim(), mode: 'insensitive' } },
+        { description: { contains: query.trim(), mode: 'insensitive' } },
+        { location: { contains: query.trim(), mode: 'insensitive' } },
+      ];
+
+      // Build AND conditions array if we have status/urgency/category
+      if (status || urgency || categoryId) {
+        const andConditions: any[] = [
+          { pinId },
+          { OR: searchOrCondition },
+        ];
+
+        if (status) andConditions.push({ status });
+        if (urgency) andConditions.push({ urgency });
+        if (categoryId) andConditions.push({ categoryId });
+
+        where.AND = andConditions;
+        delete where.pinId;
+        delete where.status;
+        delete where.urgency;
+        delete where.categoryId;
+      } else {
+        where.OR = searchOrCondition;
+      }
+    }
+
     const requests = await prisma.request.findMany({
-      where: { pinId },
-      skip,
-      take: limit,
+      where,
       include: {
         pin: true,
         category: true,
@@ -151,7 +198,7 @@ export class RequestEntity implements PrismaRequest {
         createdAt: 'desc',
       },
     });
-    return requests.map(request => new RequestEntity(request));
+    return requests.map(request => new Request(request));
   }
 
   /**
@@ -171,27 +218,7 @@ export class RequestEntity implements PrismaRequest {
         createdAt: 'desc',
       },
     });
-    return requests.map(request => new RequestEntity(request));
-  }
-
-  /**
-   * Find requests by category
-   */
-  static async findByCategory(categoryId: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
-    const requests = await prisma.request.findMany({
-      where: { categoryId },
-      skip,
-      take: limit,
-      include: {
-        pin: true,
-        category: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-    return requests.map(request => new RequestEntity(request));
+    return requests.map(request => new Request(request));
   }
 
   /**
@@ -211,14 +238,7 @@ export class RequestEntity implements PrismaRequest {
         createdAt: 'desc',
       },
     });
-    return requests.map(request => new RequestEntity(request));
-  }
-
-  /**
-   * Find active requests
-   */
-  static async findActive(page: number = 1, limit: number = 10) {
-    return this.findByStatus(RequestStatus.ACTIVE, page, limit);
+    return requests.map(request => new Request(request));
   }
 
   /**
@@ -245,7 +265,7 @@ export class RequestEntity implements PrismaRequest {
         category: true,
       },
     });
-    return new RequestEntity(request);
+    return new Request(request);
   }
 
   /**
@@ -267,7 +287,7 @@ export class RequestEntity implements PrismaRequest {
         category: true,
       },
     });
-    return new RequestEntity(request);
+    return new Request(request);
   }
 
   /**
@@ -297,29 +317,62 @@ export class RequestEntity implements PrismaRequest {
   }
 
   /**
-   * Count requests by PIN
+   * Search requests with optional filters
+   * @param query - Search query (null/undefined = return all matching status)
+   * @param status - Request status filter (default: ACTIVE)
+   * @param categoryId - Category filter (optional)
+   * @param urgency - Urgency filter (optional)
    */
-  static async countByPIN(pinId: string): Promise<number> {
-    return prisma.request.count({
-      where: { pinId },
-    });
-  }
+  static async search(
+    query: string | null = null,
+    status: RequestStatus = RequestStatus.ACTIVE,
+    categoryId?: string,
+    urgency?: UrgencyLevel
+  ) {
+    const where: any = {
+      status, // Default to ACTIVE, but can be overridden
+    };
 
-  /**
-   * Search requests
-   */
-  static async search(query: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
+    // Add urgency filter
+    if (urgency) {
+      where.urgency = urgency;
+    }
+
+    // Add category filter
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+
+    // Add search query filter if provided
+    if (query && query.trim()) {
+      const searchOrCondition = [
+        { title: { contains: query.trim(), mode: 'insensitive' } },
+        { description: { contains: query.trim(), mode: 'insensitive' } },
+        { location: { contains: query.trim(), mode: 'insensitive' } },
+      ];
+
+      // Build AND conditions array to combine status + search + other filters
+      const andConditions: any[] = [
+        { status },
+        { OR: searchOrCondition },
+      ];
+
+      if (urgency) {
+        andConditions.push({ urgency });
+      }
+      if (categoryId) {
+        andConditions.push({ categoryId });
+      }
+
+      where.AND = andConditions;
+      // Remove the direct properties since we're using AND
+      delete where.status;
+      delete where.urgency;
+      delete where.categoryId;
+    }
+
     const requests = await prisma.request.findMany({
-      where: {
-        OR: [
-          { title: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
-          { location: { contains: query, mode: 'insensitive' } },
-        ],
-      },
-      skip,
-      take: limit,
+      where,
       include: {
         pin: true,
         category: true,
@@ -328,7 +381,7 @@ export class RequestEntity implements PrismaRequest {
         createdAt: 'desc',
       },
     });
-    return requests.map(request => new RequestEntity(request));
+    return requests.map(request => new Request(request));
   }
 
   /**
@@ -347,7 +400,7 @@ export class RequestEntity implements PrismaRequest {
         category: true,
       },
     });
-    return new RequestEntity(request);
+    return new Request(request);
   }
 
   /**
@@ -366,13 +419,7 @@ export class RequestEntity implements PrismaRequest {
         category: true,
       },
     });
-    return new RequestEntity(request);
+    return new Request(request);
   }
 
-  /**
-   * Change request status
-   */
-  static async changeStatus(id: string, status: RequestStatus) {
-    return this.update(id, { status });
-  }
 }
