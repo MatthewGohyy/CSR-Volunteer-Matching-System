@@ -1,5 +1,6 @@
 import { Shortlist as PrismaShortlist } from '@prisma/client';
 import { prisma } from '../config/database';
+import { Request } from './Request.entity';
 
 /**
  * Shortlist Class
@@ -83,6 +84,10 @@ export class Shortlist implements PrismaShortlist {
         csrRep: true,
       },
     });
+
+    // Increment shortlist count for the request
+    await Request.incrementShortlistCountDB(data.requestId);
+
     return new Shortlist(shortlist);
   }
 
