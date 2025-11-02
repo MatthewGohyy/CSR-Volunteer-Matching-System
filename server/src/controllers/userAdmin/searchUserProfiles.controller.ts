@@ -16,15 +16,26 @@ import { UserProfile } from '../../entities/UserProfile.entity';
 export class SearchUserProfilesController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { query } = req.query;
+      const { query, isActive } = req.query;
 
-      // Use entity search method (handles query, filters to active profiles only)
+      // Use entity search method (handles query and optional isActive filter)
       const searchQuery = typeof query === 'string' && query.trim() ? query.trim() : null;
+      
+      // Parse isActive filter - can be 'true', 'false', or undefined (all)
+      let isActiveFilter: boolean | undefined = undefined;
+      if (isActive !== undefined) {
+        if (typeof isActive === 'string') {
+          isActiveFilter = isActive.toLowerCase() === 'true';
+        } else if (typeof isActive === 'boolean') {
+          isActiveFilter = isActive;
+        }
+      }
 
-      const profiles = await UserProfile.search(searchQuery);
+      const profiles = await UserProfile.search(searchQuery, isActiveFilter);
 
       res.json({
         query: searchQuery,
+        isActive: isActiveFilter,
         profiles,
         total: profiles.length,
       });

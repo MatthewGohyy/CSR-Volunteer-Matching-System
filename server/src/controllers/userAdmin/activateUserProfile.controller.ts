@@ -1,34 +1,35 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccount } from '../../entities/UserAccount.entity';
+import { UserProfile } from '../../entities/UserProfile.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
  * Activate User Profile Controller
  * 
- * Activates a suspended user profile, allowing the user to perform role-specific tasks again.
+ * Activates a suspended user profile (role definition), allowing all users with this profile
+ * to perform role-specific tasks again.
  */
 export class ActivateUserProfileController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 
-      // Find the user
-      const user = await UserAccount.findById(id);
-      if (!user) {
-        throw new AppError('User not found', 404);
+      // Check if profile exists
+      const profile = await UserProfile.findById(id);
+      if (!profile) {
+        throw new AppError('Profile not found', 404);
       }
 
-      // Activate profile using the new consolidated method
-      await UserAccount.activateProfile(id);
+      // Check if already active
+      if (profile.isActive) {
+        throw new AppError('Profile is already active', 400);
+      }
+
+      // Activate profile by setting isActive to true
+      const updatedProfile = await UserProfile.update(id, { isActive: true });
 
       res.json({
-        message: 'User profile activated successfully',
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.getRole(),
-        },
+        message: 'User profile activated successfully. This role is now enabled for all users.',
+        profile: updatedProfile,
       });
     } catch (error) {
       next(error);

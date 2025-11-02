@@ -137,13 +137,16 @@ export class UserProfile implements PrismaUserProfile {
   /**
    * Search profiles by query string
    * Supports searching by name and description
-   * Filters to active profiles only
    * @param query - Search query string (optional)
+   * @param isActive - Filter by active status (optional, undefined = all profiles)
    */
-  static async search(query?: string | null) {
-    const where: any = {
-      isActive: true,
-    };
+  static async search(query?: string | null, isActive?: boolean | null) {
+    const where: any = {};
+
+    // Add isActive filter only if explicitly provided
+    if (isActive !== undefined && isActive !== null) {
+      where.isActive = isActive;
+    }
 
     if (query && query.trim()) {
       const searchOrCondition = [
@@ -151,11 +154,15 @@ export class UserProfile implements PrismaUserProfile {
         { description: { contains: query.trim(), mode: 'insensitive' } },
       ];
 
-      where.AND = [
-        { isActive: true },
-        { OR: searchOrCondition },
-      ];
-      delete where.isActive;
+      if (isActive !== undefined && isActive !== null) {
+        where.AND = [
+          { isActive },
+          { OR: searchOrCondition },
+        ];
+        delete where.isActive;
+      } else {
+        where.OR = searchOrCondition;
+      }
     }
 
     const profiles = await prisma.userProfile.findMany({

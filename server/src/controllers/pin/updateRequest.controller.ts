@@ -15,12 +15,9 @@ export class UpdateRequestController {
       const { title, description, urgency, dateNeeded, location, status } = req.body;
 
       const existingRequest = await Request.findById(id);
-      if (!existingRequest) {
-        throw new AppError('Request not found', 404);
-      }
-      if (existingRequest.pinId !== userId) {
-        throw new AppError('Unauthorized to update this request', 403);
-      }
+      // if (!existingRequest) {
+      //   throw new AppError('Request not found', 404);
+      // }
 
       const updateData: any = {};
       if (title) updateData.title = title;

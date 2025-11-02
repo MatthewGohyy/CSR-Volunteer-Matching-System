@@ -15,20 +15,24 @@ import {
   Settings
 } from 'lucide-react';
 import api from '../config/api';
-import { UserRole, UserStatus, AdminUser, UsersResponse, UserProfilesResponse } from '../types';
+import { UserRole, UserStatus, AdminUser, UsersResponse, UserProfilesResponse, UserProfile } from '../types';
 import CreateUserModal from './CreateUserModal';
 import CreateUserProfileModal from './CreateUserProfileModal';
 import UserDetailsModal from './UserDetailsModal';
+import UserProfileDetailsModal from './UserProfileDetailsModal';
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'accounts' | 'profiles'>('accounts');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'ALL'>('ALL');
+  const [profileStatusFilter, setProfileStatusFilter] = useState<boolean | 'ALL'>('ALL');
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
   const [showCreateProfileModal, setShowCreateProfileModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -44,9 +48,18 @@ const AdminDashboard: React.FC = () => {
 
   // Fetch user profiles (role definitions) - Direct API call to controller
   const { data: profilesData, isLoading: isLoadingProfiles, error: profilesError } = useQuery({
-    queryKey: ['admin-profiles', currentPage],
+    queryKey: ['admin-profiles', currentPage, profileStatusFilter, searchTerm],
     queryFn: async (): Promise<UserProfilesResponse> => {
-      const response = await api.get<UserProfilesResponse>(`/admin/profiles`);
+      const params = new URLSearchParams();
+      if (searchTerm.trim()) {
+        params.append('query', searchTerm.trim());
+      }
+      if (profileStatusFilter !== 'ALL') {
+        params.append('isActive', profileStatusFilter.toString());
+      }
+      const queryString = params.toString();
+      const url = `/admin/profiles${queryString ? `?${queryString}` : ''}`;
+      const response = await api.get<UserProfilesResponse>(url);
       return response.data;
     },
     enabled: activeTab === 'profiles',
@@ -70,11 +83,8 @@ const AdminDashboard: React.FC = () => {
     return matchesSearch && matchesStatus;
   }) || [];
 
-  // Filter profiles based on search (for profiles tab)
-  const filteredProfiles = activeProfilesData?.profiles.filter(profile => {
-    return profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (profile.description || '').toLowerCase().includes(searchTerm.toLowerCase());
-  }) || [];
+  // Profiles are already filtered server-side, use them directly
+  const filteredProfiles = activeProfilesData?.profiles || [];
 
 
   const getStatusColor = (status: UserStatus) => {
@@ -297,17 +307,32 @@ const AdminDashboard: React.FC = () => {
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
-                {/* Status Filter */}
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as UserStatus | 'ALL')}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="ALL">All Status</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="SUSPENDED">Suspended</option>
-                  <option value="DELETED">Deleted</option>
-                </select>
+                {/* Status Filter - Show different options for accounts vs profiles */}
+                {activeTab === 'accounts' ? (
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as UserStatus | 'ALL')}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="ALL">All Status</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="SUSPENDED">Suspended</option>
+                    <option value="DELETED">Deleted</option>
+                  </select>
+                ) : (
+                  <select
+                    value={profileStatusFilter === 'ALL' ? 'ALL' : profileStatusFilter.toString()}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setProfileStatusFilter(value === 'ALL' ? 'ALL' : value === 'true');
+                    }}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="ALL">All Status</option>
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                )}
               </div>
             </div>
           </div>
@@ -365,7 +390,22 @@ const AdminDashboard: React.FC = () => {
             ) : (
               // User Profiles (Role Definitions) List
               filteredProfiles.map((profile) => (
-                <li key={profile.id} className="px-4 py-4 sm:px-6">
+                <li 
+                  key={profile.id} 
+                  className="px-4 py-4 sm:px-6 hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={async () => {
+                    try {
+                      const response = await api.get<{ profile: UserProfile }>(`/admin/profiles/${profile.id}`);
+                      setSelectedProfile(response.data.profile);
+                      setShowProfileModal(true);
+                    } catch (error) {
+                      console.error('Failed to fetch profile:', error);
+                      // Fallback to using list data if fetch fails
+                      setSelectedProfile(profile);
+                      setShowProfileModal(true);
+                    }
+                  }}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
@@ -387,21 +427,8 @@ const AdminDashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {profile.isActive ? (
-                        <button
-                          onClick={() => {/* Handle suspend profile */}}
-                          className="text-orange-600 hover:text-orange-700 text-sm font-medium"
-                        >
-                          Suspend
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => {/* Handle activate profile */}}
-                          className="text-green-600 hover:text-green-700 text-sm font-medium"
-                        >
-                          Activate
-                        </button>
-                      )}
+                      <Eye className="h-4 w-4 text-gray-400" />
+                      <span className="text-xs text-gray-500">View Details</span>
                     </div>
                   </div>
                 </li>
@@ -494,6 +521,20 @@ const AdminDashboard: React.FC = () => {
           }}
           onUpdate={() => {
             queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+          }}
+        />
+      )}
+
+      {/* User Profile Details Modal */}
+      {showProfileModal && selectedProfile && (
+        <UserProfileDetailsModal
+          profile={selectedProfile}
+          onClose={() => {
+            setShowProfileModal(false);
+            setSelectedProfile(null);
+          }}
+          onUpdate={() => {
+            queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
           }}
         />
       )}

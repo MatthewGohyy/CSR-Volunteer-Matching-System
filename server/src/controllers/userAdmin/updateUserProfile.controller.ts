@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccount } from '../../entities/UserAccount.entity';
+import { UserProfile } from '../../entities/UserProfile.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -7,26 +7,47 @@ import { AppError } from '../../middleware/errorHandler';
  * 
  * Story #10: As a User Admin, I want to update a user profile so that the latest information is shown.
  * 
- * With the consolidated structure, updating a profile means updating the user account fields.
+ * Updates a role/profile definition (UserProfile entity), not individual user accounts.
  */
 export class UpdateUserProfileController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const profileData = req.body;
+      const { name, description, permissions, isActive } = req.body;
 
-      const user = await UserAccount.findById(id);
-
-      if (!user) {
-        throw new AppError('User not found', 404);
+      // Check if profile exists
+      const existingProfile = await UserProfile.findById(id);
+      if (!existingProfile) {
+        throw new AppError('Profile not found', 404);
       }
 
-      // Update user account with profile data
-      const updatedUser = await UserAccount.update(id, profileData);
+      // If name is being changed, check if new name already exists
+      if (name && name !== existingProfile.name) {
+        const nameExists = await UserProfile.findByName(name);
+        if (nameExists) {
+          throw new AppError('Profile with this name already exists', 409);
+        }
+      }
+
+      // Build update data (only include fields that are provided)
+      const updateData: Partial<{
+        name: string;
+        description: string;
+        permissions: any;
+        isActive: boolean;
+      }> = {};
+      
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (permissions !== undefined) updateData.permissions = permissions;
+      if (isActive !== undefined) updateData.isActive = isActive;
+
+      // Update profile
+      const updatedProfile = await UserProfile.update(id, updateData);
 
       res.json({
-        message: 'Profile updated successfully',
-        user: updatedUser.toJSON(),
+        message: 'User profile updated successfully',
+        profile: updatedProfile,
       });
     } catch (error) {
       next(error);

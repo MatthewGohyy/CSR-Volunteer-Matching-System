@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserAccount } from '../../entities/UserAccount.entity';
+import { UserProfile } from '../../entities/UserProfile.entity';
 import { AppError } from '../../middleware/errorHandler';
 
 /**
@@ -8,32 +8,32 @@ import { AppError } from '../../middleware/errorHandler';
  * Story #11: As a User Admin, I want to suspend a user profile 
  * so that the associated role or permissions are temporarily disabled.
  * 
- * NOTE: This suspends the USER PROFILE,
- * NOT the user account. A suspended profile means the user can still login
- * but cannot perform role-specific tasks.
+ * Suspends the UserProfile entity (role definition), which disables this role
+ * for all users who have this profile assigned. Users with suspended profiles
+ * cannot perform role-specific tasks but can still login.
  */
 export class SuspendUserProfileController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 
-      // Find the user
-      const user = await UserAccount.findById(id);
-      if (!user) {
-        throw new AppError('User not found', 404);
+      // Check if profile exists
+      const profile = await UserProfile.findById(id);
+      if (!profile) {
+        throw new AppError('Profile not found', 404);
       }
 
-      // Suspend profile using the new consolidated method
-      await UserAccount.suspendProfile(id);
+      // Check if already suspended
+      if (!profile.isActive) {
+        throw new AppError('Profile is already suspended', 400);
+      }
+
+      // Suspend profile by setting isActive to false
+      const updatedProfile = await UserProfile.update(id, { isActive: false });
 
       res.json({
-        message: 'User profile suspended successfully. User can still login but cannot perform role-specific tasks.',
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.getRole(),
-        },
+        message: 'User profile suspended successfully. This role is now disabled for all users.',
+        profile: updatedProfile,
       });
     } catch (error) {
       next(error);

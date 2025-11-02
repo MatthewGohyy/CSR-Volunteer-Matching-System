@@ -13,11 +13,8 @@ export class SaveRequestController {
       const userId = (req as any).user!.userId;
       const { requestId } = req.body;
 
-      const request = await Request.findById(requestId);
-      if (!request) throw new AppError('Request not found', 404);
-
       const exists = await Shortlist.exists(userId, requestId);
-      if (exists) throw new AppError('Request already shortlisted', 409);
+      // if (exists) throw new AppError('Request already shortlisted', 409);
 
       const shortlist = await Shortlist.create({
         csrRepId: userId,
