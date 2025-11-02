@@ -143,6 +143,12 @@ export class VolunteerOffer implements PrismaVolunteerOffer {
     requestId: string;
     message?: string;
   }) {
+    // Check if offer already exists
+    const exists = await this.exists(data.csrRepId, data.requestId);
+    if (exists) {
+      throw new Error('Offer already submitted');
+    }
+
     const offer = await prisma.volunteerOffer.create({
       data: {
         ...data,

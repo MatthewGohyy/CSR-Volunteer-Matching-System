@@ -418,6 +418,12 @@ export class UserAccount implements PrismaUserAccount {
     department?: string;
     profileStatus?: ProfileStatus;
   }) {
+    // Check if email already exists
+    const existingUser = await this.findByEmail(data.email);
+    if (existingUser) {
+      throw new Error('Email already registered');
+    }
+
     const user = await prisma.userAccount.create({
       data: {
         ...data,
@@ -456,6 +462,17 @@ export class UserAccount implements PrismaUserAccount {
     department: string;
     profileStatus: ProfileStatus;
   }>) {
+    // If email is being changed, check if new email already exists
+    if (data.email) {
+      const existingUser = await this.findById(id);
+      if (existingUser && data.email !== existingUser.email) {
+        const emailExists = await this.findByEmail(data.email);
+        if (emailExists) {
+          throw new Error('Email already in use');
+        }
+      }
+    }
+
     const user = await prisma.userAccount.update({
       where: { id },
       data,

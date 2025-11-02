@@ -13,26 +13,20 @@ export class ActivateUserProfileController {
     try {
       const { id } = req.params;
 
-      // Check if profile exists
-      const profile = await UserProfile.findById(id);
-      if (!profile) {
-        throw new AppError('Profile not found', 404);
-      }
-
-      // Check if already active
-      if (profile.isActive) {
-        throw new AppError('Profile is already active', 400);
-      }
-
-      // Activate profile by setting isActive to true
+      // Activate profile by setting isActive to true (existence check handled in update)
       const updatedProfile = await UserProfile.update(id, { isActive: true });
 
       res.json({
         message: 'User profile activated successfully. This role is now enabled for all users.',
         profile: updatedProfile,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message && error.message.includes('not found')) {
+        next(new AppError(error.message, 404));
+      } else {
+        next(error);
+      }
     }
   }
 }

@@ -12,14 +12,7 @@ export class CreateCategoryController {
     try {
       const { name, description, iconUrl } = req.body;
 
-      // Check if category with same name already exists
-      const allCategories = await RequestCategory.findAll();
-      const existingCategory = allCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
-
-      if (existingCategory) {
-        throw new AppError('Category with this name already exists', 409);
-      }
-
+      // Create category (validation handled in entity)
       const category = await RequestCategory.create({
         name,
         description,
@@ -31,8 +24,13 @@ export class CreateCategoryController {
         message: 'Request category created successfully',
         category,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message && error.message.includes('already exists')) {
+        next(new AppError(error.message, 409));
+      } else {
+        next(error);
+      }
     }
   }
 }

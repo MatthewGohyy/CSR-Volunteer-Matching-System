@@ -13,21 +13,7 @@ export class UpdateUserAccountController {
       const { id } = req.params;
       const { email, status } = req.body;
 
-      // Check if user exists
-      const existingUser = await UserAccount.findById(id);
-      if (!existingUser) {
-        throw new AppError('User not found', 404);
-      }
-
-      // Check if email is being changed and if it already exists
-      if (email && email !== existingUser.email) {
-        const emailExists = await UserAccount.findByEmail(email);
-        if (emailExists) {
-          throw new AppError('Email already in use', 409);
-        }
-      }
-
-      // Update user
+      // Update user (validation handled in entity)
       const updateData: any = {};
       if (email) updateData.email = email;
       if (status) updateData.status = status;
@@ -38,8 +24,14 @@ export class UpdateUserAccountController {
         message: 'User account updated successfully',
         user: user.toJSON(),
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message && (error.message.includes('not found') || error.message.includes('already'))) {
+        const statusCode = error.message.includes('not found') ? 404 : 409;
+        next(new AppError(error.message, statusCode));
+      } else {
+        next(error);
+      }
     }
   }
 }

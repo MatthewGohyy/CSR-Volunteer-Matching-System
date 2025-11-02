@@ -93,6 +93,12 @@ export class UserProfile implements PrismaUserProfile {
     permissions?: any;
     isActive?: boolean;
   }) {
+    // Check if profile with this name already exists
+    const existingProfile = await this.findByName(data.name);
+    if (existingProfile) {
+      throw new Error('Profile with this name already exists');
+    }
+
     const profile = await prisma.userProfile.create({
       data: {
         ...data,
@@ -111,6 +117,17 @@ export class UserProfile implements PrismaUserProfile {
     permissions: any;
     isActive: boolean;
   }>) {
+    // If name is being changed, check if new name already exists
+    if (data.name) {
+      const existingProfile = await this.findById(id);
+      if (existingProfile && data.name !== existingProfile.name) {
+        const nameExists = await this.findByName(data.name);
+        if (nameExists) {
+          throw new Error('Profile with this name already exists');
+        }
+      }
+    }
+
     const profile = await prisma.userProfile.update({
       where: { id },
       data,

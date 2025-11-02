@@ -14,16 +14,10 @@ export class CreateUserAccountController {
     try {
       const { email, password, userProfileId, name, ...profileData } = req.body;
 
-      // Check if user already exists
-      const existingUser = await UserAccount.findByEmail(email);
-      if (existingUser) {
-        throw new AppError('Email already registered', 409);
-      }
-
       // Hash password
       const hashedPassword = await hashPassword(password);
 
-      // Create user account with all profile fields
+      // Create user account with all profile fields (validation handled in entity)
       const user = await UserAccount.create({
         email,
         password: hashedPassword,
@@ -42,8 +36,13 @@ export class CreateUserAccountController {
           role: user.getRole(),
         },
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message && error.message.includes('already')) {
+        next(new AppError(error.message, 409));
+      } else {
+        next(error);
+      }
     }
   }
 }
