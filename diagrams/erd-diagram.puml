@@ -22,8 +22,7 @@ skinparam class {
 entity UserProfile {
     * id : UUID <<PK>>
     --
-    * role : UserProfileRole <<UNIQUE>>
-    * name : VARCHAR(100)
+    * name : VARCHAR(100) <<UNIQUE>>
     description : TEXT
     permissions : JSON
     * isActive : BOOLEAN
@@ -72,7 +71,7 @@ entity UserAccount {
 ' SERVICE MANAGEMENT
 ' ====================
 
-entity ServiceCategory {
+entity RequestCategory {
     * id : UUID <<PK>>
     --
     * name : VARCHAR(100) <<UNIQUE>>
@@ -173,8 +172,8 @@ UserAccount ||--o{ Shortlist : "saves (CSR)"
 UserAccount ||--o{ VolunteerOffer : "makes (CSR)"
 UserAccount ||--o{ Match : "provides help (CSR)"
 
-' ServiceCategory <-> Request (1:M)
-ServiceCategory ||--o{ Request : "categorizes"
+' RequestCategory <-> Request (1:M)
+RequestCategory ||--o{ Request : "categorizes"
 
 ' Request Relationships
 Request ||--o{ Shortlist : "saved by"

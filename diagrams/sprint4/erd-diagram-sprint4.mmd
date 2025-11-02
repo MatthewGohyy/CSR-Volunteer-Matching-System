@@ -1,7 +1,8 @@
 erDiagram
     %% ============================================
-    %% CSR Volunteer Matching System - ERD
-    %% Refactored Design with UserAccount/UserProfile
+    %% Sprint 4: History & Advanced Features (Complete System)
+    %% Duration: TBD
+    %% User Stories: #22, #23, #29, #30, #31, #32
     %% ============================================
 
     UserProfile ||--o{ UserAccount : "has role"
@@ -29,11 +30,11 @@ erDiagram
     UserAccount {
         uuid id PK "Primary Key"
         varchar email UK "Unique email"
-        varchar password "Bcrypt hashed"
+        varchar password "Hashed password"
         varchar name "Full name"
-        varchar phoneNumber
-        text address
-        date dateOfBirth
+        varchar phoneNumber "Contact number - nullable"
+        text address "Full address - nullable"
+        date dateOfBirth "Date of birth - nullable"
         enum status "ACTIVE, SUSPENDED, DELETED"
         uuid userProfileId FK "References UserProfile"
         int age "PIN field - nullable"
@@ -41,7 +42,7 @@ erDiagram
         text accessibilityNeeds "PIN field - nullable"
         varchar profilePhoto "PIN field - nullable"
         varchar companyName "CSR field - nullable"
-        varchar companyRegistrationNumber UK "CSR field - nullable"
+        varchar companyRegistrationNumber "CSR field - unique, nullable"
         varchar industry "CSR field - nullable"
         varchar contactPerson "CSR field - nullable"
         text companyAddress "CSR field - nullable"
@@ -98,7 +99,7 @@ erDiagram
 
     Match {
         uuid id PK "Primary Key"
-        uuid requestId FK_UK "References Request (Unique)"
+        uuid requestId UK FK "References Request (unique)"
         uuid csrRepId FK "References UserAccount (CSR role)"
         uuid pinId FK "References UserAccount (PIN role)"
         enum status "ACTIVE, COMPLETED, CANCELLED"

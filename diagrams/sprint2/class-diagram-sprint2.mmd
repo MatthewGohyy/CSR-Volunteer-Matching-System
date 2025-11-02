@@ -1,0 +1,110 @@
+classDiagram
+    %% ============================================
+    %% Sprint 2: Advanced User/Profile Management & Category Management
+    %% Duration: 19 Oct 2025 - 26 Oct 2025
+    %% User Stories: #4, #5, #7, #9, #10, #12, #35, #36, #37, #38, #39
+    %% ============================================
+
+    %% ============================================
+    %% ENUMS
+    %% ============================================
+    
+    class UserStatus {
+        <<enumeration>>
+        ACTIVE
+        SUSPENDED
+        DELETED
+    }
+
+    class ProfileStatus {
+        <<enumeration>>
+        ACTIVE
+        SUSPENDED
+        DEACTIVATED
+    }
+
+    %% ============================================
+    %% CORE AUTHENTICATION & AUTHORIZATION
+    %% ============================================
+
+    class UserAccount {
+        -UUID id
+        -String email
+        -String password
+        -String name
+        -String phoneNumber
+        -String address
+        -Date dateOfBirth
+        -UserStatus status
+        -UUID userProfileId
+        -DateTime createdAt
+        -DateTime updatedAt
+        -Integer age
+        -String location
+        -String accessibilityNeeds
+        -String profilePhoto
+        -String companyName
+        -String companyRegistrationNumber
+        -String industry
+        -String contactPerson
+        -String companyAddress
+        -String companyLogo
+        -String department
+        -ProfileStatus profileStatus
+        +isActive() Boolean
+        +isSuspended() Boolean
+        +isPIN() Boolean
+        +isCSRRep() Boolean
+        +isPlatformManager() Boolean
+        +findById(id)$ UserAccount
+        +findByEmail(email)$ UserAccount
+        +findByProfileName(name)$ UserAccount[]
+        +create(data)$ UserAccount
+        +update(id, data)$ UserAccount
+        +suspend(id)$ UserAccount
+        +activate(id)$ UserAccount
+    }
+
+    class UserProfile {
+        -UUID id
+        -String name
+        -String description
+        -JSON permissions
+        -Boolean isActive
+        -DateTime createdAt
+        -DateTime updatedAt
+        +hasPermission(permission) Boolean
+        +isActiveRole() Boolean
+        +findByName(name)$ UserProfile
+        +getAllProfiles()$ UserProfile[]
+    }
+
+    note for UserProfile "Only 4 static records exist:\nPIN, CSR_REP, USER_ADMIN, PLATFORM_MANAGER"
+    note for UserAccount "Single Table Inheritance Pattern:\n- All role-specific fields in ONE class\n- Role determined by userProfile reference\n- PIN users use: age, location, accessibilityNeeds\n- CSR users use: companyName, companyRegistrationNumber, etc\n- Platform Managers use: department\n- Unused fields are NULL for each user"
+
+    %% ============================================
+    %% CATEGORY MANAGEMENT (New in Sprint 2)
+    %% ============================================
+
+    class RequestCategory {
+        -UUID id
+        -String name
+        -String description
+        -String iconUrl
+        -Boolean isActive
+        -DateTime createdAt
+        -DateTime updatedAt
+        +isActive() Boolean
+        +findById(id)$ RequestCategory
+        +findAll()$ RequestCategory[]
+        +create(data)$ RequestCategory
+        +update(id, data)$ RequestCategory
+    }
+
+    %% ============================================
+    %% RELATIONSHIPS
+    %% ============================================
+    
+    UserProfile "1" --> "0..*" UserAccount : has role
+    UserAccount --> UserStatus : has status
+    UserAccount --> ProfileStatus : has profile status

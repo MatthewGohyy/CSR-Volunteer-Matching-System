@@ -1,7 +1,8 @@
 classDiagram
     %% ============================================
-    %% CSR Volunteer Matching System - Class Diagram
-    %% Refactored Design with UserAccount/UserProfile
+    %% Sprint 4: History & Advanced Features (Complete System)
+    %% Duration: TBD
+    %% User Stories: #22, #23, #29, #30, #31, #32
     %% ============================================
 
     %% ============================================
@@ -72,9 +73,11 @@ classDiagram
         -String name
         -String phoneNumber
         -String address
-        -DateTime dateOfBirth
+        -Date dateOfBirth
         -UserStatus status
         -UUID userProfileId
+        -DateTime createdAt
+        -DateTime updatedAt
         -Integer age
         -String location
         -String accessibilityNeeds
@@ -87,19 +90,11 @@ classDiagram
         -String companyLogo
         -String department
         -ProfileStatus profileStatus
-        -DateTime createdAt
-        -DateTime updatedAt
         +isActive() Boolean
         +isSuspended() Boolean
         +isPIN() Boolean
         +isCSRRep() Boolean
         +isPlatformManager() Boolean
-        +hasRole(role) Boolean
-        +getProfile() UserProfile
-        +isSenior() Boolean
-        +hasAccessibilityNeeds() Boolean
-        +hasLogo() Boolean
-        +toJSON() Object
         +findById(id)$ UserAccount
         +findByEmail(email)$ UserAccount
         +findByProfileName(name)$ UserAccount[]
@@ -163,14 +158,15 @@ classDiagram
         +isMatched() Boolean
         +isCompleted() Boolean
         +isUrgent() Boolean
-        +canBeUpdated() Boolean
         +incrementViewCount() void
         +incrementShortlistCount() void
+        +decrementShortlistCount() void
         +findById(id)$ Request
-        +findByPinId(pinId)$ Request[]
+        +findByPIN(pinId)$ Request[]
+        +search(query, filters)$ Request[]
         +create(data)$ Request
         +update(id, data)$ Request
-        +cancel(id)$ Request
+        +delete(id)$ Boolean
     }
 
     %% ============================================
@@ -182,10 +178,11 @@ classDiagram
         -UUID csrRepId
         -UUID requestId
         -DateTime createdAt
+        +getAgeInDays() Integer
+        +isRecent() Boolean
         +findById(id)$ Shortlist
-        +findByCsrRepId(csrRepId)$ Shortlist[]
         +create(data)$ Shortlist
-        +delete(id)$ void
+        +delete(id)$ Boolean
     }
 
     class VolunteerOffer {
@@ -199,9 +196,11 @@ classDiagram
         +isPending() Boolean
         +isAccepted() Boolean
         +isDeclined() Boolean
+        +hasMessage() Boolean
+        +getAgeInHours() Integer
         +findById(id)$ VolunteerOffer
-        +findByRequestId(requestId)$ VolunteerOffer[]
         +create(data)$ VolunteerOffer
+        +update(id, data)$ VolunteerOffer
         +accept(id)$ VolunteerOffer
         +decline(id)$ VolunteerOffer
     }
@@ -219,16 +218,15 @@ classDiagram
         +isActive() Boolean
         +isCompleted() Boolean
         +isCancelled() Boolean
-        +canBeCompleted() Boolean
+        +getDurationInDays() Integer
         +findById(id)$ Match
-        +findByPinId(pinId)$ Match[]
         +create(data)$ Match
         +complete(id)$ Match
         +cancel(id, reason)$ Match
     }
 
     %% ============================================
-    %% NOTIFICATIONS
+    %% NOTIFICATIONS (New in Sprint 4)
     %% ============================================
 
     class Notification {
@@ -249,16 +247,16 @@ classDiagram
     %% ============================================
     %% RELATIONSHIPS
     %% ============================================
-
-    %% Core Authentication
-    UserProfile "1" --> "0..*" UserAccount : has
+    
+    %% Core relationships
+    UserProfile "1" --> "0..*" UserAccount : has role
     UserAccount --> UserStatus : has status
     UserAccount --> ProfileStatus : has profile status
 
     %% UserAccount Relationships (role-based)
-    UserAccount "1" --> "0..*" Request : creates (when PIN role)
-    UserAccount "1" --> "0..*" Shortlist : saves (when CSR role)
-    UserAccount "1" --> "0..*" VolunteerOffer : makes (when CSR role)
+    UserAccount "1" --> "0..*" Request : creates (PIN role)
+    UserAccount "1" --> "0..*" Shortlist : saves (CSR role)
+    UserAccount "1" --> "0..*" VolunteerOffer : makes (CSR role)
     UserAccount "1" *-- "0..*" Match : provides help (CSR)
     UserAccount "1" *-- "0..*" Match : receives help (PIN)
 
@@ -276,6 +274,6 @@ classDiagram
     %% Volunteer Offer
     VolunteerOffer --> OfferStatus : has status
 
-    %% Notifications
+    %% Notification
     UserAccount "1" --> "0..*" Notification : receives
     Notification --> NotificationType : has type

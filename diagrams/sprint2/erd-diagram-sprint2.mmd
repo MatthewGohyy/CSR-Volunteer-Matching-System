@@ -1,0 +1,54 @@
+erDiagram
+    %% ============================================
+    %% Sprint 2: Advanced User/Profile Management & Category Management
+    %% Duration: 19 Oct 2025 - 26 Oct 2025
+    %% User Stories: #4, #5, #7, #9, #10, #12, #35, #36, #37, #38, #39
+    %% ============================================
+
+    UserProfile ||--o{ UserAccount : "has role"
+
+    UserProfile {
+        uuid id PK "Primary Key"
+        varchar name UK "Unique role name (4 records only)"
+        text description "Role description"
+        json permissions "Future RBAC"
+        boolean isActive "Is role active"
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    UserAccount {
+        uuid id PK "Primary Key"
+        varchar email UK "Unique email"
+        varchar password "Hashed password"
+        varchar name "Full name"
+        varchar phoneNumber "Contact number - nullable"
+        text address "Full address - nullable"
+        date dateOfBirth "Date of birth - nullable"
+        enum status "ACTIVE, SUSPENDED, DELETED"
+        uuid userProfileId FK "References UserProfile"
+        int age "PIN field - nullable"
+        varchar location "PIN field - nullable"
+        text accessibilityNeeds "PIN field - nullable"
+        varchar profilePhoto "PIN field - nullable"
+        varchar companyName "CSR field - nullable"
+        varchar companyRegistrationNumber "CSR field - unique, nullable"
+        varchar industry "CSR field - nullable"
+        varchar contactPerson "CSR field - nullable"
+        text companyAddress "CSR field - nullable"
+        varchar companyLogo "CSR field - nullable"
+        varchar department "Platform Manager field - nullable"
+        enum profileStatus "ACTIVE, SUSPENDED, DEACTIVATED"
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    RequestCategory {
+        uuid id PK "Primary Key"
+        varchar name UK "Unique category name"
+        text description
+        varchar iconUrl
+        boolean isActive
+        timestamp createdAt
+        timestamp updatedAt
+    }

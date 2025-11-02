@@ -19,13 +19,6 @@ skinparam enum {
 ' ENUMS
 ' ====================
 
-enum UserProfileRole {
-    PIN
-    CSR_REP
-    USER_ADMIN
-    PLATFORM_MANAGER
-}
-
 enum UserStatus {
     ACTIVE
     SUSPENDED
@@ -133,8 +126,7 @@ class UserAccount {
 
 class UserProfile {
     - id: UUID
-    - role: UserProfileRole {unique}
-    - name: String
+    - name: String {unique}
     - description: String
     - permissions: JSON
     - isActive: Boolean
@@ -144,7 +136,7 @@ class UserProfile {
     + hasPermission(permission: String): Boolean
     + isActiveRole(): Boolean
     --
-    {static} + findByRole(role: UserProfileRole): UserProfile
+    {static} + findByName(name: String): UserProfile
     {static} + getAllProfiles(): UserProfile[]
     --
     <<Note: Only 4 static records exist>>
@@ -155,7 +147,7 @@ class UserProfile {
 ' SERVICE MANAGEMENT
 ' ====================
 
-class ServiceCategory {
+class RequestCategory {
     - id: UUID
     - name: String {unique}
     - description: String
@@ -166,10 +158,10 @@ class ServiceCategory {
     --
     + isActive(): Boolean
     --
-    {static} + findById(id: UUID): ServiceCategory
-    {static} + findAll(): ServiceCategory[]
-    {static} + create(data: Object): ServiceCategory
-    {static} + update(id: UUID, data: Object): ServiceCategory
+    {static} + findById(id: UUID): RequestCategory
+    {static} + findAll(): RequestCategory[]
+    {static} + create(data: Object): RequestCategory
+    {static} + update(id: UUID, data: Object): RequestCategory
 }
 
 class Request {
@@ -288,8 +280,6 @@ class Notification {
 
 ' UserProfile -> UserAccount (1:M)
 UserProfile "1" -- "0..*" UserAccount : has >
-UserProfile::role -- UserProfileRole
-
 
 ' UserAccount Status
 UserAccount::status -- UserStatus
@@ -302,7 +292,7 @@ UserAccount "1" -- "0..*" Match : involved in >
 UserAccount::profileStatus -- ProfileStatus
 
 ' Request Relationships
-ServiceCategory "1" -- "0..*" Request : categorizes >
+RequestCategory "1" -- "0..*" Request : categorizes >
 Request "1" -- "0..*" Shortlist : saved by >
 Request "1" -- "0..*" VolunteerOffer : receives >
 Request "1" -- "0..1" Match : matched with >
