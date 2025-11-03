@@ -9,6 +9,7 @@ import type { User as UserType } from '../types';
 import CSROffersList from './CSROffersList';
 import MatchesList from './MatchesList';
 import SubmitOfferModal from './SubmitOfferModal';
+import RequestModal from './RequestModal';
 
 // Types
 interface Request {
@@ -557,6 +558,19 @@ const CSRRepDashboard: React.FC = () => {
         <SubmitOfferModal
           request={offerModalRequest}
           onClose={() => setOfferModalRequest(null)}
+        />
+      )}
+
+      {/* Request Detail Modal */}
+      {selectedRequestId && (
+        <RequestModal
+          requestId={selectedRequestId}
+          type={
+            activeTab === 'shortlist' ? 'shortlist' :
+            activeTab === 'history' ? 'csrHistory' :
+            'request'
+          }
+          onClose={() => setSelectedRequestId(null)}
         />
       )}
     </div>

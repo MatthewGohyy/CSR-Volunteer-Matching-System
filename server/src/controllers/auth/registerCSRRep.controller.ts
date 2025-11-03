@@ -24,11 +24,6 @@ export class RegisterCSRRepController {
         companyAddress,
       } = req.body;
 
-      const existingUser = await UserAccount.findByEmail(email);
-      if (existingUser) {
-        throw new AppError('Email already registered', 409);
-      }
-
       // Hash password
       const hashedPassword = await hashPassword(password);
 
@@ -72,8 +67,13 @@ export class RegisterCSRRepController {
         },
         token,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message && error.message.includes('already')) {
+        next(new AppError(error.message, 409));
+      } else {
+        next(error);
+      }
     }
   }
 }

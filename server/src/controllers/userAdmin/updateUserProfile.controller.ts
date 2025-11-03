@@ -15,20 +15,6 @@ export class UpdateUserProfileController {
       const { id } = req.params;
       const { name, description, permissions, isActive } = req.body;
 
-      // Check if profile exists
-      const existingProfile = await UserProfile.findById(id);
-      if (!existingProfile) {
-        throw new AppError('Profile not found', 404);
-      }
-
-      // If name is being changed, check if new name already exists
-      if (name && name !== existingProfile.name) {
-        const nameExists = await UserProfile.findByName(name);
-        if (nameExists) {
-          throw new AppError('Profile with this name already exists', 409);
-        }
-      }
-
       // Build update data (only include fields that are provided)
       const updateData: Partial<{
         name: string;
@@ -42,15 +28,21 @@ export class UpdateUserProfileController {
       if (permissions !== undefined) updateData.permissions = permissions;
       if (isActive !== undefined) updateData.isActive = isActive;
 
-      // Update profile
+      // Update profile (validation handled in entity)
       const updatedProfile = await UserProfile.update(id, updateData);
 
       res.json({
         message: 'User profile updated successfully',
         profile: updatedProfile,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message && (error.message.includes('not found') || error.message.includes('already exists'))) {
+        const statusCode = error.message.includes('not found') ? 404 : 409;
+        next(new AppError(error.message, statusCode));
+      } else {
+        next(error);
+      }
     }
   }
 }

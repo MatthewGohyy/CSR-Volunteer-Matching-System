@@ -12,19 +12,20 @@ export class SuspendUserAccountController {
     try {
       const { id } = req.params;
 
-      const existingUser = await UserAccount.findById(id);
-      if (!existingUser) {
-        throw new AppError('User not found', 404);
-      }
-
+      // Suspend user (existence check handled in update method)
       const user = await UserAccount.suspend(id);
 
       res.json({
         message: 'User account suspended successfully',
         user: user.toJSON(),
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message && error.message.includes('not found')) {
+        next(new AppError(error.message, 404));
+      } else {
+        next(error);
+      }
     }
   }
 }

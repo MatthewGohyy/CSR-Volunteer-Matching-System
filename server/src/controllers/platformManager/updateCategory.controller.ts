@@ -13,37 +13,27 @@ export class UpdateCategoryController {
       const { id } = req.params;
       const { name, description, iconUrl, isActive } = req.body;
 
-      // Check if category exists
-
-      const existingCategory = await RequestCategory.findById(id);
-
-      if (!existingCategory) {
-        throw new AppError('Category not found', 404);
-      }
-
-      if (name && name !== existingCategory.name) {
-        const allCategories = await RequestCategory.findAll();
-        const duplicate = allCategories.find(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== id);
-
-        if (duplicate) {
-          throw new AppError('Category with this name already exists', 409);
-        }
-      }
-
       const updateData: any = {};
       if (name) updateData.name = name;
       if (description !== undefined) updateData.description = description;
       if (iconUrl !== undefined) updateData.iconUrl = iconUrl;
       if (isActive !== undefined) updateData.isActive = isActive;
 
+      // Update category (validation handled in entity)
       const category = await RequestCategory.update(id, updateData);
 
       res.json({
         message: 'Request category updated successfully',
         category,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message && (error.message.includes('not found') || error.message.includes('already exists'))) {
+        const statusCode = error.message.includes('not found') ? 404 : 409;
+        next(new AppError(error.message, statusCode));
+      } else {
+        next(error);
+      }
     }
   }
 }

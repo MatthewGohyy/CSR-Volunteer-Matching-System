@@ -14,10 +14,7 @@ export class UpdateRequestController {
       const { id } = req.params;
       const { title, description, urgency, dateNeeded, location, status } = req.body;
 
-      const existingRequest = await Request.findById(id);
-      // if (!existingRequest) {
-      //   throw new AppError('Request not found', 404);
-      // }
+      // Update request (existence check handled in entity)
 
       const updateData: any = {};
       if (title) updateData.title = title;
@@ -34,8 +31,13 @@ export class UpdateRequestController {
         message: 'Request updated successfully',
         request,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message && error.message.includes('not found')) {
+        next(new AppError(error.message, 404));
+      } else {
+        next(error);
+      }
     }
   }
 }

@@ -91,6 +91,14 @@ export class RequestCategory implements PrismaRequestCategory {
     iconUrl?: string;
     isActive?: boolean;
   }) {
+    // Check if category with same name already exists (case-insensitive)
+    const allCategories = await this.findAll();
+    const existingCategory = allCategories.find(c => c.name.toLowerCase() === data.name.toLowerCase());
+
+    if (existingCategory) {
+      throw new Error('Category with this name already exists');
+    }
+
     const category = await prisma.requestCategory.create({
       data: {
         ...data,
@@ -109,6 +117,19 @@ export class RequestCategory implements PrismaRequestCategory {
     iconUrl: string;
     isActive: boolean;
   }>) {
+    // If name is being changed, check if new name already exists (case-insensitive)
+    if (data.name) {
+      const existingCategory = await this.findById(id);
+      if (existingCategory && data.name.toLowerCase() !== existingCategory.name.toLowerCase()) {
+        const allCategories = await this.findAll();
+        const duplicate = allCategories.find(c => c.name.toLowerCase() === data.name!.toLowerCase() && c.id !== id);
+
+        if (duplicate) {
+          throw new Error('Category with this name already exists');
+        }
+      }
+    }
+
     const category = await prisma.requestCategory.update({
       where: { id },
       data,

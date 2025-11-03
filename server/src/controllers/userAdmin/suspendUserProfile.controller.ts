@@ -17,26 +17,20 @@ export class SuspendUserProfileController {
     try {
       const { id } = req.params;
 
-      // Check if profile exists
-      const profile = await UserProfile.findById(id);
-      if (!profile) {
-        throw new AppError('Profile not found', 404);
-      }
-
-      // Check if already suspended
-      if (!profile.isActive) {
-        throw new AppError('Profile is already suspended', 400);
-      }
-
-      // Suspend profile by setting isActive to false
+      // Suspend profile by setting isActive to false (existence check handled in update)
       const updatedProfile = await UserProfile.update(id, { isActive: false });
 
       res.json({
         message: 'User profile suspended successfully. This role is now disabled for all users.',
         profile: updatedProfile,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message && error.message.includes('not found')) {
+        next(new AppError(error.message, 404));
+      } else {
+        next(error);
+      }
     }
   }
 }

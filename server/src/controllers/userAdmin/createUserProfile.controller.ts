@@ -13,13 +13,7 @@ export class CreateUserProfileController {
     try {
       const { name, description, isActive, permissions } = req.body;
 
-      // Check if profile with this name already exists
-      const existingProfile = await UserProfile.findByName(name);
-      if (existingProfile) {
-        throw new AppError('Profile with this name already exists', 409);
-      }
-
-      // Create new profile
+      // Create new profile (validation handled in entity)
       const profile = await UserProfile.create({
         name,
         description,
@@ -31,8 +25,13 @@ export class CreateUserProfileController {
         message: 'User profile created successfully',
         profile: profile,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message && error.message.includes('already exists')) {
+        next(new AppError(error.message, 409));
+      } else {
+        next(error);
+      }
     }
   }
 }

@@ -32,27 +32,19 @@ export class SubmitOfferController {
         throw new AppError('Request is not active', 400);
       }
 
-      // Get PIN for notification
-      const pinUser = await UserAccount.findById(request.pinId);
-      if (!pinUser) {
-        throw new AppError('PIN not found', 404);
-      }
-
-      const exists = await VolunteerOffer.exists(userId, requestId);
-      if (exists) {
-        throw new AppError('Offer already submitted', 409);
-      }
-
-      // Create offer
+      // Create offer (duplicate check handled in entity)
       const offer = await VolunteerOffer.create({
         csrRepId: userId,
         requestId,
         message,
       });
 
+      // Get PIN for notification (pinId is guaranteed by foreign key)
+      const pinUser = await UserAccount.findById(request.pinId);
+
       // Create notification (supplementary logic)
       await Notification.create({
-        userId: pinUser.id,
+        userId: request.pinId,
         type: NotificationType.VOLUNTEER_OFFER,
         message: `${user.companyName} has offered to help with your request: ${request.title}`,
       });
@@ -61,8 +53,13 @@ export class SubmitOfferController {
         message: 'Volunteer offer submitted successfully',
         offer,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      // Convert entity errors to AppError
+      if (error.message && error.message.includes('already submitted')) {
+        next(new AppError(error.message, 409));
+      } else {
+        next(error);
+      }
     }
   }
 }
