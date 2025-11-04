@@ -403,7 +403,7 @@ const CSRRepDashboard: React.FC = () => {
         {activeTab === 'offers' ? (
           <CSROffersList />
         ) : activeTab === 'matches' ? (
-          <MatchesList userType="CSR_REP" />
+          <MatchesList userType="CSR_REP" searchQuery={searchQuery} />
         ) : isLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>

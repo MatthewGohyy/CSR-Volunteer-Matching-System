@@ -93,9 +93,10 @@ export class Request implements PrismaRequest {
 
   /**
    * Search requests by PIN with optional filters
+   * By default, excludes COMPLETED and MATCHED requests (they appear in history/separate tabs)
    * @param pinId - PIN ID
    * @param query - Search query (null/undefined = return all)
-   * @param status - Request status filter (optional)
+   * @param status - Request status filter (optional). If not provided, excludes COMPLETED and MATCHED
    * @param categoryId - Category filter (optional)
    * @param urgency - Urgency filter (optional)
    */
@@ -111,6 +112,12 @@ export class Request implements PrismaRequest {
     // Add status filter if provided
     if (status) {
       where.status = status;
+    } else {
+      // By default, exclude COMPLETED and MATCHED requests from "my requests"
+      // These should only appear in history/matches tabs
+      where.status = {
+        notIn: [RequestStatus.COMPLETED, RequestStatus.MATCHED],
+      };
     }
 
     // Add urgency filter
@@ -131,14 +138,19 @@ export class Request implements PrismaRequest {
         { location: { contains: query.trim(), mode: 'insensitive' } },
       ];
 
-      // Build AND conditions array if we have status/urgency/category
-      if (status || urgency || categoryId) {
+      // Build AND conditions array if we have status/urgency/category filters or default status exclusion
+      if (status || urgency || categoryId || where.status?.notIn) {
         const andConditions: any[] = [
           { pinId },
           { OR: searchOrCondition },
         ];
 
-        if (status) andConditions.push({ status });
+        if (status) {
+          andConditions.push({ status });
+        } else if (where.status?.notIn) {
+          // Include the default status exclusion
+          andConditions.push({ status: { notIn: where.status.notIn } });
+        }
         if (urgency) andConditions.push({ urgency });
         if (categoryId) andConditions.push({ categoryId });
 
@@ -186,11 +198,12 @@ export class Request implements PrismaRequest {
   }
 
   /**
-   * Find completed requests by PIN (COMPLETED or MATCHED status)
+   * Find completed requests by PIN (COMPLETED status only)
    * Used for viewing/searching request history
+   * Note: MATCHED requests are active matches, not completed. Only COMPLETED requests should appear in history.
    * @param pinId - PIN ID
    * @param query - Search query (null/undefined = return all)
-   * @returns Array of completed/matched requests
+   * @returns Array of completed requests
    */
   static async findCompletedByPIN(
     pinId: string,
@@ -198,9 +211,7 @@ export class Request implements PrismaRequest {
   ) {
     const where: any = {
       pinId,
-      status: {
-        in: [RequestStatus.COMPLETED, RequestStatus.MATCHED],
-      },
+      status: RequestStatus.COMPLETED, // Only COMPLETED, not MATCHED
     };
 
     // Add search query filter if provided
@@ -213,11 +224,7 @@ export class Request implements PrismaRequest {
 
       where.AND = [
         { pinId },
-        {
-          status: {
-            in: [RequestStatus.COMPLETED, RequestStatus.MATCHED],
-          },
-        },
+        { status: RequestStatus.COMPLETED }, // Only COMPLETED, not MATCHED
         { OR: searchOrCondition },
       ];
     }

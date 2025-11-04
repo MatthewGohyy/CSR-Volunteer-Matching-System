@@ -33,7 +33,11 @@ interface OffersResponse {
   declined: number;
 }
 
-const OffersList: React.FC = () => {
+interface OffersListProps {
+  searchQuery?: string;
+}
+
+const OffersList: React.FC<OffersListProps> = ({ searchQuery = '' }) => {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'declined'>('all');
 
@@ -99,9 +103,22 @@ const OffersList: React.FC = () => {
   }
 
   const offers = offersData?.offers || [];
-  const filteredOffers = filter === 'all' 
+  
+  // Filter by status
+  let filteredOffers = filter === 'all' 
     ? offers 
     : offers.filter(o => o.status === filter.toUpperCase());
+
+  // Filter by search query (search in request title, description, and CSR name/company)
+  if (searchQuery && searchQuery.trim()) {
+    const query = searchQuery.toLowerCase().trim();
+    filteredOffers = filteredOffers.filter(offer => 
+      offer.request.title.toLowerCase().includes(query) ||
+      offer.request.description.toLowerCase().includes(query) ||
+      offer.csrRep.name.toLowerCase().includes(query) ||
+      offer.csrRep.companyName.toLowerCase().includes(query)
+    );
+  }
 
   const getStatusBadge = (status: string) => {
     const styles = {

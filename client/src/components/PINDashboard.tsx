@@ -258,9 +258,9 @@ const PINDashboard: React.FC = () => {
 
         {/* Tab Content */}
         {activeTab === 'offers' ? (
-          <OffersList />
+          <OffersList searchQuery={searchQuery} />
         ) : activeTab === 'matches' ? (
-          <MatchesList userType="PIN" />
+          <MatchesList userType="PIN" searchQuery={searchQuery} />
         ) : requestsLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -348,21 +348,23 @@ const PINDashboard: React.FC = () => {
                           }
                         }}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
-                        title={request.status === 'COMPLETED' ? 'View' : 'View/Edit'}
+                        title={request.status === 'COMPLETED' || request.status === 'MATCHED' ? 'View' : 'View/Edit'}
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
-                      <button
-                        onClick={() => {
-                          if (window.confirm('Are you sure you want to delete this request?')) {
-                            deleteRequestMutation.mutate(request.id);
-                          }
-                        }}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-md"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      {request.status !== 'COMPLETED' && request.status !== 'MATCHED' && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this request?')) {
+                              deleteRequestMutation.mutate(request.id);
+                            }
+                          }}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-md"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -449,8 +451,9 @@ const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  // View mode by default for existing requests (including completed history)
-  const [isEditMode, setIsEditMode] = useState(!request || request.status === 'COMPLETED');
+  // Start in edit mode only when creating a new request
+  // For viewing existing requests, always start in view mode
+  const [isEditMode, setIsEditMode] = useState(!request);
   
   // Fetch counts for existing requests (Story #20 & #21)
   const { data: viewCount } = useQuery({
@@ -516,7 +519,7 @@ const CreateEditRequestModal: React.FC<CreateEditRequestModalProps> = ({
                 ? (isEditMode ? 'Edit Request' : 'View Request')
                 : 'Create New Request'}
             </h2>
-            {request && !isEditMode && request.status !== 'COMPLETED' && (
+            {request && !isEditMode && request.status !== 'COMPLETED' && request.status !== 'MATCHED' && (
               <button
                 type="button"
                 onClick={() => setIsEditMode(true)}

@@ -28,8 +28,8 @@ export class ViewCompletedRequestsController {
         throw new AppError('Unauthorized access to this request', 403);
       }
 
-      // Verify request is completed or matched
-      if (request.status !== RequestStatus.COMPLETED && request.status !== RequestStatus.MATCHED) {
+      // Verify request is completed (not just matched - matches are active)
+      if (request.status !== RequestStatus.COMPLETED) {
         throw new AppError('This request is not in completed history', 400);
       }
 

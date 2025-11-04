@@ -11,7 +11,7 @@ import { UserStatus } from '@prisma/client';
  * Handles listing/searching/filtering user accounts with pagination.
  * Returns all found instances matching the criteria.
  * 
- * Architecture: BCE framework - Uses UserEntity to access database instead of direct Prisma calls
+ * Architecture: BCE framework - Uses UserAccount entity to access database instead of direct Prisma calls
  */
 export class SearchUserAccountsController {
   static async handle(req: Request, res: Response, next: NextFunction): Promise<void> {

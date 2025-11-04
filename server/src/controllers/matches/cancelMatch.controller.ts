@@ -73,6 +73,16 @@ export class CancelMatchController {
           data: { status: 'ACTIVE' }
         });
 
+        // Reset previously DECLINED offers back to PENDING
+        // When match is cancelled, those CSRs should get another chance
+        await tx.volunteerOffer.updateMany({
+          where: {
+            requestId: match.requestId,
+            status: 'DECLINED'
+          },
+          data: { status: 'PENDING' }
+        });
+
         // Create cancellation notifications
         const csrName = match.csrRep.companyName || match.csrRep.name;
         const notificationMessage = reason 

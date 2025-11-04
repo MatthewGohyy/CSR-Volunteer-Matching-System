@@ -49,9 +49,10 @@ interface MatchesResponse {
 
 interface MatchesListProps {
   userType: 'PIN' | 'CSR_REP';
+  searchQuery?: string;
 }
 
-const MatchesList: React.FC<MatchesListProps> = ({ userType }) => {
+const MatchesList: React.FC<MatchesListProps> = ({ userType, searchQuery = '' }) => {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
   const [cancelReason, setCancelReason] = useState('');
@@ -128,9 +129,25 @@ const MatchesList: React.FC<MatchesListProps> = ({ userType }) => {
   }
 
   const matches = matchesData?.matches || [];
-  const filteredMatches = filter === 'all'
+  
+  // Filter by status
+  let filteredMatches = filter === 'all'
     ? matches
     : matches.filter(m => m.status === filter.toUpperCase());
+
+  // Filter by search query (search in request title, description, and CSR/PIN name)
+  if (searchQuery && searchQuery.trim()) {
+    const query = searchQuery.toLowerCase().trim();
+    filteredMatches = filteredMatches.filter(match => 
+      match.request.title.toLowerCase().includes(query) ||
+      match.request.description.toLowerCase().includes(query) ||
+      (userType === 'PIN' && match.csrRep && (
+        match.csrRep.name.toLowerCase().includes(query) ||
+        match.csrRep.companyName.toLowerCase().includes(query)
+      )) ||
+      (userType === 'CSR_REP' && match.pin && match.pin.name.toLowerCase().includes(query))
+    );
+  }
 
   const getStatusBadge = (status: string) => {
     const styles = {
