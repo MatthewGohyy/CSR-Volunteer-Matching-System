@@ -24,46 +24,6 @@ export class Notification implements PrismaNotification {
     this.createdAt = data.createdAt;
   }
 
-  /**
-   * Check if notification is unread
-   */
-  isUnread(): boolean {
-    return !this.isRead;
-  }
-
-  /**
-   * Check if notification is about a match
-   */
-  isMatchNotification(): boolean {
-    return this.type === NotificationType.MATCH_CONFIRMED || 
-           this.type === NotificationType.MATCH_CANCELLED;
-  }
-
-  /**
-   * Check if notification is about an offer
-   */
-  isOfferNotification(): boolean {
-    return this.type === NotificationType.VOLUNTEER_OFFER ||
-           this.type === NotificationType.OFFER_ACCEPTED ||
-           this.type === NotificationType.OFFER_DECLINED;
-  }
-
-  /**
-   * Get notification age in hours
-   */
-  getAgeInHours(): number {
-    const now = new Date();
-    const diff = now.getTime() - this.createdAt.getTime();
-    return Math.floor(diff / (1000 * 60 * 60));
-  }
-
-  /**
-   * Check if notification is recent (< 24 hours)
-   */
-  isRecent(): boolean {
-    return this.getAgeInHours() < 24;
-  }
-
   // ============================================
   // CRUD Methods (Static) - Database Operations
   // ============================================

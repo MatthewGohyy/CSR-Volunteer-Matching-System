@@ -21,22 +21,6 @@ export class Shortlist implements PrismaShortlist {
     this.createdAt = data.createdAt;
   }
 
-  /**
-   * Get age of shortlist in days
-   */
-  getAgeInDays(): number {
-    const now = new Date();
-    const diff = now.getTime() - this.createdAt.getTime();
-    return Math.floor(diff / (1000 * 60 * 60 * 24));
-  }
-
-  /**
-   * Check if recently added (< 7 days)
-   */
-  isRecent(): boolean {
-    return this.getAgeInDays() < 7;
-  }
-
   // ============================================
   // CRUD Methods (Static) - Database Operations
   // ============================================

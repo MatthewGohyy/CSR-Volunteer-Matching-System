@@ -1,0 +1,224 @@
+@startuml Sprint3_Class_Diagram
+
+!define ENTITY_COLOR #E8F5E9
+!define ENUM_COLOR #FFF9C4
+!define RELATION_COLOR #90CAF9
+
+skinparam class {
+    BackgroundColor ENTITY_COLOR
+    BorderColor #4CAF50
+    ArrowColor RELATION_COLOR
+}
+
+skinparam enum {
+    BackgroundColor ENUM_COLOR
+    BorderColor #FBC02D
+}
+
+title Sprint 3: Request Management & Shortlisting
+note as N1
+  Duration: 26 Oct 2025 - 02 Nov 2025
+  User Stories: #15, #16, #17, #18, #19, #20, #21, #26, #27, #28
+  Focus: Complete request CRUD, view tracking, and shortlist functionality
+end note
+
+' ====================
+' ENUMS
+' ====================
+
+enum UserStatus {
+    ACTIVE
+    SUSPENDED
+    DELETED
+}
+
+enum ProfileStatus {
+    ACTIVE
+    SUSPENDED
+    DEACTIVATED
+}
+
+enum RequestStatus {
+    ACTIVE
+    MATCHED
+    COMPLETED
+    CANCELLED
+}
+
+enum UrgencyLevel {
+    LOW
+    MEDIUM
+    HIGH
+}
+
+' ====================
+' CORE ENTITIES
+' ====================
+
+class UserAccount {
+    - id: UUID
+    - email: String {unique}
+    - password: String
+    - name: String
+    - phoneNumber: String
+    - address: String
+    - dateOfBirth: Date
+    - status: UserStatus
+    - userProfileId: UUID
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    - age: Integer
+    - location: String
+    - accessibilityNeeds: String
+    - profilePhoto: String
+    - companyName: String
+    - companyRegistrationNumber: String {unique}
+    - industry: String
+    - contactPerson: String
+    - companyAddress: String
+    - companyLogo: String
+    - department: String
+    - profileStatus: ProfileStatus
+    --
+    + isActive(): Boolean
+    + isSuspended(): Boolean
+    + isPIN(): Boolean
+    + isCSRRep(): Boolean
+    --
+    {static} + findById(id: UUID): UserAccount
+    {static} + findByEmail(email: String): UserAccount
+    {static} + create(data: Object): UserAccount
+    {static} + update(id: UUID, data: Object): UserAccount
+}
+
+class UserProfile {
+    - id: UUID
+    - name: String {unique}
+    - description: String
+    - permissions: JSON
+    - isActive: Boolean
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    + hasPermission(permission: String): Boolean
+    + isActiveRole(): Boolean
+    --
+    {static} + findByName(name: String): UserProfile
+    {static} + getAllProfiles(): UserProfile[]
+}
+
+class RequestCategory {
+    - id: UUID
+    - name: String {unique}
+    - description: String
+    - iconUrl: String
+    - isActive: Boolean
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    + isActive(): Boolean
+    --
+    {static} + findById(id: UUID): RequestCategory
+    {static} + findAll(): RequestCategory[]
+    {static} + create(data: Object): RequestCategory
+    {static} + update(id: UUID, data: Object): RequestCategory
+}
+
+' ====================
+' NEW IN SPRINT 3
+' ====================
+
+class Request {
+    - id: UUID
+    - pinId: UUID
+    - categoryId: UUID
+    - title: String
+    - description: String
+    - urgency: UrgencyLevel
+    - dateNeeded: DateTime
+    - location: String
+    - status: RequestStatus
+    - viewCount: Integer
+    - shortlistCount: Integer
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    + isActive(): Boolean
+    + isMatched(): Boolean
+    + isCompleted(): Boolean
+    + isUrgent(): Boolean
+    + incrementViewCount(): void
+    + incrementShortlistCount(): void
+    + decrementShortlistCount(): void
+    --
+    {static} + findById(id: UUID): Request
+    {static} + findByPIN(pinId: UUID): Request[]
+    {static} + search(query: String, filters: Object): Request[]
+    {static} + create(data: Object): Request
+    {static} + update(id: UUID, data: Object): Request
+    {static} + delete(id: UUID): Boolean
+}
+
+class Shortlist {
+    - id: UUID
+    - csrRepId: UUID
+    - requestId: UUID
+    - createdAt: DateTime
+    --
+    + getAgeInDays(): Integer
+    + isRecent(): Boolean
+    --
+    {static} + findById(id: UUID): Shortlist
+    {static} + create(data: Object): Shortlist
+    {static} + delete(id: UUID): Boolean
+}
+
+' ====================
+' RELATIONSHIPS
+' ====================
+
+' Core relationships from previous sprints
+UserProfile "1" -- "0..*" UserAccount : has >
+UserAccount::status -- UserStatus
+UserAccount::profileStatus -- ProfileStatus
+
+' Request relationships (NEW)
+RequestCategory "1" -- "0..*" Request : categorizes >
+UserAccount "1" -- "0..*" Request : creates (PIN role) >
+Request::status -- RequestStatus
+Request::urgency -- UrgencyLevel
+
+' Shortlist relationships (NEW)
+UserAccount "1" -- "0..*" Shortlist : saves (CSR role) >
+Request "1" -- "0..*" Shortlist : saved by >
+
+note right of Request
+  **NEW IN SPRINT 3**
+  
+  PIN capabilities:
+  - Create requests
+  - View requests
+  - Update requests
+  - Delete requests
+  - Search requests
+  - Track view counts
+  - Track shortlist counts
+  
+  CSR Rep capabilities:
+  - Search requests
+  - View requests
+end note
+
+note right of Shortlist
+  **NEW IN SPRINT 3**
+  
+  CSR Rep can save requests
+  to their shortlist for easy
+  access later.
+  
+  Shortcuts are linked to
+  both the CSR Rep and the
+  Request.
+end note
+
+@enduml

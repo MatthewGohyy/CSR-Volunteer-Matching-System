@@ -28,13 +28,6 @@ export class UserProfile implements PrismaUserProfile {
     this.updatedAt = data.updatedAt;
   }
 
-  /**
-   * Check if profile is active
-   */
-  isActiveProfile(): boolean {
-    return this.isActive;
-  }
-
   // ============================================
   // CRUD Methods (Static) - Database Operations
   // ============================================

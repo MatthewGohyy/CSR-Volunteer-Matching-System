@@ -1,0 +1,147 @@
+@startuml Sprint1_Class_Diagram
+
+!define ENTITY_COLOR #E8F5E9
+!define ENUM_COLOR #FFF9C4
+!define RELATION_COLOR #90CAF9
+
+skinparam class {
+    BackgroundColor ENTITY_COLOR
+    BorderColor #4CAF50
+    ArrowColor RELATION_COLOR
+}
+
+skinparam enum {
+    BackgroundColor ENUM_COLOR
+    BorderColor #FBC02D
+}
+
+title Sprint 1: Authentication & Basic User/Profile Management
+note as N1
+  Duration: 09 Oct 2025 - 19 Oct 2025
+  User Stories: #1, #2, #3, #6, #8, #11, #13, #14, #24, #25, #33, #34
+  Focus: Core authentication and basic CRUD operations
+end note
+
+' ====================
+' ENUMS
+' ====================
+
+enum UserStatus {
+    ACTIVE
+    SUSPENDED
+    DELETED
+}
+
+enum ProfileStatus {
+    ACTIVE
+    SUSPENDED
+    DEACTIVATED
+}
+
+' ====================
+' CORE ENTITIES
+' ====================
+
+class UserAccount {
+    - id: UUID
+    - email: String {unique}
+    - password: String
+    - name: String
+    - phoneNumber: String
+    - address: String
+    - dateOfBirth: Date
+    - status: UserStatus
+    - userProfileId: UUID
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    ' PIN-specific fields
+    - age: Integer
+    - location: String
+    - accessibilityNeeds: String
+    - profilePhoto: String
+    --
+    ' CSR Rep-specific fields
+    - companyName: String
+    - companyRegistrationNumber: String {unique}
+    - industry: String
+    - contactPerson: String
+    - companyAddress: String
+    - companyLogo: String
+    --
+    ' Platform Manager-specific fields
+    - department: String
+    --
+    - profileStatus: ProfileStatus
+    --
+    + isActive(): Boolean
+    + isSuspended(): Boolean
+    + isPIN(): Boolean
+    + isCSRRep(): Boolean
+    + isPlatformManager(): Boolean
+    --
+    {static} + findById(id: UUID): UserAccount
+    {static} + findByEmail(email: String): UserAccount
+    {static} + findByProfileName(name: String): UserAccount[]
+    {static} + create(data: Object): UserAccount
+    {static} + update(id: UUID, data: Object): UserAccount
+    {static} + suspend(id: UUID): UserAccount
+    {static} + activate(id: UUID): UserAccount
+}
+
+class UserProfile {
+    - id: UUID
+    - name: String {unique}
+    - description: String
+    - permissions: JSON
+    - isActive: Boolean
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    + hasPermission(permission: String): Boolean
+    + isActiveRole(): Boolean
+    --
+    {static} + findByName(name: String): UserProfile
+    {static} + getAllProfiles(): UserProfile[]
+    --
+    <<Note: Only 4 static records exist>>
+}
+
+
+' ====================
+' RELATIONSHIPS
+' ====================
+
+' UserProfile -> UserAccount (1:M)
+UserProfile "1" -- "0..*" UserAccount : has >
+
+' UserAccount Status
+UserAccount::status -- UserStatus
+UserAccount::profileStatus -- ProfileStatus
+
+note right of UserProfile
+  **IMPORTANT**: This table contains 
+  exactly 4 static records:
+  - PIN
+  - CSR_REP
+  - USER_ADMIN
+  - PLATFORM_MANAGER
+  
+  All UserAccounts reference one
+  of these 4 records via userProfileId.
+end note
+
+note right of UserAccount
+  **Single Table Inheritance**:
+  - ALL role-specific fields in ONE class
+  - Role determined by userProfile reference
+  - PIN users use: age, location, accessibilityNeeds
+  - CSR users use: companyName, companyRegistrationNumber
+  - Platform Managers use: department
+  - Unused fields are NULL
+  
+  This sprint focuses on authentication
+  and basic user/profile management.
+end note
+
+@enduml

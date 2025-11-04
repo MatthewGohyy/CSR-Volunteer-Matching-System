@@ -26,27 +26,6 @@ export class RequestCategory implements PrismaRequestCategory {
     this.updatedAt = data.updatedAt;
   }
 
-  /**
-   * Check if category is active
-   */
-  isActiveCategory(): boolean {
-    return this.isActive;
-  }
-
-  /**
-   * Check if has icon
-   */
-  hasIcon(): boolean {
-    return !!this.iconUrl;
-  }
-
-  /**
-   * Check if has description
-   */
-  hasDescription(): boolean {
-    return !!this.description;
-  }
-
   // ============================================
   // CRUD Methods (Static) - Database Operations
   // ============================================

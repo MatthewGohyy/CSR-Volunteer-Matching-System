@@ -96,19 +96,6 @@ export class UserAccount implements PrismaUserAccount {
     return this.status === UserStatus.ACTIVE;
   }
 
-  /**
-   * Check if user is suspended
-   */
-  isSuspended(): boolean {
-    return this.status === UserStatus.SUSPENDED;
-  }
-
-  /**
-   * Check if user is deleted
-   */
-  isDeleted(): boolean {
-    return this.status === UserStatus.SUSPENDED; // Soft deletes use SUSPENDED status
-  }
 
   /**
    * Get user profile name (now serves as the identifier)
@@ -152,63 +139,6 @@ export class UserAccount implements PrismaUserAccount {
     return this.userProfile?.name === 'Platform Manager' || this.userProfile?.name === 'PLATFORM_MANAGER';
   }
 
-  /**
-   * Check if PIN profile is complete
-   */
-  isPINProfileComplete(): boolean {
-    if (!this.isPIN()) return false;
-    return !!(this.name && this.location && this.phoneNumber);
-  }
-
-  /**
-   * Check if CSR Rep profile is complete
-   */
-  isCSRRepProfileComplete(): boolean {
-    if (!this.isCSRRep()) return false;
-    return !!(
-      this.companyName &&
-      this.companyRegistrationNumber &&
-      this.contactPerson &&
-      this.phoneNumber
-    );
-  }
-
-  /**
-   * Check if Platform Manager profile is complete
-   */
-  isPlatformManagerProfileComplete(): boolean {
-    if (!this.isPlatformManager()) return false;
-    return !!(this.name && this.phoneNumber);
-  }
-
-  /**
-   * Check if has accessibility needs (PIN specific)
-   */
-  hasAccessibilityNeeds(): boolean {
-    return !!this.accessibilityNeeds;
-  }
-
-  /**
-   * Check if senior (65+) (PIN specific)
-   */
-  isSenior(): boolean {
-    return this.age !== null && this.age >= 65;
-  }
-
-  /**
-   * Check if has company logo (CSR Rep specific)
-   */
-  hasLogo(): boolean {
-    return !!this.companyLogo;
-  }
-
-  /**
-   * Get display name based on role
-   */
-  getDisplayName(): string {
-    if (this.isCSRRep() && this.companyName) return this.companyName;
-    return this.name;
-  }
 
   /**
    * Get user data without password (for API responses)
@@ -335,14 +265,6 @@ export class UserAccount implements PrismaUserAccount {
   }
 
   /**
-   * Find user by user ID with role check (deprecated - use findByUserIdWithProfileName)
-   * @deprecated Use findByUserIdWithProfileName instead
-   */
-  static async findByUserIdWithRole(userId: string, profileName: string) {
-    return this.findByUserIdWithProfileName(userId, profileName);
-  }
-
-  /**
    * Find users by profile name (replacing findByProfileRole)
    */
   static async findByProfileName(profileName: string, page: number = 1, limit: number = 10) {
@@ -361,14 +283,6 @@ export class UserAccount implements PrismaUserAccount {
       },
     });
     return users.map(user => new UserAccount(user));
-  }
-
-  /**
-   * Find users by profile role (deprecated - use findByProfileName)
-   * @deprecated Use findByProfileName instead
-   */
-  static async findByProfileRole(roleName: string, page: number = 1, limit: number = 10) {
-    return this.findByProfileName(roleName, page, limit);
   }
 
   /**
@@ -520,14 +434,6 @@ export class UserAccount implements PrismaUserAccount {
         userProfile: { name: profileName } 
       },
     });
-  }
-
-  /**
-   * Count users by profile role (deprecated - use countByProfileName)
-   * @deprecated Use countByProfileName instead
-   */
-  static async countByProfileRole(roleName: string): Promise<number> {
-    return this.countByProfileName(roleName);
   }
 
   /**

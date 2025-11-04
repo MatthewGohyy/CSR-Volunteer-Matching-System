@@ -1,0 +1,149 @@
+@startuml Sprint3_ERD
+
+!theme plain
+
+skinparam linetype ortho
+skinparam entity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+title Sprint 3: Request Management & Shortlisting
+note as N1
+  Duration: 26 Oct 2025 - 02 Nov 2025
+  User Stories: #15, #16, #17, #18, #19, #20, #21, #26, #27, #28
+  Focus: Complete request CRUD, view tracking, and shortlist functionality
+end note
+
+' ====================
+' CORE ENTITIES
+' ====================
+
+entity UserProfile {
+    * id : UUID <<PK>>
+    --
+    * name : VARCHAR(100) <<UNIQUE>>
+    description : TEXT
+    permissions : JSON
+    * isActive : BOOLEAN
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+}
+
+entity UserAccount {
+    * id : UUID <<PK>>
+    --
+    * email : VARCHAR(255) <<UNIQUE>>
+    * password : VARCHAR(255)
+    * name : VARCHAR(255)
+    phoneNumber : VARCHAR(20)
+    address : TEXT
+    dateOfBirth : DATE
+    * status : UserStatus
+    * userProfileId : UUID <<FK>>
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+    --
+    age : INTEGER
+    location : VARCHAR(255)
+    accessibilityNeeds : TEXT
+    profilePhoto : VARCHAR(500)
+    companyName : VARCHAR(255)
+    companyRegistrationNumber : VARCHAR(100) <<UNIQUE>>
+    industry : VARCHAR(100)
+    contactPerson : VARCHAR(255)
+    companyAddress : TEXT
+    companyLogo : VARCHAR(500)
+    department : VARCHAR(100)
+    --
+    * profileStatus : ProfileStatus
+}
+
+entity RequestCategory {
+    * id : UUID <<PK>>
+    --
+    * name : VARCHAR(100) <<UNIQUE>>
+    description : TEXT
+    iconUrl : VARCHAR(500)
+    * isActive : BOOLEAN
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+}
+
+' ====================
+' NEW IN SPRINT 3
+' ====================
+
+entity Request {
+    * id : UUID <<PK>>
+    --
+    * pinId : UUID <<FK>>
+    * categoryId : UUID <<FK>>
+    * title : VARCHAR(255)
+    * description : TEXT
+    * urgency : UrgencyLevel
+    dateNeeded : TIMESTAMP
+    location : VARCHAR(255)
+    * status : RequestStatus
+    * viewCount : INTEGER
+    * shortlistCount : INTEGER
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+}
+
+entity Shortlist {
+    * id : UUID <<PK>>
+    --
+    * csrRepId : UUID <<FK>>
+    * requestId : UUID <<FK>>
+    * createdAt : TIMESTAMP
+}
+
+' ====================
+' RELATIONSHIPS
+' ====================
+
+' Core relationships
+UserProfile ||--o{ UserAccount : "has role"
+
+' Request relationships (NEW)
+UserAccount ||--o{ Request : "creates (PIN role)"
+RequestCategory ||--o{ Request : "categorizes"
+
+' Shortlist relationships (NEW)
+UserAccount ||--o{ Shortlist : "saves (CSR role)"
+Request ||--o{ Shortlist : "saved by"
+
+' ====================
+' NOTES
+' ====================
+
+note bottom of Request
+  **NEW IN SPRINT 3**
+  
+  PIN creates requests for help.
+  Each request:
+  - Belongs to a category
+  - Has urgency level (LOW, MEDIUM, HIGH)
+  - Tracks view count (engagement)
+  - Tracks shortlist count (interest)
+  - Can be ACTIVE, MATCHED, COMPLETED, or CANCELLED
+  
+  User Stories: #15-#21 (PIN), #26-#27 (CSR Rep)
+end note
+
+note bottom of Shortlist
+  **NEW IN SPRINT 3**
+  
+  CSR Reps can save (shortlist) requests
+  they are interested in helping with.
+  
+  This allows them to:
+  - Build a curated list of requests
+  - Easily find requests later
+  - Track their interests
+  
+  User Story: #28 (CSR Rep)
+end note
+
+@enduml

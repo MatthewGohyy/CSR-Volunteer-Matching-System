@@ -32,8 +32,8 @@ export class SearchUserAccountsController {
       }
       // Filter by user profile name
       else if (userType) {
-        users = await UserAccount.findByProfileRole(userType as string, page, limit);
-        total = await UserAccount.countByProfileRole(userType as string);
+        users = await UserAccount.findByProfileName(userType as string, page, limit);
+        total = await UserAccount.countByProfileName(userType as string);
       }
       // Filter by status
       else if (status) {

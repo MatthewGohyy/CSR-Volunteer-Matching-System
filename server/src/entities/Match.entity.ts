@@ -41,36 +41,6 @@ export class Match implements PrismaMatch {
     }
   }
 
-  /**
-   * Check if match is active
-   */
-  isActive(): boolean {
-    return this.status === MatchStatus.ACTIVE;
-  }
-
-  /**
-   * Check if match is completed
-   */
-  isCompleted(): boolean {
-    return this.status === MatchStatus.COMPLETED;
-  }
-
-  /**
-   * Check if match is cancelled
-   */
-  isCancelled(): boolean {
-    return this.status === MatchStatus.CANCELLED;
-  }
-
-  /**
-   * Get match duration in days
-   */
-  getDurationInDays(): number | null {
-    if (!this.completedAt) return null;
-    const diff = this.completedAt.getTime() - this.matchedAt.getTime();
-    return Math.floor(diff / (1000 * 60 * 60 * 24));
-  }
-
   // ============================================
   // CRUD Methods (Static) - Database Operations
   // ============================================

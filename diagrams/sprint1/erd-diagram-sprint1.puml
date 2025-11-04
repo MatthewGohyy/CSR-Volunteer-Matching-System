@@ -1,0 +1,106 @@
+@startuml Sprint1_ERD
+
+!theme plain
+
+skinparam linetype ortho
+skinparam entity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+title Sprint 1: Authentication & Basic User/Profile Management
+note as N1
+  Duration: 09 Oct 2025 - 19 Oct 2025
+  User Stories: #1, #2, #3, #6, #8, #11, #13, #14, #24, #25, #33, #34
+  Focus: Core authentication and basic CRUD operations
+end note
+
+' ====================
+' CORE ENTITIES
+' ====================
+
+entity UserProfile {
+    * id : UUID <<PK>>
+    --
+    * name : VARCHAR(100) <<UNIQUE>>
+    description : TEXT
+    permissions : JSON
+    * isActive : BOOLEAN
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+    --
+    <<Static 4 Records Only>>
+}
+
+entity UserAccount {
+    * id : UUID <<PK>>
+    --
+    * email : VARCHAR(255) <<UNIQUE>>
+    * password : VARCHAR(255)
+    * name : VARCHAR(255)
+    phoneNumber : VARCHAR(20)
+    address : TEXT
+    dateOfBirth : DATE
+    * status : UserStatus
+    * userProfileId : UUID <<FK>>
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+    --
+    ' PIN-specific fields (nullable)
+    age : INTEGER
+    location : VARCHAR(255)
+    accessibilityNeeds : TEXT
+    profilePhoto : VARCHAR(500)
+    --
+    ' CSR Rep-specific fields (nullable)
+    companyName : VARCHAR(255)
+    companyRegistrationNumber : VARCHAR(100) <<UNIQUE>>
+    industry : VARCHAR(100)
+    contactPerson : VARCHAR(255)
+    companyAddress : TEXT
+    companyLogo : VARCHAR(500)
+    --
+    ' Platform Manager-specific fields (nullable)
+    department : VARCHAR(100)
+    --
+    * profileStatus : ProfileStatus
+}
+
+' ====================
+' RELATIONSHIPS
+' ====================
+
+' UserProfile <-> UserAccount (1:M)
+UserProfile ||--o{ UserAccount : "has role"
+
+' ====================
+' NOTES
+' ====================
+
+note bottom of UserProfile
+  **Only 4 static records exist:**
+  1. PIN (Person-In-Need)
+  2. CSR_REP (CSR Representative)
+  3. USER_ADMIN (User Administrator)
+  4. PLATFORM_MANAGER (Platform Manager)
+  
+  These are reference data, not user-created.
+end note
+
+note bottom of UserAccount
+  **Single Table Inheritance Pattern**
+  
+  All user types stored in ONE table:
+  - Role determined by userProfileId FK
+  - Role-specific fields are nullable
+  - Each user only uses fields relevant to their role
+  
+  **Sprint 1 Capabilities:**
+  - Login/Logout (all roles)
+  - Create user accounts
+  - Suspend user accounts
+  - Create user profiles
+  - Suspend user profiles
+end note
+
+@enduml

@@ -7,18 +7,27 @@ This folder contains progressive system architecture diagrams organized by sprin
 ```
 diagrams/
 ├── sprint1/
-│   ├── class-diagram-sprint1.mmd
-│   └── erd-diagram-sprint1.mmd
+│   ├── class-diagram-sprint1.mmd      (Mermaid)
+│   ├── class-diagram-sprint1.puml     (PlantUML)
+│   ├── erd-diagram-sprint1.mmd        (Mermaid)
+│   └── erd-diagram-sprint1.puml       (PlantUML)
 ├── sprint2/
-│   ├── class-diagram-sprint2.mmd
-│   └── erd-diagram-sprint2.mmd
+│   ├── class-diagram-sprint2.mmd      (Mermaid)
+│   ├── class-diagram-sprint2.puml     (PlantUML)
+│   ├── erd-diagram-sprint2.mmd        (Mermaid)
+│   └── erd-diagram-sprint2.puml       (PlantUML)
 ├── sprint3/
-│   ├── class-diagram-sprint3.mmd
-│   └── erd-diagram-sprint3.mmd
+│   ├── class-diagram-sprint3.mmd      (Mermaid)
+│   ├── class-diagram-sprint3.puml     (PlantUML)
+│   ├── erd-diagram-sprint3.mmd        (Mermaid)
+│   └── erd-diagram-sprint3.puml       (PlantUML)
 ├── sprint4/
-│   ├── class-diagram-sprint4.mmd
-│   └── erd-diagram-sprint4.mmd
-└── (final diagrams at root level)
+│   └── README.md                      (→ Points to final diagrams)
+├── class-diagram.mmd                  (Final - Mermaid)
+├── class-diagram.puml                 (Final - PlantUML)
+├── erd-diagram.mmd                    (Final - Mermaid)
+├── erd-diagram.puml                   (Final - PlantUML)
+└── *.png                              (Generated images)
 ```
 
 ## 🏃 Sprint Overview
@@ -98,11 +107,17 @@ While not strictly required by the user stories until Sprint 3, RequestCategory 
 
 ---
 
-### Sprint 4: History & Advanced Features (Complete System)
+### Sprint 4: Complete System (Final Diagrams)
 **Duration:** TBD  
 **User Stories:** 6 stories (#22, #23, #29, #30, #31, #32)
 
-**New Entities:**
+**📌 Sprint 4 = Final System Architecture**
+
+Sprint 4 represents the **complete, fully-built system**. Instead of separate Sprint 4 diagrams, refer to the **final diagrams in the root diagrams folder**:
+- `class-diagram.mmd` / `class-diagram.puml`
+- `erd-diagram.mmd` / `erd-diagram.puml`
+
+**New Entities in Sprint 4:**
 - ✅ VolunteerOffer
 - ✅ Match
 - ✅ Notification
@@ -118,8 +133,7 @@ While not strictly required by the user stories until Sprint 3, RequestCategory 
 - Complete matching system implementation
 - Notification system
 
-**Complete System:**
-All 8 entities now present:
+**Complete System - All 8 Entities:**
 1. UserProfile (4 static records)
 2. UserAccount (Single Table Inheritance)
 3. RequestCategory
@@ -134,6 +148,9 @@ All 8 entities now present:
 - Match entity represents PIN-CSR Rep pairing
 - VolunteerOffer tracks CSR Rep offers to help
 - Notification keeps users informed of system events
+
+**Why Sprint 4 = Final Diagrams?**
+By Sprint 4, you've incrementally built up to the complete architecture. The final diagrams represent this complete state, eliminating duplication.
 
 ---
 
@@ -209,18 +226,26 @@ Each sprint's ERD can guide database migration scripts:
 ### Architectural Consistency:
 All diagrams follow the same naming conventions, field types, and relationship patterns established in the final system design.
 
-### Mermaid Format:
-All diagrams use Mermaid syntax (.mmd files) for easy rendering in:
-- GitHub/GitLab markdown
+### Diagram Formats:
+All diagrams are available in **two formats**:
+
+**Mermaid (.mmd files):**
+- Easy rendering in GitHub/GitLab markdown
 - VS Code with Mermaid extension
 - Documentation tools
-- Presentation software
+- Lightweight and text-based
+
+**PlantUML (.puml files):**
+- Industry-standard UML notation
+- Rich diagram generation with `plantuml` command
+- Better for formal documentation
+- More detailed styling options
 
 ---
 
 ## 🚀 Quick Start
 
-To view these diagrams:
+### Viewing Mermaid Diagrams (.mmd)
 
 1. **VS Code:** Install "Mermaid Preview" extension
 2. **Online:** Use [Mermaid Live Editor](https://mermaid.live)
@@ -229,6 +254,20 @@ To view these diagrams:
 ```bash
 # Generate PNG from Mermaid diagram
 mmdc -i sprint1/class-diagram-sprint1.mmd -o sprint1/class-diagram-sprint1.png
+```
+
+### Viewing PlantUML Diagrams (.puml)
+
+1. **VS Code:** Install "PlantUML" extension
+2. **Online:** Use [PlantUML Web Server](https://www.plantuml.com/plantuml/uml)
+3. **Command Line:** Use `plantuml` command
+
+```bash
+# Generate PNG from PlantUML diagram
+plantuml sprint1/class-diagram-sprint1.puml
+
+# Generate PNG for all sprint diagrams
+plantuml sprint1/*.puml sprint2/*.puml sprint3/*.puml
 ```
 
 ---

@@ -1,0 +1,174 @@
+@startuml Sprint2_Class_Diagram
+
+!define ENTITY_COLOR #E8F5E9
+!define ENUM_COLOR #FFF9C4
+!define RELATION_COLOR #90CAF9
+
+skinparam class {
+    BackgroundColor ENTITY_COLOR
+    BorderColor #4CAF50
+    ArrowColor RELATION_COLOR
+}
+
+skinparam enum {
+    BackgroundColor ENUM_COLOR
+    BorderColor #FBC02D
+}
+
+title Sprint 2: Advanced User/Profile Management & Category Management
+note as N1
+  Duration: 19 Oct 2025 - 26 Oct 2025
+  User Stories: #4, #5, #7, #9, #10, #12, #35, #36, #37, #38, #39
+  Focus: View, search, update operations + category management
+end note
+
+' ====================
+' ENUMS
+' ====================
+
+enum UserStatus {
+    ACTIVE
+    SUSPENDED
+    DELETED
+}
+
+enum ProfileStatus {
+    ACTIVE
+    SUSPENDED
+    DEACTIVATED
+}
+
+' ====================
+' CORE ENTITIES (from Sprint 1)
+' ====================
+
+class UserAccount {
+    - id: UUID
+    - email: String {unique}
+    - password: String
+    - name: String
+    - phoneNumber: String
+    - address: String
+    - dateOfBirth: Date
+    - status: UserStatus
+    - userProfileId: UUID
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    ' PIN-specific fields
+    - age: Integer
+    - location: String
+    - accessibilityNeeds: String
+    - profilePhoto: String
+    --
+    ' CSR Rep-specific fields
+    - companyName: String
+    - companyRegistrationNumber: String {unique}
+    - industry: String
+    - contactPerson: String
+    - companyAddress: String
+    - companyLogo: String
+    --
+    ' Platform Manager-specific fields
+    - department: String
+    --
+    - profileStatus: ProfileStatus
+    --
+    + isActive(): Boolean
+    + isSuspended(): Boolean
+    + isPIN(): Boolean
+    + isCSRRep(): Boolean
+    + isPlatformManager(): Boolean
+    --
+    {static} + findById(id: UUID): UserAccount
+    {static} + findByEmail(email: String): UserAccount
+    {static} + findByProfileName(name: String): UserAccount[]
+    {static} + create(data: Object): UserAccount
+    {static} + update(id: UUID, data: Object): UserAccount
+    {static} + suspend(id: UUID): UserAccount
+    {static} + activate(id: UUID): UserAccount
+}
+
+class UserProfile {
+    - id: UUID
+    - name: String {unique}
+    - description: String
+    - permissions: JSON
+    - isActive: Boolean
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    + hasPermission(permission: String): Boolean
+    + isActiveRole(): Boolean
+    --
+    {static} + findByName(name: String): UserProfile
+    {static} + getAllProfiles(): UserProfile[]
+    --
+    <<Note: Only 4 static records exist>>
+}
+
+' ====================
+' NEW IN SPRINT 2
+' ====================
+
+class RequestCategory {
+    - id: UUID
+    - name: String {unique}
+    - description: String
+    - iconUrl: String
+    - isActive: Boolean
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    + isActive(): Boolean
+    --
+    {static} + findById(id: UUID): RequestCategory
+    {static} + findAll(): RequestCategory[]
+    {static} + create(data: Object): RequestCategory
+    {static} + update(id: UUID, data: Object): RequestCategory
+}
+
+' ====================
+' RELATIONSHIPS
+' ====================
+
+' UserProfile -> UserAccount (1:M)
+UserProfile "1" -- "0..*" UserAccount : has >
+
+' UserAccount Status
+UserAccount::status -- UserStatus
+UserAccount::profileStatus -- ProfileStatus
+
+note right of UserProfile
+  **4 static records:**
+  - PIN
+  - CSR_REP
+  - USER_ADMIN
+  - PLATFORM_MANAGER
+end note
+
+note right of UserAccount
+  **Single Table Inheritance**
+  All role-specific fields in ONE class
+  
+  **Sprint 2 adds:**
+  - View user accounts/profiles
+  - Update user accounts/profiles
+  - Search user accounts/profiles
+end note
+
+note right of RequestCategory
+  **NEW IN SPRINT 2**
+  
+  Platform Manager can now:
+  - Create categories
+  - View categories
+  - Update categories
+  - Delete categories
+  - Search categories
+  
+  Prepared for Sprint 3 when
+  Requests will reference these.
+end note
+
+@enduml

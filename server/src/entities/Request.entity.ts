@@ -48,42 +48,6 @@ export class Request implements PrismaRequest {
   }
 
   /**
-   * Check if request is active
-   */
-  isActive(): boolean {
-    return this.status === RequestStatus.ACTIVE;
-  }
-
-  /**
-   * Check if request is matched
-   */
-  isMatched(): boolean {
-    return this.status === RequestStatus.MATCHED;
-  }
-
-  /**
-   * Check if request is completed
-   */
-  isCompleted(): boolean {
-    return this.status === RequestStatus.COMPLETED;
-  }
-
-  /**
-   * Check if request is urgent
-   */
-  isUrgent(): boolean {
-    return this.urgency === UrgencyLevel.HIGH;
-  }
-
-  /**
-   * Check if request is overdue
-   */
-  isOverdue(): boolean {
-    if (!this.dateNeeded) return false;
-    return this.dateNeeded < new Date() && this.status === RequestStatus.ACTIVE;
-  }
-
-  /**
    * Serialize request for JSON response (ensures dates are formatted correctly)
    */
   toJSON() {

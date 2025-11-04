@@ -34,43 +34,6 @@ export class VolunteerOffer implements PrismaVolunteerOffer {
     }
   }
 
-  /**
-   * Check if offer is pending
-   */
-  isPending(): boolean {
-    return this.status === OfferStatus.PENDING;
-  }
-
-  /**
-   * Check if offer is accepted
-   */
-  isAccepted(): boolean {
-    return this.status === OfferStatus.ACCEPTED;
-  }
-
-  /**
-   * Check if offer is declined
-   */
-  isDeclined(): boolean {
-    return this.status === OfferStatus.DECLINED;
-  }
-
-  /**
-   * Check if has message
-   */
-  hasMessage(): boolean {
-    return !!this.message;
-  }
-
-  /**
-   * Get age in hours
-   */
-  getAgeInHours(): number {
-    const now = new Date();
-    const diff = now.getTime() - this.createdAt.getTime();
-    return Math.floor(diff / (1000 * 60 * 60));
-  }
-
   // ============================================
   // CRUD Methods (Static) - Database Operations
   // ============================================

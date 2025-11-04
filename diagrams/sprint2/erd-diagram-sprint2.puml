@@ -1,0 +1,118 @@
+@startuml Sprint2_ERD
+
+!theme plain
+
+skinparam linetype ortho
+skinparam entity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+title Sprint 2: Advanced User/Profile Management & Category Management
+note as N1
+  Duration: 19 Oct 2025 - 26 Oct 2025
+  User Stories: #4, #5, #7, #9, #10, #12, #35, #36, #37, #38, #39
+  Focus: View, search, update operations + category management
+end note
+
+' ====================
+' CORE ENTITIES
+' ====================
+
+entity UserProfile {
+    * id : UUID <<PK>>
+    --
+    * name : VARCHAR(100) <<UNIQUE>>
+    description : TEXT
+    permissions : JSON
+    * isActive : BOOLEAN
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+    --
+    <<Static 4 Records Only>>
+}
+
+entity UserAccount {
+    * id : UUID <<PK>>
+    --
+    * email : VARCHAR(255) <<UNIQUE>>
+    * password : VARCHAR(255)
+    * name : VARCHAR(255)
+    phoneNumber : VARCHAR(20)
+    address : TEXT
+    dateOfBirth : DATE
+    * status : UserStatus
+    * userProfileId : UUID <<FK>>
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+    --
+    ' PIN-specific fields (nullable)
+    age : INTEGER
+    location : VARCHAR(255)
+    accessibilityNeeds : TEXT
+    profilePhoto : VARCHAR(500)
+    --
+    ' CSR Rep-specific fields (nullable)
+    companyName : VARCHAR(255)
+    companyRegistrationNumber : VARCHAR(100) <<UNIQUE>>
+    industry : VARCHAR(100)
+    contactPerson : VARCHAR(255)
+    companyAddress : TEXT
+    companyLogo : VARCHAR(500)
+    --
+    ' Platform Manager-specific fields (nullable)
+    department : VARCHAR(100)
+    --
+    * profileStatus : ProfileStatus
+}
+
+' ====================
+' NEW IN SPRINT 2
+' ====================
+
+entity RequestCategory {
+    * id : UUID <<PK>>
+    --
+    * name : VARCHAR(100) <<UNIQUE>>
+    description : TEXT
+    iconUrl : VARCHAR(500)
+    * isActive : BOOLEAN
+    * createdAt : TIMESTAMP
+    * updatedAt : TIMESTAMP
+}
+
+' ====================
+' RELATIONSHIPS
+' ====================
+
+' UserProfile <-> UserAccount (1:M)
+UserProfile ||--o{ UserAccount : "has role"
+
+' ====================
+' NOTES
+' ====================
+
+note bottom of RequestCategory
+  **NEW IN SPRINT 2**
+  
+  Platform Manager capabilities:
+  - Create request categories
+  - View request categories
+  - Update request categories
+  - Delete request categories
+  - Search request categories
+  
+  Categories are prepared for Sprint 3
+  when Requests will reference them.
+end note
+
+note bottom of UserAccount
+  **Sprint 2 adds:**
+  - View operations (all accounts/profiles)
+  - Search functionality
+  - Update operations
+  
+  Single Table Inheritance maintained.
+end note
+
+@enduml
