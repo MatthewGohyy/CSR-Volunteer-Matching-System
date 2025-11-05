@@ -89,7 +89,6 @@ classDiagram
         -ProfileStatus profileStatus
         -DateTime createdAt
         -DateTime updatedAt
-        +isActive() Boolean
         +getRole() String
         +toJSON() Object
         +findAll(page, limit)$ UserAccount[]
@@ -126,17 +125,11 @@ classDiagram
         +findAll()$ UserProfile[]
         +findById(id)$ UserProfile
         +findByName(name)$ UserProfile
-        +findActive()$ UserProfile[]
         +create(data)$ UserProfile
         +update(id, data)$ UserProfile
         +count()$ Number
-        +countActive()$ Number
         +search(query, isActive)$ UserProfile[]
     }
-
-    note for UserProfile "Only 4 static records exist:\n- PIN (Person in Need)\n- CSR_REP (CSR Representative)\n- USER_ADMIN (User Administrator)\n- PLATFORM_MANAGER (Platform Manager)"
-    
-    note for UserAccount "Single Table Inheritance Pattern:\n- All role-specific fields in ONE class\n- Role determined by userProfile reference\n- PIN users use: age, location, accessibilityNeeds\n- CSR users use: companyName, companyRegistrationNumber, etc\n- Platform Managers use: department\n- Unused fields are NULL for each user\n\nAfter Cleanup (Nov 2025):\n- Removed 11 unused instance methods\n- Kept only used methods: isActive, isPIN, isCSRRep, etc.\n- All static CRUD methods remain"
 
     %% ============================================
     %% SERVICE MANAGEMENT
@@ -159,8 +152,6 @@ classDiagram
         +search(query, includeInactive)$ RequestCategory[]
         +count()$ Number
     }
-
-    note for RequestCategory "After Cleanup (Nov 2025):\n- Removed 3 unused instance methods\n- All operations use static methods"
 
     class Request {
         -UUID id
@@ -193,8 +184,6 @@ classDiagram
         +getShortlistCount(pinId, requestId)$ Number
     }
 
-    note for Request "After Cleanup (Nov 2025):\n- Removed 5 unused instance methods\n- Increment methods now static (DB operations)\n- toJSON() for proper date serialization"
-
     %% ============================================
     %% MATCHING SYSTEM
     %% ============================================
@@ -212,8 +201,6 @@ classDiagram
         +search(csrRepId, query)$ Shortlist[]
     }
 
-    note for Shortlist "After Cleanup (Nov 2025):\n- Removed 2 unused instance methods\n- All operations use static methods"
-
     class VolunteerOffer {
         -UUID id
         -UUID csrRepId
@@ -227,10 +214,7 @@ classDiagram
         +search(userId, role, status, page, limit)$ VolunteerOffer[]
         +create(data)$ VolunteerOffer
         +update(id, data)$ VolunteerOffer
-        +delete(id)$ Boolean
     }
-
-    note for VolunteerOffer "After Cleanup (Nov 2025):\n- Removed 5 unused instance methods\n- All operations use static methods"
 
     class Match {
         -UUID id
@@ -247,11 +231,8 @@ classDiagram
         +search(userId, role, status, query, page, limit)$ Match[]
         +create(data)$ Match
         +update(id, data)$ Match
-        +delete(id)$ Boolean
         +count()$ Number
     }
-
-    note for Match "After Cleanup (Nov 2025):\n- Removed 4 unused instance methods\n- All operations use static methods"
 
     %% ============================================
     %% NOTIFICATIONS
@@ -271,10 +252,7 @@ classDiagram
         +markAsRead(id)$ Notification
         +markAllAsRead(userId)$ void
         +countUnread(userId)$ Number
-        +delete(id)$ Boolean
     }
-
-    note for Notification "After Cleanup (Nov 2025):\n- Removed 4 unused instance methods\n- Field name: userId (not userAccountId)\n- markAsRead is now static"
 
     %% ============================================
     %% RELATIONSHIPS

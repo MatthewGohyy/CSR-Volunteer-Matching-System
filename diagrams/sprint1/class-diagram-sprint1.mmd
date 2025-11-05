@@ -51,7 +51,6 @@ classDiagram
         -String companyLogo
         -String department
         -ProfileStatus profileStatus
-        +isActive() Boolean
         +getRole() String
         +toJSON() Object
         +findAll(page, limit)$ UserAccount[]
@@ -78,15 +77,11 @@ classDiagram
         +findAll()$ UserProfile[]
         +findById(id)$ UserProfile
         +findByName(name)$ UserProfile
-        +findActive()$ UserProfile[]
         +create(data)$ UserProfile
         +update(id, data)$ UserProfile
         +count()$ Number
         +search(query, isActive)$ UserProfile[]
     }
-
-    note for UserProfile "Only 4 static records exist:\nPIN, CSR_REP, USER_ADMIN, PLATFORM_MANAGER"
-    note for UserAccount "Single Table Inheritance Pattern:\n- All role-specific fields in ONE class\n- Role determined by userProfile reference\n- PIN users use: age, location, accessibilityNeeds\n- CSR users use: companyName, companyRegistrationNumber, etc\n- Platform Managers use: department\n- Unused fields are NULL for each user"
 
     %% ============================================
     %% RELATIONSHIPS

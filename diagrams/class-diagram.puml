@@ -102,7 +102,6 @@ class UserAccount {
     - updatedAt: DateTime
     --
     ' Instance methods (actually used)
-    + isActive(): Boolean
     + getRole(): String
     + toJSON(): Object
     --
@@ -143,11 +142,9 @@ class UserProfile {
     {static} + findAll(): UserProfile[]
     {static} + findById(id: UUID): UserProfile
     {static} + findByName(name: String): UserProfile
-    {static} + findActive(): UserProfile[]
     {static} + create(data: Object): UserProfile
     {static} + update(id: UUID, data: Object): UserProfile
     {static} + count(): Number
-    {static} + countActive(): Number
     {static} + search(query?, isActive?): UserProfile[]
     --
     <<Note: Only 4 static records exist>>
@@ -247,7 +244,6 @@ class VolunteerOffer {
     {static} + search(userId, role, status?, page, limit): VolunteerOffer[]
     {static} + create(data: Object): VolunteerOffer
     {static} + update(id: UUID, data: Object): VolunteerOffer
-    {static} + delete(id: UUID): Boolean
 }
 
 class Match {
@@ -267,7 +263,6 @@ class Match {
     {static} + search(userId, role, status?, query?, page, limit): Match[]
     {static} + create(data: Object): Match
     {static} + update(id: UUID, data: Object): Match
-    {static} + delete(id: UUID): Boolean
     {static} + count(): Number
 }
 
@@ -291,7 +286,6 @@ class Notification {
     {static} + markAsRead(id: UUID): Notification
     {static} + markAllAsRead(userId): void
     {static} + countUnread(userId): Number
-    {static} + delete(id: UUID): Boolean
 }
 
 ' ====================
@@ -328,49 +322,5 @@ VolunteerOffer::status -- OfferStatus
 ' Notification
 UserAccount "1" -- "0..*" Notification : receives >
 Notification::type -- NotificationType
-
-note right of UserProfile
-  **IMPORTANT**: This table contains 
-  exactly 4 static records:
-  - PIN ("Person in Need")
-  - CSR_REP ("CSR Representative")
-  - USER_ADMIN ("User Administrator")
-  - PLATFORM_MANAGER ("Platform Manager")
-  
-  All UserAccounts reference one
-  of these 4 records via userProfileId.
-end note
-
-note right of UserAccount
-  **Single Table Inheritance**:
-  - ALL role-specific fields in ONE class
-  - Role determined by userProfile reference
-  - PIN users use: age, location, accessibilityNeeds
-  - CSR users use: companyName, companyRegistrationNumber
-  - Platform Managers use: department
-  - Unused fields are NULL
-  
-  **Methods After Cleanup**:
-  - Removed 11 unused instance methods
-  - Kept only methods used in actual code:
-    * isActive(), isPIN(), isCSRRep(), etc.
-    * getProfileName(), getRole()
-    * toJSON() for serialization
-  - All static CRUD methods remain
-end note
-
-note bottom of Request
-  **Methods After Cleanup**:
-  - Removed 5 unused instance methods
-  - Static incrementViewCountDB/incrementShortlistCountDB
-    replace instance methods
-  - toJSON() for proper date serialization
-end note
-
-note bottom of Match
-  **Methods After Cleanup**:
-  - Removed 4 unused instance methods
-  - All operations use static methods
-end note
 
 @enduml

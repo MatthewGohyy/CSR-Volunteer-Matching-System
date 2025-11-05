@@ -9,11 +9,6 @@ skinparam entity {
 }
 
 title Sprint 3: Request Management & Shortlisting
-note as N1
-  Duration: 26 Oct 2025 - 02 Nov 2025
-  User Stories: #15, #16, #17, #18, #19, #20, #21, #26, #27, #28
-  Focus: Complete request CRUD, view tracking, and shortlist functionality
-end note
 
 ' ====================
 ' CORE ENTITIES
@@ -117,33 +112,5 @@ Request ||--o{ Shortlist : "saved by"
 ' ====================
 ' NOTES
 ' ====================
-
-note bottom of Request
-  **NEW IN SPRINT 3**
-  
-  PIN creates requests for help.
-  Each request:
-  - Belongs to a category
-  - Has urgency level (LOW, MEDIUM, HIGH)
-  - Tracks view count (engagement)
-  - Tracks shortlist count (interest)
-  - Can be ACTIVE, MATCHED, COMPLETED, or CANCELLED
-  
-  User Stories: #15-#21 (PIN), #26-#27 (CSR Rep)
-end note
-
-note bottom of Shortlist
-  **NEW IN SPRINT 3**
-  
-  CSR Reps can save (shortlist) requests
-  they are interested in helping with.
-  
-  This allows them to:
-  - Build a curated list of requests
-  - Easily find requests later
-  - Track their interests
-  
-  User Story: #28 (CSR Rep)
-end note
 
 @enduml

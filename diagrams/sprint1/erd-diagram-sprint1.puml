@@ -9,11 +9,6 @@ skinparam entity {
 }
 
 title Sprint 1: Authentication & Basic User/Profile Management
-note as N1
-  Duration: 09 Oct 2025 - 19 Oct 2025
-  User Stories: #1, #2, #3, #6, #8, #11, #13, #14, #24, #25, #33, #34
-  Focus: Core authentication and basic CRUD operations
-end note
 
 ' ====================
 ' CORE ENTITIES
@@ -76,31 +71,5 @@ UserProfile ||--o{ UserAccount : "has role"
 ' ====================
 ' NOTES
 ' ====================
-
-note bottom of UserProfile
-  **Only 4 static records exist:**
-  1. PIN (Person-In-Need)
-  2. CSR_REP (CSR Representative)
-  3. USER_ADMIN (User Administrator)
-  4. PLATFORM_MANAGER (Platform Manager)
-  
-  These are reference data, not user-created.
-end note
-
-note bottom of UserAccount
-  **Single Table Inheritance Pattern**
-  
-  All user types stored in ONE table:
-  - Role determined by userProfileId FK
-  - Role-specific fields are nullable
-  - Each user only uses fields relevant to their role
-  
-  **Sprint 1 Capabilities:**
-  - Login/Logout (all roles)
-  - Create user accounts
-  - Suspend user accounts
-  - Create user profiles
-  - Suspend user profiles
-end note
 
 @enduml

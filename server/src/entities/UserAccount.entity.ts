@@ -90,14 +90,6 @@ export class UserAccount implements PrismaUserAccount {
   }
 
   /**
-   * Check if user is active
-   */
-  isActive(): boolean {
-    return this.status === UserStatus.ACTIVE;
-  }
-
-
-  /**
    * Get user role - returns profile name
    */
   getRole(): string | null {
@@ -183,7 +175,7 @@ export class UserAccount implements PrismaUserAccount {
     const user = new UserAccount(userData);
 
     // Check if user is active
-    if (!user.isActive()) {
+    if (user.status !== UserStatus.ACTIVE) {
       throw new Error('Account is not active');
     }
 

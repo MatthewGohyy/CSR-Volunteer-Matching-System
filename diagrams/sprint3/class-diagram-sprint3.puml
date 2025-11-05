@@ -16,11 +16,6 @@ skinparam enum {
 }
 
 title Sprint 3: Request Management & Shortlisting
-note as N1
-  Duration: 26 Oct 2025 - 02 Nov 2025
-  User Stories: #15, #16, #17, #18, #19, #20, #21, #26, #27, #28
-  Focus: Complete request CRUD, view tracking, and shortlist functionality
-end note
 
 ' ====================
 ' ENUMS
@@ -81,7 +76,6 @@ class UserAccount {
     - profileStatus: ProfileStatus
     --
     ' Instance methods (actually used)
-    + isActive(): Boolean
     + getRole(): String
     + toJSON(): Object
     --
@@ -110,7 +104,6 @@ class UserProfile {
     {static} + findAll(): UserProfile[]
     {static} + findById(id: UUID): UserProfile
     {static} + findByName(name: String): UserProfile
-    {static} + findActive(): UserProfile[]
     {static} + create(data: Object): UserProfile
     {static} + update(id: UUID, data: Object): UserProfile
     {static} + count(): Number
@@ -209,34 +202,5 @@ Request::urgency -- UrgencyLevel
 ' Shortlist relationships (NEW)
 UserAccount "1" -- "0..*" Shortlist : saves (CSR role) >
 Request "1" -- "0..*" Shortlist : saved by >
-
-note right of Request
-  **NEW IN SPRINT 3**
-  
-  PIN capabilities:
-  - Create requests
-  - View requests
-  - Update requests
-  - Delete requests
-  - Search requests
-  - Track view counts
-  - Track shortlist counts
-  
-  CSR Rep capabilities:
-  - Search requests
-  - View requests
-end note
-
-note right of Shortlist
-  **NEW IN SPRINT 3**
-  
-  CSR Rep can save requests
-  to their shortlist for easy
-  access later.
-  
-  Shortcuts are linked to
-  both the CSR Rep and the
-  Request.
-end note
 
 @enduml

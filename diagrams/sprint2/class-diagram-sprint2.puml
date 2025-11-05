@@ -16,11 +16,6 @@ skinparam enum {
 }
 
 title Sprint 2: Advanced User/Profile Management & Category Management
-note as N1
-  Duration: 19 Oct 2025 - 26 Oct 2025
-  User Stories: #4, #5, #7, #9, #10, #12, #35, #36, #37, #38, #39
-  Focus: View, search, update operations + category management
-end note
 
 ' ====================
 ' ENUMS
@@ -75,7 +70,6 @@ class UserAccount {
     - profileStatus: ProfileStatus
     --
     ' Instance methods (actually used)
-    + isActive(): Boolean
     + getRole(): String
     + toJSON(): Object
     --
@@ -106,7 +100,6 @@ class UserProfile {
     {static} + findAll(): UserProfile[]
     {static} + findById(id: UUID): UserProfile
     {static} + findByName(name: String): UserProfile
-    {static} + findActive(): UserProfile[]
     {static} + create(data: Object): UserProfile
     {static} + update(id: UUID, data: Object): UserProfile
     {static} + count(): Number
@@ -149,37 +142,5 @@ UserProfile "1" -- "0..*" UserAccount : has >
 ' UserAccount Status
 UserAccount::status -- UserStatus
 UserAccount::profileStatus -- ProfileStatus
-
-note right of UserProfile
-  **4 static records:**
-  - PIN
-  - CSR_REP
-  - USER_ADMIN
-  - PLATFORM_MANAGER
-end note
-
-note right of UserAccount
-  **Single Table Inheritance**
-  All role-specific fields in ONE class
-  
-  **Sprint 2 adds:**
-  - View user accounts/profiles
-  - Update user accounts/profiles
-  - Search user accounts/profiles
-end note
-
-note right of RequestCategory
-  **NEW IN SPRINT 2**
-  
-  Platform Manager can now:
-  - Create categories
-  - View categories
-  - Update categories
-  - Delete categories
-  - Search categories
-  
-  Prepared for Sprint 3 when
-  Requests will reference these.
-end note
 
 @enduml

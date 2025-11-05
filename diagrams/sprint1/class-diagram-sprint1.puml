@@ -16,11 +16,6 @@ skinparam enum {
 }
 
 title Sprint 1: Authentication & Basic User/Profile Management
-note as N1
-  Duration: 09 Oct 2025 - 19 Oct 2025
-  User Stories: #1, #2, #3, #6, #8, #11, #13, #14, #24, #25, #33, #34
-  Focus: Core authentication and basic CRUD operations
-end note
 
 ' ====================
 ' ENUMS
@@ -75,7 +70,6 @@ class UserAccount {
     - profileStatus: ProfileStatus
     --
     ' Instance methods (actually used)
-    + isActive(): Boolean
     + getRole(): String
     + toJSON(): Object
     --
@@ -106,7 +100,6 @@ class UserProfile {
     {static} + findAll(): UserProfile[]
     {static} + findById(id: UUID): UserProfile
     {static} + findByName(name: String): UserProfile
-    {static} + findActive(): UserProfile[]
     {static} + create(data: Object): UserProfile
     {static} + update(id: UUID, data: Object): UserProfile
     {static} + count(): Number
@@ -126,30 +119,5 @@ UserProfile "1" -- "0..*" UserAccount : has >
 ' UserAccount Status
 UserAccount::status -- UserStatus
 UserAccount::profileStatus -- ProfileStatus
-
-note right of UserProfile
-  **IMPORTANT**: This table contains 
-  exactly 4 static records:
-  - PIN
-  - CSR_REP
-  - USER_ADMIN
-  - PLATFORM_MANAGER
-  
-  All UserAccounts reference one
-  of these 4 records via userProfileId.
-end note
-
-note right of UserAccount
-  **Single Table Inheritance**:
-  - ALL role-specific fields in ONE class
-  - Role determined by userProfile reference
-  - PIN users use: age, location, accessibilityNeeds
-  - CSR users use: companyName, companyRegistrationNumber
-  - Platform Managers use: department
-  - Unused fields are NULL
-  
-  This sprint focuses on authentication
-  and basic user/profile management.
-end note
 
 @enduml
