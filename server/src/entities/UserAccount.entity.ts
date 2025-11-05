@@ -98,45 +98,10 @@ export class UserAccount implements PrismaUserAccount {
 
 
   /**
-   * Get user profile name (now serves as the identifier)
-   */
-  getProfileName(): string | null {
-    return this.userProfile?.name || null;
-  }
-
-  /**
-   * Get user role - returns profile name (for backward compatibility)
+   * Get user role - returns profile name
    */
   getRole(): string | null {
     return this.userProfile?.name || null;
-  }
-
-  /**
-   * Check if user is admin based on profile name
-   */
-  isAdmin(): boolean {
-    return this.userProfile?.name === 'User Administrator' || this.userProfile?.name === 'USER_ADMIN';
-  }
-
-  /**
-   * Check if user is PIN (Person In Need)
-   */
-  isPIN(): boolean {
-    return this.userProfile?.name === 'Person in Need' || this.userProfile?.name === 'PIN';
-  }
-
-  /**
-   * Check if user is CSR Representative
-   */
-  isCSRRep(): boolean {
-    return this.userProfile?.name === 'CSR Representative' || this.userProfile?.name === 'CSR_REP';
-  }
-
-  /**
-   * Check if user is Platform Manager
-   */
-  isPlatformManager(): boolean {
-    return this.userProfile?.name === 'Platform Manager' || this.userProfile?.name === 'PLATFORM_MANAGER';
   }
 
 
@@ -404,16 +369,6 @@ export class UserAccount implements PrismaUserAccount {
     await prisma.userAccount.update({
       where: { id },
       data: { status: UserStatus.SUSPENDED }, // Use SUSPENDED for soft delete
-    });
-    return true;
-  }
-
-  /**
-   * Hard delete user account
-   */
-  static async hardDelete(id: string): Promise<boolean> {
-    await prisma.userAccount.delete({
-      where: { id },
     });
     return true;
   }

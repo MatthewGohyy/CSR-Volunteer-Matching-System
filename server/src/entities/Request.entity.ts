@@ -243,26 +243,6 @@ export class Request implements PrismaRequest {
   }
 
   /**
-   * Find requests by urgency
-   */
-  static async findByUrgency(urgency: UrgencyLevel, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
-    const requests = await prisma.request.findMany({
-      where: { urgency },
-      skip,
-      take: limit,
-      include: {
-        pin: true,
-        category: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-    return requests.map(request => new Request(request));
-  }
-
-  /**
    * Create a new request
    */
   static async create(data: {

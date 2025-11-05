@@ -177,14 +177,6 @@ export class Match implements PrismaMatch {
   }
 
   /**
-   * Delete match
-   */
-  static async delete(id: string): Promise<boolean> {
-    await prisma.match.delete({ where: { id } });
-    return true;
-  }
-
-  /**
    * Count total matches
    */
   static async count(): Promise<number> {

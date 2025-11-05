@@ -52,17 +52,19 @@ classDiagram
         -String department
         -ProfileStatus profileStatus
         +isActive() Boolean
-        +isSuspended() Boolean
-        +isPIN() Boolean
-        +isCSRRep() Boolean
-        +isPlatformManager() Boolean
+        +getRole() String
+        +toJSON() Object
+        +findAll(page, limit)$ UserAccount[]
         +findById(id)$ UserAccount
         +findByEmail(email)$ UserAccount
+        +login(email, password)$ LoginResult
         +findByProfileName(name)$ UserAccount[]
         +create(data)$ UserAccount
         +update(id, data)$ UserAccount
         +suspend(id)$ UserAccount
         +activate(id)$ UserAccount
+        +count()$ Number
+        +search(query, page, limit)$ UserAccount[]
     }
 
     class UserProfile {
@@ -73,10 +75,14 @@ classDiagram
         -Boolean isActive
         -DateTime createdAt
         -DateTime updatedAt
-        +hasPermission(permission) Boolean
-        +isActiveRole() Boolean
+        +findAll()$ UserProfile[]
+        +findById(id)$ UserProfile
         +findByName(name)$ UserProfile
-        +getAllProfiles()$ UserProfile[]
+        +findActive()$ UserProfile[]
+        +create(data)$ UserProfile
+        +update(id, data)$ UserProfile
+        +count()$ Number
+        +search(query, isActive)$ UserProfile[]
     }
 
     note for UserProfile "Only 4 static records exist:\nPIN, CSR_REP, USER_ADMIN, PLATFORM_MANAGER"
@@ -94,11 +100,14 @@ classDiagram
         -Boolean isActive
         -DateTime createdAt
         -DateTime updatedAt
-        +isActive() Boolean
-        +findById(id)$ RequestCategory
         +findAll()$ RequestCategory[]
+        +findActive()$ RequestCategory[]
+        +findById(id)$ RequestCategory
         +create(data)$ RequestCategory
         +update(id, data)$ RequestCategory
+        +delete(id)$ Boolean
+        +search(query, includeInactive)$ RequestCategory[]
+        +count()$ Number
     }
 
     %% ============================================

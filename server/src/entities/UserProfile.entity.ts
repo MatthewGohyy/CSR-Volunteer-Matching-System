@@ -65,19 +65,6 @@ export class UserProfile implements PrismaUserProfile {
   }
 
   /**
-   * Find active profiles only
-   */
-  static async findActive() {
-    const profiles = await prisma.userProfile.findMany({
-      where: { isActive: true },
-      orderBy: {
-        name: 'asc',
-      },
-    });
-    return profiles.map(profile => new UserProfile(profile));
-  }
-
-  /**
    * Create a new profile
    */
   static async create(data: {
@@ -133,15 +120,6 @@ export class UserProfile implements PrismaUserProfile {
    */
   static async count(): Promise<number> {
     return prisma.userProfile.count();
-  }
-
-  /**
-   * Count active profiles
-   */
-  static async countActive(): Promise<number> {
-    return prisma.userProfile.count({
-      where: { isActive: true },
-    });
   }
 
   /**

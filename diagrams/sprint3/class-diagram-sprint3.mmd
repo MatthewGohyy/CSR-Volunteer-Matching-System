@@ -67,13 +67,17 @@ classDiagram
         -String department
         -ProfileStatus profileStatus
         +isActive() Boolean
-        +isSuspended() Boolean
-        +isPIN() Boolean
-        +isCSRRep() Boolean
+        +getRole() String
+        +toJSON() Object
+        +findAll(page, limit)$ UserAccount[]
         +findById(id)$ UserAccount
         +findByEmail(email)$ UserAccount
+        +login(email, password)$ LoginResult
+        +findByProfileName(name)$ UserAccount[]
         +create(data)$ UserAccount
         +update(id, data)$ UserAccount
+        +count()$ Number
+        +search(query, page, limit)$ UserAccount[]
     }
 
     class UserProfile {
@@ -84,10 +88,14 @@ classDiagram
         -Boolean isActive
         -DateTime createdAt
         -DateTime updatedAt
-        +hasPermission(permission) Boolean
-        +isActiveRole() Boolean
+        +findAll()$ UserProfile[]
+        +findById(id)$ UserProfile
         +findByName(name)$ UserProfile
-        +getAllProfiles()$ UserProfile[]
+        +findActive()$ UserProfile[]
+        +create(data)$ UserProfile
+        +update(id, data)$ UserProfile
+        +count()$ Number
+        +search(query, isActive)$ UserProfile[]
     }
 
     class RequestCategory {
@@ -98,11 +106,14 @@ classDiagram
         -Boolean isActive
         -DateTime createdAt
         -DateTime updatedAt
-        +isActive() Boolean
-        +findById(id)$ RequestCategory
         +findAll()$ RequestCategory[]
+        +findActive()$ RequestCategory[]
+        +findById(id)$ RequestCategory
         +create(data)$ RequestCategory
         +update(id, data)$ RequestCategory
+        +delete(id)$ Boolean
+        +search(query, includeInactive)$ RequestCategory[]
+        +count()$ Number
     }
 
     %% ============================================
@@ -123,19 +134,21 @@ classDiagram
         -Integer shortlistCount
         -DateTime createdAt
         -DateTime updatedAt
-        +isActive() Boolean
-        +isMatched() Boolean
-        +isCompleted() Boolean
-        +isUrgent() Boolean
-        +incrementViewCount() void
-        +incrementShortlistCount() void
-        +decrementShortlistCount() void
+        +toJSON() Object
         +findById(id)$ Request
-        +findByPIN(pinId)$ Request[]
-        +search(query, filters)$ Request[]
+        +searchByPIN(pinId, query, status, categoryId, urgency)$ Request[]
+        +findByStatus(status, page, limit)$ Request[]
+        +findCompletedByPIN(pinId, query)$ Request[]
         +create(data)$ Request
         +update(id, data)$ Request
         +delete(id)$ Boolean
+        +count()$ Number
+        +countByStatus(status)$ Number
+        +search(query, status, urgency, categoryId, page, limit)$ Request[]
+        +incrementViewCountDB(id)$ void
+        +incrementShortlistCountDB(id)$ void
+        +getViewCount(pinId, requestId)$ Number
+        +getShortlistCount(pinId, requestId)$ Number
     }
 
     class Shortlist {
@@ -143,11 +156,12 @@ classDiagram
         -UUID csrRepId
         -UUID requestId
         -DateTime createdAt
-        +getAgeInDays() Integer
-        +isRecent() Boolean
         +findById(id)$ Shortlist
+        +getShortlistedRequestIds(csrRepId)$ String[]
         +create(data)$ Shortlist
-        +delete(id)$ Boolean
+        +deleteByCSRRepAndRequest(csrRepId, requestId)$ Boolean
+        +exists(csrRepId, requestId)$ Boolean
+        +search(csrRepId, query)$ Shortlist[]
     }
 
     note for UserProfile "Only 4 static records exist:\nPIN, CSR_REP, USER_ADMIN, PLATFORM_MANAGER"

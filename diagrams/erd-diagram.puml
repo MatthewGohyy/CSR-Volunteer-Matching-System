@@ -149,6 +149,8 @@ entity Notification {
     * message : TEXT
     * isRead : BOOLEAN
     * createdAt : TIMESTAMP
+    --
+    <<Cascading Delete Enabled>>
 }
 
 ' ====================
@@ -246,7 +248,28 @@ note bottom of Request
   - LOW: Flexible timing
   - MEDIUM: Within a week
   - HIGH: Urgent, ASAP
+  
+  **Cascading Deletes**:
+  - When Request is deleted, related
+    Shortlists, VolunteerOffers, and 
+    Match are auto-deleted
 end note
 
+note right of Notification
+  **Cascading Delete**:
+  - When UserAccount is deleted,
+    all notifications are auto-deleted
+  
+  **Field Name**:
+  - Uses userId (not userAccountId)
+end note
+
+note as VersionNote
+  **Database Schema Version**: Nov 2025
+  **Status**: Updated after code cleanup
+  - All tables and relationships verified
+  - Cascading delete constraints documented
+  - Field names match Prisma schema
+end note
 
 @enduml

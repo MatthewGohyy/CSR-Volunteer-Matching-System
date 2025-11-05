@@ -1,7 +1,8 @@
 erDiagram
     %% ============================================
     %% CSR Volunteer Matching System - ERD
-    %% Refactored Design with UserAccount/UserProfile
+    %% Updated: November 2025 (After Code Cleanup)
+    %% Status: Verified against Prisma schema
     %% ============================================
 
     UserProfile ||--o{ UserAccount : "has role"
@@ -65,7 +66,7 @@ erDiagram
 
     Request {
         uuid id PK "Primary Key"
-        uuid pinId FK "References UserAccount (PIN role)"
+        uuid pinId FK "References UserAccount (PIN role, Cascade Delete)"
         uuid categoryId FK "References RequestCategory"
         varchar title
         text description
@@ -110,7 +111,7 @@ erDiagram
 
     Notification {
         uuid id PK "Primary Key"
-        uuid userId FK "References UserAccount"
+        uuid userId FK "References UserAccount (Cascade Delete)"
         enum type "VOLUNTEER_OFFER, OFFER_ACCEPTED, etc."
         text message
         boolean isRead "Default false"

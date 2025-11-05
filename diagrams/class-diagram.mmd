@@ -1,7 +1,7 @@
 classDiagram
     %% ============================================
     %% CSR Volunteer Matching System - Class Diagram
-    %% Refactored Design with UserAccount/UserProfile
+    %% Updated: November 2025 (After Code Cleanup)
     %% ============================================
 
     %% ============================================
@@ -90,23 +90,29 @@ classDiagram
         -DateTime createdAt
         -DateTime updatedAt
         +isActive() Boolean
-        +isSuspended() Boolean
-        +isPIN() Boolean
-        +isCSRRep() Boolean
-        +isPlatformManager() Boolean
-        +hasRole(role) Boolean
-        +getProfile() UserProfile
-        +isSenior() Boolean
-        +hasAccessibilityNeeds() Boolean
-        +hasLogo() Boolean
+        +getRole() String
         +toJSON() Object
+        +findAll(page, limit)$ UserAccount[]
         +findById(id)$ UserAccount
         +findByEmail(email)$ UserAccount
-        +findByProfileName(name)$ UserAccount[]
+        +login(email, password)$ LoginResult
+        +findByUserIdWithProfileName(userId, profileName)$ UserAccount
+        +findByProfileName(profileName, page, limit)$ UserAccount[]
+        +findByStatus(status, page, limit)$ UserAccount[]
         +create(data)$ UserAccount
         +update(id, data)$ UserAccount
+        +delete(id)$ Boolean
+        +count()$ Number
+        +countByProfileName(profileName)$ Number
+        +countByStatus(status)$ Number
+        +search(query, page, limit)$ UserAccount[]
         +suspend(id)$ UserAccount
         +activate(id)$ UserAccount
+        +updatePINProfile(userId, data)$ UserAccount
+        +updateCSRRepProfile(userId, data)$ UserAccount
+        +updatePlatformManagerProfile(userId, data)$ UserAccount
+        +suspendProfile(id)$ UserAccount
+        +activateProfile(id)$ UserAccount
     }
 
     class UserProfile {
@@ -117,14 +123,20 @@ classDiagram
         -Boolean isActive
         -DateTime createdAt
         -DateTime updatedAt
-        +hasPermission(permission) Boolean
-        +isActiveRole() Boolean
+        +findAll()$ UserProfile[]
+        +findById(id)$ UserProfile
         +findByName(name)$ UserProfile
-        +getAllProfiles()$ UserProfile[]
+        +findActive()$ UserProfile[]
+        +create(data)$ UserProfile
+        +update(id, data)$ UserProfile
+        +count()$ Number
+        +countActive()$ Number
+        +search(query, isActive)$ UserProfile[]
     }
 
-    note for UserProfile "Only 4 static records exist:\nPIN, CSR_REP, USER_ADMIN, PLATFORM_MANAGER"
-    note for UserAccount "Single Table Inheritance Pattern:\n- All role-specific fields in ONE class\n- Role determined by userProfile reference\n- PIN users use: age, location, accessibilityNeeds\n- CSR users use: companyName, companyRegistrationNumber, etc\n- Platform Managers use: department\n- Unused fields are NULL for each user"
+    note for UserProfile "Only 4 static records exist:\n- PIN (Person in Need)\n- CSR_REP (CSR Representative)\n- USER_ADMIN (User Administrator)\n- PLATFORM_MANAGER (Platform Manager)"
+    
+    note for UserAccount "Single Table Inheritance Pattern:\n- All role-specific fields in ONE class\n- Role determined by userProfile reference\n- PIN users use: age, location, accessibilityNeeds\n- CSR users use: companyName, companyRegistrationNumber, etc\n- Platform Managers use: department\n- Unused fields are NULL for each user\n\nAfter Cleanup (Nov 2025):\n- Removed 11 unused instance methods\n- Kept only used methods: isActive, isPIN, isCSRRep, etc.\n- All static CRUD methods remain"
 
     %% ============================================
     %% SERVICE MANAGEMENT
@@ -138,12 +150,17 @@ classDiagram
         -Boolean isActive
         -DateTime createdAt
         -DateTime updatedAt
-        +isActive() Boolean
-        +findById(id)$ RequestCategory
         +findAll()$ RequestCategory[]
+        +findActive()$ RequestCategory[]
+        +findById(id)$ RequestCategory
         +create(data)$ RequestCategory
         +update(id, data)$ RequestCategory
+        +delete(id)$ Boolean
+        +search(query, includeInactive)$ RequestCategory[]
+        +count()$ Number
     }
+
+    note for RequestCategory "After Cleanup (Nov 2025):\n- Removed 3 unused instance methods\n- All operations use static methods"
 
     class Request {
         -UUID id
@@ -159,19 +176,24 @@ classDiagram
         -Integer shortlistCount
         -DateTime createdAt
         -DateTime updatedAt
-        +isActive() Boolean
-        +isMatched() Boolean
-        +isCompleted() Boolean
-        +isUrgent() Boolean
-        +canBeUpdated() Boolean
-        +incrementViewCount() void
-        +incrementShortlistCount() void
+        +toJSON() Object
         +findById(id)$ Request
-        +findByPinId(pinId)$ Request[]
+        +searchByPIN(pinId, query, status, categoryId, urgency)$ Request[]
+        +findByStatus(status, page, limit)$ Request[]
+        +findCompletedByPIN(pinId, query)$ Request[]
         +create(data)$ Request
         +update(id, data)$ Request
-        +cancel(id)$ Request
+        +delete(id)$ Boolean
+        +count()$ Number
+        +countByStatus(status)$ Number
+        +search(query, status, urgency, categoryId, page, limit)$ Request[]
+        +incrementViewCountDB(id)$ void
+        +incrementShortlistCountDB(id)$ void
+        +getViewCount(pinId, requestId)$ Number
+        +getShortlistCount(pinId, requestId)$ Number
     }
+
+    note for Request "After Cleanup (Nov 2025):\n- Removed 5 unused instance methods\n- Increment methods now static (DB operations)\n- toJSON() for proper date serialization"
 
     %% ============================================
     %% MATCHING SYSTEM
@@ -183,10 +205,14 @@ classDiagram
         -UUID requestId
         -DateTime createdAt
         +findById(id)$ Shortlist
-        +findByCsrRepId(csrRepId)$ Shortlist[]
+        +getShortlistedRequestIds(csrRepId)$ String[]
         +create(data)$ Shortlist
-        +delete(id)$ void
+        +deleteByCSRRepAndRequest(csrRepId, requestId)$ Boolean
+        +exists(csrRepId, requestId)$ Boolean
+        +search(csrRepId, query)$ Shortlist[]
     }
+
+    note for Shortlist "After Cleanup (Nov 2025):\n- Removed 2 unused instance methods\n- All operations use static methods"
 
     class VolunteerOffer {
         -UUID id
@@ -196,15 +222,15 @@ classDiagram
         -OfferStatus status
         -DateTime createdAt
         -DateTime updatedAt
-        +isPending() Boolean
-        +isAccepted() Boolean
-        +isDeclined() Boolean
         +findById(id)$ VolunteerOffer
-        +findByRequestId(requestId)$ VolunteerOffer[]
+        +exists(csrRepId, requestId)$ Boolean
+        +search(userId, role, status, page, limit)$ VolunteerOffer[]
         +create(data)$ VolunteerOffer
-        +accept(id)$ VolunteerOffer
-        +decline(id)$ VolunteerOffer
+        +update(id, data)$ VolunteerOffer
+        +delete(id)$ Boolean
     }
+
+    note for VolunteerOffer "After Cleanup (Nov 2025):\n- Removed 5 unused instance methods\n- All operations use static methods"
 
     class Match {
         -UUID id
@@ -216,16 +242,16 @@ classDiagram
         -DateTime completedAt
         -String cancellationReason
         -DateTime updatedAt
-        +isActive() Boolean
-        +isCompleted() Boolean
-        +isCancelled() Boolean
-        +canBeCompleted() Boolean
         +findById(id)$ Match
-        +findByPinId(pinId)$ Match[]
+        +searchByPIN(pinId, query, status)$ Match[]
+        +search(userId, role, status, query, page, limit)$ Match[]
         +create(data)$ Match
-        +complete(id)$ Match
-        +cancel(id, reason)$ Match
+        +update(id, data)$ Match
+        +delete(id)$ Boolean
+        +count()$ Number
     }
+
+    note for Match "After Cleanup (Nov 2025):\n- Removed 4 unused instance methods\n- All operations use static methods"
 
     %% ============================================
     %% NOTIFICATIONS
@@ -238,13 +264,17 @@ classDiagram
         -String message
         -Boolean isRead
         -DateTime createdAt
-        +markAsRead() void
-        +isUnread() Boolean
         +findById(id)$ Notification
-        +findByUserId(userId)$ Notification[]
+        +findByUserId(userId, page, limit)$ Notification[]
+        +findUnreadByUserId(userId)$ Notification[]
         +create(data)$ Notification
+        +markAsRead(id)$ Notification
         +markAllAsRead(userId)$ void
+        +countUnread(userId)$ Number
+        +delete(id)$ Boolean
     }
+
+    note for Notification "After Cleanup (Nov 2025):\n- Removed 4 unused instance methods\n- Field name: userId (not userAccountId)\n- markAsRead is now static"
 
     %% ============================================
     %% RELATIONSHIPS

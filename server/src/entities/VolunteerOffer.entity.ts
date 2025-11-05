@@ -143,12 +143,4 @@ export class VolunteerOffer implements PrismaVolunteerOffer {
     return new VolunteerOffer(offer);
   }
 
-  /**
-   * Delete volunteer offer
-   */
-  static async delete(id: string): Promise<boolean> {
-    await prisma.volunteerOffer.delete({ where: { id } });
-    return true;
-  }
-
 }

@@ -74,19 +74,23 @@ class UserAccount {
     --
     - profileStatus: ProfileStatus
     --
+    ' Instance methods (actually used)
     + isActive(): Boolean
-    + isSuspended(): Boolean
-    + isPIN(): Boolean
-    + isCSRRep(): Boolean
-    + isPlatformManager(): Boolean
+    + getRole(): String
+    + toJSON(): Object
     --
+    ' Static CRUD methods
+    {static} + findAll(page, limit): UserAccount[]
     {static} + findById(id: UUID): UserAccount
     {static} + findByEmail(email: String): UserAccount
+    {static} + login(email, password): LoginResult
     {static} + findByProfileName(name: String): UserAccount[]
     {static} + create(data: Object): UserAccount
     {static} + update(id: UUID, data: Object): UserAccount
     {static} + suspend(id: UUID): UserAccount
     {static} + activate(id: UUID): UserAccount
+    {static} + count(): Number
+    {static} + search(query, page, limit): UserAccount[]
 }
 
 class UserProfile {
@@ -98,11 +102,15 @@ class UserProfile {
     - createdAt: DateTime
     - updatedAt: DateTime
     --
-    + hasPermission(permission: String): Boolean
-    + isActiveRole(): Boolean
-    --
+    ' Static methods only (no instance methods used)
+    {static} + findAll(): UserProfile[]
+    {static} + findById(id: UUID): UserProfile
     {static} + findByName(name: String): UserProfile
-    {static} + getAllProfiles(): UserProfile[]
+    {static} + findActive(): UserProfile[]
+    {static} + create(data: Object): UserProfile
+    {static} + update(id: UUID, data: Object): UserProfile
+    {static} + count(): Number
+    {static} + search(query, isActive): UserProfile[]
     --
     <<Note: Only 4 static records exist>>
 }
@@ -120,12 +128,15 @@ class RequestCategory {
     - createdAt: DateTime
     - updatedAt: DateTime
     --
-    + isActive(): Boolean
-    --
-    {static} + findById(id: UUID): RequestCategory
+    ' Static methods only (no instance methods used)
     {static} + findAll(): RequestCategory[]
+    {static} + findActive(): RequestCategory[]
+    {static} + findById(id: UUID): RequestCategory
     {static} + create(data: Object): RequestCategory
     {static} + update(id: UUID, data: Object): RequestCategory
+    {static} + delete(id: UUID): Boolean
+    {static} + search(query, includeInactive): RequestCategory[]
+    {static} + count(): Number
 }
 
 ' ====================

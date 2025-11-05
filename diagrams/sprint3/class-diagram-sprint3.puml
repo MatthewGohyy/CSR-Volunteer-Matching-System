@@ -80,15 +80,21 @@ class UserAccount {
     - department: String
     - profileStatus: ProfileStatus
     --
+    ' Instance methods (actually used)
     + isActive(): Boolean
-    + isSuspended(): Boolean
-    + isPIN(): Boolean
-    + isCSRRep(): Boolean
+    + getRole(): String
+    + toJSON(): Object
     --
+    ' Static CRUD methods
+    {static} + findAll(page, limit): UserAccount[]
     {static} + findById(id: UUID): UserAccount
     {static} + findByEmail(email: String): UserAccount
+    {static} + login(email, password): LoginResult
+    {static} + findByProfileName(name: String): UserAccount[]
     {static} + create(data: Object): UserAccount
     {static} + update(id: UUID, data: Object): UserAccount
+    {static} + count(): Number
+    {static} + search(query, page, limit): UserAccount[]
 }
 
 class UserProfile {
@@ -100,11 +106,15 @@ class UserProfile {
     - createdAt: DateTime
     - updatedAt: DateTime
     --
-    + hasPermission(permission: String): Boolean
-    + isActiveRole(): Boolean
-    --
+    ' Static methods only (no instance methods used)
+    {static} + findAll(): UserProfile[]
+    {static} + findById(id: UUID): UserProfile
     {static} + findByName(name: String): UserProfile
-    {static} + getAllProfiles(): UserProfile[]
+    {static} + findActive(): UserProfile[]
+    {static} + create(data: Object): UserProfile
+    {static} + update(id: UUID, data: Object): UserProfile
+    {static} + count(): Number
+    {static} + search(query, isActive): UserProfile[]
 }
 
 class RequestCategory {
@@ -116,12 +126,15 @@ class RequestCategory {
     - createdAt: DateTime
     - updatedAt: DateTime
     --
-    + isActive(): Boolean
-    --
-    {static} + findById(id: UUID): RequestCategory
+    ' Static methods only (no instance methods used)
     {static} + findAll(): RequestCategory[]
+    {static} + findActive(): RequestCategory[]
+    {static} + findById(id: UUID): RequestCategory
     {static} + create(data: Object): RequestCategory
     {static} + update(id: UUID, data: Object): RequestCategory
+    {static} + delete(id: UUID): Boolean
+    {static} + search(query, includeInactive): RequestCategory[]
+    {static} + count(): Number
 }
 
 ' ====================
@@ -143,20 +156,24 @@ class Request {
     - createdAt: DateTime
     - updatedAt: DateTime
     --
-    + isActive(): Boolean
-    + isMatched(): Boolean
-    + isCompleted(): Boolean
-    + isUrgent(): Boolean
-    + incrementViewCount(): void
-    + incrementShortlistCount(): void
-    + decrementShortlistCount(): void
+    ' Instance method (for serialization)
+    + toJSON(): Object
     --
+    ' Static methods
     {static} + findById(id: UUID): Request
-    {static} + findByPIN(pinId: UUID): Request[]
-    {static} + search(query: String, filters: Object): Request[]
+    {static} + searchByPIN(pinId, query, status, categoryId, urgency): Request[]
+    {static} + findByStatus(status, page, limit): Request[]
+    {static} + findCompletedByPIN(pinId, query): Request[]
     {static} + create(data: Object): Request
     {static} + update(id: UUID, data: Object): Request
     {static} + delete(id: UUID): Boolean
+    {static} + count(): Number
+    {static} + countByStatus(status): Number
+    {static} + search(query, status, urgency, categoryId, page, limit): Request[]
+    {static} + incrementViewCountDB(id: UUID): void
+    {static} + incrementShortlistCountDB(id: UUID): void
+    {static} + getViewCount(pinId, requestId): Number
+    {static} + getShortlistCount(pinId, requestId): Number
 }
 
 class Shortlist {
@@ -165,12 +182,13 @@ class Shortlist {
     - requestId: UUID
     - createdAt: DateTime
     --
-    + getAgeInDays(): Integer
-    + isRecent(): Boolean
-    --
+    ' Static methods only (no instance methods used)
     {static} + findById(id: UUID): Shortlist
+    {static} + getShortlistedRequestIds(csrRepId): String[]
     {static} + create(data: Object): Shortlist
-    {static} + delete(id: UUID): Boolean
+    {static} + deleteByCSRRepAndRequest(csrRepId, requestId): Boolean
+    {static} + exists(csrRepId, requestId): Boolean
+    {static} + search(csrRepId, query): Shortlist[]
 }
 
 ' ====================

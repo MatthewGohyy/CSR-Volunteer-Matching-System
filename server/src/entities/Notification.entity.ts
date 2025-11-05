@@ -111,11 +111,4 @@ export class Notification implements PrismaNotification {
     });
   }
 
-  /**
-   * Delete notification
-   */
-  static async delete(id: string): Promise<boolean> {
-    await prisma.notification.delete({ where: { id } });
-    return true;
-  }
 }

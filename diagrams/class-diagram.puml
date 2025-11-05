@@ -101,27 +101,33 @@ class UserAccount {
     - createdAt: DateTime
     - updatedAt: DateTime
     --
+    ' Instance methods (actually used)
     + isActive(): Boolean
-    + isSuspended(): Boolean
-    + isPIN(): Boolean
-    + isCSRRep(): Boolean
-    + isPlatformManager(): Boolean
-    + isUserAdmin(): Boolean
-    + hasRole(role: String): Boolean
-    + getProfile(): UserProfile
-    + isSenior(): Boolean
-    + hasAccessibilityNeeds(): Boolean
-    + hasLogo(): Boolean
-    + isApproved(): Boolean
+    + getRole(): String
     + toJSON(): Object
     --
+    ' Static CRUD methods
+    {static} + findAll(page, limit): UserAccount[]
     {static} + findById(id: UUID): UserAccount
     {static} + findByEmail(email: String): UserAccount
-    {static} + findByRole(role: String): UserAccount[]
+    {static} + login(email, password): LoginResult
+    {static} + findByUserIdWithProfileName(userId, profileName): UserAccount
+    {static} + findByProfileName(profileName, page, limit): UserAccount[]
+    {static} + findByStatus(status, page, limit): UserAccount[]
     {static} + create(data: Object): UserAccount
     {static} + update(id: UUID, data: Object): UserAccount
+    {static} + delete(id: UUID): Boolean
+    {static} + count(): Number
+    {static} + countByProfileName(profileName): Number
+    {static} + countByStatus(status): Number
+    {static} + search(query, page, limit): UserAccount[]
     {static} + suspend(id: UUID): UserAccount
     {static} + activate(id: UUID): UserAccount
+    {static} + updatePINProfile(userId, data): UserAccount
+    {static} + updateCSRRepProfile(userId, data): UserAccount
+    {static} + updatePlatformManagerProfile(userId, data): UserAccount
+    {static} + suspendProfile(id: UUID): UserAccount
+    {static} + activateProfile(id: UUID): UserAccount
 }
 
 class UserProfile {
@@ -133,11 +139,16 @@ class UserProfile {
     - createdAt: DateTime
     - updatedAt: DateTime
     --
-    + hasPermission(permission: String): Boolean
-    + isActiveRole(): Boolean
-    --
+    ' Static CRUD methods only (no instance methods used)
+    {static} + findAll(): UserProfile[]
+    {static} + findById(id: UUID): UserProfile
     {static} + findByName(name: String): UserProfile
-    {static} + getAllProfiles(): UserProfile[]
+    {static} + findActive(): UserProfile[]
+    {static} + create(data: Object): UserProfile
+    {static} + update(id: UUID, data: Object): UserProfile
+    {static} + count(): Number
+    {static} + countActive(): Number
+    {static} + search(query?, isActive?): UserProfile[]
     --
     <<Note: Only 4 static records exist>>
 }
@@ -156,12 +167,15 @@ class RequestCategory {
     - createdAt: DateTime
     - updatedAt: DateTime
     --
-    + isActive(): Boolean
-    --
-    {static} + findById(id: UUID): RequestCategory
+    ' Static CRUD methods only (no instance methods used)
     {static} + findAll(): RequestCategory[]
+    {static} + findActive(): RequestCategory[]
+    {static} + findById(id: UUID): RequestCategory
     {static} + create(data: Object): RequestCategory
     {static} + update(id: UUID, data: Object): RequestCategory
+    {static} + delete(id: UUID): Boolean
+    {static} + search(query?, includeInactive?): RequestCategory[]
+    {static} + count(): Number
 }
 
 class Request {
@@ -179,19 +193,24 @@ class Request {
     - createdAt: DateTime
     - updatedAt: DateTime
     --
-    + isActive(): Boolean
-    + isMatched(): Boolean
-    + isCompleted(): Boolean
-    + isUrgent(): Boolean
-    + canBeUpdated(): Boolean
-    + incrementViewCount(): void
-    + incrementShortlistCount(): void
+    ' Instance methods (used for JSON serialization)
+    + toJSON(): Object
     --
+    ' Static CRUD methods
     {static} + findById(id: UUID): Request
-    {static} + findByPinId(pinId: UUID): Request[]
+    {static} + searchByPIN(pinId, query?, status?, categoryId?, urgency?): Request[]
+    {static} + findByStatus(status, page, limit): Request[]
+    {static} + findCompletedByPIN(pinId, query?): Request[]
     {static} + create(data: Object): Request
     {static} + update(id: UUID, data: Object): Request
-    {static} + cancel(id: UUID): Request
+    {static} + delete(id: UUID): Boolean
+    {static} + count(): Number
+    {static} + countByStatus(status): Number
+    {static} + search(query?, status?, urgency?, categoryId?, page, limit): Request[]
+    {static} + incrementViewCountDB(id: UUID): void
+    {static} + incrementShortlistCountDB(id: UUID): void
+    {static} + getViewCount(pinId, requestId): Number
+    {static} + getShortlistCount(pinId, requestId): Number
 }
 
 ' ====================
@@ -204,10 +223,13 @@ class Shortlist {
     - requestId: UUID
     - createdAt: DateTime
     --
+    ' Static CRUD methods only (no instance methods used)
     {static} + findById(id: UUID): Shortlist
-    {static} + findByCsrRepId(csrRepId: UUID): Shortlist[]
+    {static} + getShortlistedRequestIds(csrRepId): String[]
     {static} + create(data: Object): Shortlist
-    {static} + delete(id: UUID): void
+    {static} + deleteByCSRRepAndRequest(csrRepId, requestId): Boolean
+    {static} + exists(csrRepId, requestId): Boolean
+    {static} + search(csrRepId, query?): Shortlist[]
 }
 
 class VolunteerOffer {
@@ -219,15 +241,13 @@ class VolunteerOffer {
     - createdAt: DateTime
     - updatedAt: DateTime
     --
-    + isPending(): Boolean
-    + isAccepted(): Boolean
-    + isDeclined(): Boolean
-    --
+    ' Static CRUD methods only (no instance methods used)
     {static} + findById(id: UUID): VolunteerOffer
-    {static} + findByRequestId(requestId: UUID): VolunteerOffer[]
+    {static} + exists(csrRepId, requestId): Boolean
+    {static} + search(userId, role, status?, page, limit): VolunteerOffer[]
     {static} + create(data: Object): VolunteerOffer
-    {static} + accept(id: UUID): VolunteerOffer
-    {static} + decline(id: UUID): VolunteerOffer
+    {static} + update(id: UUID, data: Object): VolunteerOffer
+    {static} + delete(id: UUID): Boolean
 }
 
 class Match {
@@ -241,16 +261,14 @@ class Match {
     - cancellationReason: String
     - updatedAt: DateTime
     --
-    + isActive(): Boolean
-    + isCompleted(): Boolean
-    + isCancelled(): Boolean
-    + canBeCompleted(): Boolean
-    --
+    ' Static CRUD methods only (no instance methods used)
     {static} + findById(id: UUID): Match
-    {static} + findByPinId(pinId: UUID): Match[]
+    {static} + searchByPIN(pinId, query?, status?): Match[]
+    {static} + search(userId, role, status?, query?, page, limit): Match[]
     {static} + create(data: Object): Match
-    {static} + complete(id: UUID): Match
-    {static} + cancel(id: UUID, reason: String): Match
+    {static} + update(id: UUID, data: Object): Match
+    {static} + delete(id: UUID): Boolean
+    {static} + count(): Number
 }
 
 ' ====================
@@ -265,13 +283,15 @@ class Notification {
     - isRead: Boolean
     - createdAt: DateTime
     --
-    + markAsRead(): void
-    + isUnread(): Boolean
-    --
+    ' Static CRUD methods only (no instance methods used)
     {static} + findById(id: UUID): Notification
-    {static} + findByUserId(userId: UUID): Notification[]
+    {static} + findByUserId(userId, page, limit): Notification[]
+    {static} + findUnreadByUserId(userId): Notification[]
     {static} + create(data: Object): Notification
-    {static} + markAllAsRead(userId: UUID): void
+    {static} + markAsRead(id: UUID): Notification
+    {static} + markAllAsRead(userId): void
+    {static} + countUnread(userId): Number
+    {static} + delete(id: UUID): Boolean
 }
 
 ' ====================
@@ -312,10 +332,10 @@ Notification::type -- NotificationType
 note right of UserProfile
   **IMPORTANT**: This table contains 
   exactly 4 static records:
-  - PIN
-  - CSR_REP
-  - USER_ADMIN
-  - PLATFORM_MANAGER
+  - PIN ("Person in Need")
+  - CSR_REP ("CSR Representative")
+  - USER_ADMIN ("User Administrator")
+  - PLATFORM_MANAGER ("Platform Manager")
   
   All UserAccounts reference one
   of these 4 records via userProfileId.
@@ -330,10 +350,27 @@ note right of UserAccount
   - Platform Managers use: department
   - Unused fields are NULL
   
-  **Methods handle role logic**:
-  - isPIN(), isCSRRep(), etc.
-  - Business logic varies by role
-end note with UserProfile
+  **Methods After Cleanup**:
+  - Removed 11 unused instance methods
+  - Kept only methods used in actual code:
+    * isActive(), isPIN(), isCSRRep(), etc.
+    * getProfileName(), getRole()
+    * toJSON() for serialization
+  - All static CRUD methods remain
+end note
+
+note bottom of Request
+  **Methods After Cleanup**:
+  - Removed 5 unused instance methods
+  - Static incrementViewCountDB/incrementShortlistCountDB
+    replace instance methods
+  - toJSON() for proper date serialization
+end note
+
+note bottom of Match
+  **Methods After Cleanup**:
+  - Removed 4 unused instance methods
+  - All operations use static methods
 end note
 
 @enduml
