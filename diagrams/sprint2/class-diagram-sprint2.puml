@@ -1,7 +1,6 @@
 @startuml Sprint2_Class_Diagram
 
 !define ENTITY_COLOR #E8F5E9
-!define ENUM_COLOR #FFF9C4
 !define RELATION_COLOR #90CAF9
 
 skinparam class {
@@ -10,10 +9,6 @@ skinparam class {
     ArrowColor RELATION_COLOR
 }
 
-skinparam enum {
-    BackgroundColor ENUM_COLOR
-    BorderColor #FBC02D
-}
 
 title Sprint 2: Advanced User/Profile Management & Category Management
 
@@ -21,17 +16,7 @@ title Sprint 2: Advanced User/Profile Management & Category Management
 ' ENUMS
 ' ====================
 
-enum UserStatus {
-    ACTIVE
-    SUSPENDED
-    DELETED
-}
 
-enum ProfileStatus {
-    ACTIVE
-    SUSPENDED
-    DEACTIVATED
-}
 
 ' ====================
 ' CORE ENTITIES (from Sprint 1)
@@ -140,7 +125,5 @@ class RequestCategory {
 UserProfile "1" -- "0..*" UserAccount : has >
 
 ' UserAccount Status
-UserAccount::status -- UserStatus
-UserAccount::profileStatus -- ProfileStatus
 
 @enduml

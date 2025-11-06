@@ -1,68 +1,12 @@
 @startuml CSR_Volunteer_Matching_System_Class_Diagram
 
 !define ENTITY_COLOR #E8F5E9
-!define ENUM_COLOR #FFF9C4
 !define RELATION_COLOR #90CAF9
 
 skinparam class {
     BackgroundColor ENTITY_COLOR
     BorderColor #4CAF50
     ArrowColor RELATION_COLOR
-}
-
-skinparam enum {
-    BackgroundColor ENUM_COLOR
-    BorderColor #FBC02D
-}
-
-' ====================
-' ENUMS
-' ====================
-
-enum UserStatus {
-    ACTIVE
-    SUSPENDED
-    DELETED
-}
-
-enum ProfileStatus {
-    ACTIVE
-    SUSPENDED
-    DEACTIVATED
-}
-
-enum RequestStatus {
-    ACTIVE
-    MATCHED
-    COMPLETED
-    CANCELLED
-}
-
-enum UrgencyLevel {
-    LOW
-    MEDIUM
-    HIGH
-}
-
-enum OfferStatus {
-    PENDING
-    ACCEPTED
-    DECLINED
-}
-
-enum MatchStatus {
-    ACTIVE
-    COMPLETED
-    CANCELLED
-}
-
-enum NotificationType {
-    VOLUNTEER_OFFER
-    OFFER_ACCEPTED
-    OFFER_DECLINED
-    MATCH_CONFIRMED
-    MATCH_CANCELLED
-    REQUEST_UPDATED
 }
 
 ' ====================
@@ -295,32 +239,19 @@ class Notification {
 ' UserProfile -> UserAccount (1:M)
 UserProfile "1" -- "0..*" UserAccount : has >
 
-' UserAccount Status
-UserAccount::status -- UserStatus
-
 ' UserAccount Relationships (role-based)
 UserAccount "1" -- "0..*" Request : creates (PIN role) >
 UserAccount "1" -- "0..*" Shortlist : saves (CSR role) >
 UserAccount "1" -- "0..*" VolunteerOffer : makes (CSR role) >
 UserAccount "1" -- "0..*" Match : involved in >
-UserAccount::profileStatus -- ProfileStatus
 
 ' Request Relationships
 RequestCategory "1" -- "0..*" Request : categorizes >
 Request "1" -- "0..*" Shortlist : saved by >
 Request "1" -- "0..*" VolunteerOffer : receives >
 Request "1" -- "0..1" Match : matched with >
-Request::status -- RequestStatus
-Request::urgency -- UrgencyLevel
-
-' Match Relationships
-Match::status -- MatchStatus
-
-' Volunteer Offer
-VolunteerOffer::status -- OfferStatus
 
 ' Notification
 UserAccount "1" -- "0..*" Notification : receives >
-Notification::type -- NotificationType
 
 @enduml

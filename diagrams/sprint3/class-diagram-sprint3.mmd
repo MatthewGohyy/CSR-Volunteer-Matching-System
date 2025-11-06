@@ -167,16 +167,7 @@ classDiagram
     %% ============================================
     
     %% Core relationships from previous sprints
-    UserProfile "1" --> "0..*" UserAccount : has role
-    UserAccount --> UserStatus : has status
-    UserAccount --> ProfileStatus : has profile status
 
     %% Request relationships (New in Sprint 3)
-    RequestCategory "1" --> "0..*" Request : categorizes
-    UserAccount "1" --> "0..*" Request : creates (PIN role)
-    Request --> RequestStatus : has status
-    Request --> UrgencyLevel : has urgency
 
     %% Shortlist relationships (New in Sprint 3)
-    UserAccount "1" --> "0..*" Shortlist : saves (CSR role)
-    Request "1" --> "0..*" Shortlist : saved by

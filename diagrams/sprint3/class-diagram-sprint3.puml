@@ -1,7 +1,6 @@
 @startuml Sprint3_Class_Diagram
 
 !define ENTITY_COLOR #E8F5E9
-!define ENUM_COLOR #FFF9C4
 !define RELATION_COLOR #90CAF9
 
 skinparam class {
@@ -10,10 +9,6 @@ skinparam class {
     ArrowColor RELATION_COLOR
 }
 
-skinparam enum {
-    BackgroundColor ENUM_COLOR
-    BorderColor #FBC02D
-}
 
 title Sprint 3: Request Management & Shortlisting
 
@@ -21,30 +16,9 @@ title Sprint 3: Request Management & Shortlisting
 ' ENUMS
 ' ====================
 
-enum UserStatus {
-    ACTIVE
-    SUSPENDED
-    DELETED
-}
 
-enum ProfileStatus {
-    ACTIVE
-    SUSPENDED
-    DEACTIVATED
-}
 
-enum RequestStatus {
-    ACTIVE
-    MATCHED
-    COMPLETED
-    CANCELLED
-}
 
-enum UrgencyLevel {
-    LOW
-    MEDIUM
-    HIGH
-}
 
 ' ====================
 ' CORE ENTITIES
@@ -190,14 +164,10 @@ class Shortlist {
 
 ' Core relationships from previous sprints
 UserProfile "1" -- "0..*" UserAccount : has >
-UserAccount::status -- UserStatus
-UserAccount::profileStatus -- ProfileStatus
 
 ' Request relationships (NEW)
 RequestCategory "1" -- "0..*" Request : categorizes >
 UserAccount "1" -- "0..*" Request : creates (PIN role) >
-Request::status -- RequestStatus
-Request::urgency -- UrgencyLevel
 
 ' Shortlist relationships (NEW)
 UserAccount "1" -- "0..*" Shortlist : saves (CSR role) >

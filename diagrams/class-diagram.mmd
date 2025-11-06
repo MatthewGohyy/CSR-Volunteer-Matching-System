@@ -5,63 +5,6 @@ classDiagram
     %% ============================================
 
     %% ============================================
-    %% ENUMS
-    %% ============================================
-    
-    class UserStatus {
-        <<enumeration>>
-        ACTIVE
-        SUSPENDED
-        DELETED
-    }
-
-    class ProfileStatus {
-        <<enumeration>>
-        ACTIVE
-        SUSPENDED
-        DEACTIVATED
-    }
-
-    class RequestStatus {
-        <<enumeration>>
-        ACTIVE
-        MATCHED
-        COMPLETED
-        CANCELLED
-    }
-
-    class UrgencyLevel {
-        <<enumeration>>
-        LOW
-        MEDIUM
-        HIGH
-    }
-
-    class OfferStatus {
-        <<enumeration>>
-        PENDING
-        ACCEPTED
-        DECLINED
-    }
-
-    class MatchStatus {
-        <<enumeration>>
-        ACTIVE
-        COMPLETED
-        CANCELLED
-    }
-
-    class NotificationType {
-        <<enumeration>>
-        VOLUNTEER_OFFER
-        OFFER_ACCEPTED
-        OFFER_DECLINED
-        MATCH_CONFIRMED
-        MATCH_CANCELLED
-        REQUEST_UPDATED
-    }
-
-    %% ============================================
     %% CORE AUTHENTICATION & AUTHORIZATION
     %% ============================================
 
@@ -73,7 +16,7 @@ classDiagram
         -String phoneNumber
         -String address
         -DateTime dateOfBirth
-        -UserStatus status
+        -String status
         -UUID userProfileId
         -Integer age
         -String location
@@ -86,7 +29,7 @@ classDiagram
         -String companyAddress
         -String companyLogo
         -String department
-        -ProfileStatus profileStatus
+        -String profileStatus
         -DateTime createdAt
         -DateTime updatedAt
         +getRole() String
@@ -159,10 +102,10 @@ classDiagram
         -UUID categoryId
         -String title
         -String description
-        -UrgencyLevel urgency
+        -String urgency
         -DateTime dateNeeded
         -String location
-        -RequestStatus status
+        -String status
         -Integer viewCount
         -Integer shortlistCount
         -DateTime createdAt
@@ -206,7 +149,7 @@ classDiagram
         -UUID csrRepId
         -UUID requestId
         -String message
-        -OfferStatus status
+        -String status
         -DateTime createdAt
         -DateTime updatedAt
         +findById(id)$ VolunteerOffer
@@ -221,7 +164,7 @@ classDiagram
         -UUID requestId
         -UUID csrRepId
         -UUID pinId
-        -MatchStatus status
+        -String status
         -DateTime matchedAt
         -DateTime completedAt
         -String cancellationReason
@@ -241,7 +184,7 @@ classDiagram
     class Notification {
         -UUID id
         -UUID userId
-        -NotificationType type
+        -String type
         -String message
         -Boolean isRead
         -DateTime createdAt
@@ -260,8 +203,6 @@ classDiagram
 
     %% Core Authentication
     UserProfile "1" --> "0..*" UserAccount : has
-    UserAccount --> UserStatus : has status
-    UserAccount --> ProfileStatus : has profile status
 
     %% UserAccount Relationships (role-based)
     UserAccount "1" --> "0..*" Request : creates (when PIN role)
@@ -275,15 +216,6 @@ classDiagram
     Request "1" --> "0..*" Shortlist : saved by
     Request "1" --> "0..*" VolunteerOffer : receives
     Request "1" --> "0..1" Match : matched with
-    Request --> RequestStatus : has status
-    Request --> UrgencyLevel : has urgency
-
-    %% Match
-    Match --> MatchStatus : has status
-
-    %% Volunteer Offer
-    VolunteerOffer --> OfferStatus : has status
 
     %% Notifications
     UserAccount "1" --> "0..*" Notification : receives
-    Notification --> NotificationType : has type
