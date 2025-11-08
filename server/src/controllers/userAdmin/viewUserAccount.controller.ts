@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserAccount } from '../../entities/UserAccount.entity';
-import { AppError } from '../../middleware/errorHandler';
 
 /**
  * View User Account Controller (Singular)
@@ -17,11 +16,7 @@ export class ViewUserAccountController {
 
       const user = await UserAccount.findById(id);
 
-      if (!user) {
-        throw new AppError('User not found', 404);
-      }
-
-      res.json({ user: user.toJSON() });
+      res.json({ user: user?.toJSON() || null });
     } catch (error) {
       next(error);
     }

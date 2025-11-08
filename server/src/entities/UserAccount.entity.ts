@@ -394,19 +394,22 @@ export class UserAccount implements PrismaUserAccount {
 
   /**
    * Search users by email, name, or company name
+   * @param query - Search query (null/undefined = return all users)
    */
-  static async search(query: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
+  static async search(query: string | null = null) {
+    const where: any = {};
+
+    // Add search query filter if provided
+    if (query && query.trim()) {
+      where.OR = [
+        { email: { contains: query.trim(), mode: 'insensitive' } },
+        { name: { contains: query.trim(), mode: 'insensitive' } },
+        { companyName: { contains: query.trim(), mode: 'insensitive' } },
+      ];
+    }
+
     const users = await prisma.userAccount.findMany({
-      where: {
-        OR: [
-          { email: { contains: query, mode: 'insensitive' } },
-          { name: { contains: query, mode: 'insensitive' } },
-          { companyName: { contains: query, mode: 'insensitive' } },
-        ],
-      },
-      skip,
-      take: limit,
+      where,
       include: {
         userProfile: true,
       },

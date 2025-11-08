@@ -23,7 +23,6 @@ import UserProfileDetailsModal from './UserProfileDetailsModal';
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'accounts' | 'profiles'>('accounts');
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'ALL'>('ALL');
   const [profileStatusFilter, setProfileStatusFilter] = useState<boolean | 'ALL'>('ALL');
@@ -38,9 +37,15 @@ const AdminDashboard: React.FC = () => {
 
   // Fetch user accounts - Direct API call to controller (Boundary -> Controller)
   const { data: usersData, isLoading, error } = useQuery({
-    queryKey: ['admin-users', currentPage],
+    queryKey: ['admin-users', searchTerm],
     queryFn: async (): Promise<UsersResponse> => {
-      const response = await api.get<UsersResponse>(`/admin/users?page=${currentPage}&limit=10`);
+      const params = new URLSearchParams();
+      if (searchTerm.trim()) {
+        params.append('query', searchTerm.trim());
+      }
+      const queryString = params.toString();
+      const url = `/admin/users${queryString ? `?${queryString}` : ''}`;
+      const response = await api.get<UsersResponse>(url);
       return response.data;
     },
     enabled: activeTab === 'accounts',
@@ -48,7 +53,7 @@ const AdminDashboard: React.FC = () => {
 
   // Fetch user profiles (role definitions) - Direct API call to controller
   const { data: profilesData, isLoading: isLoadingProfiles, error: profilesError } = useQuery({
-    queryKey: ['admin-profiles', currentPage, profileStatusFilter, searchTerm],
+    queryKey: ['admin-profiles', profileStatusFilter, searchTerm],
     queryFn: async (): Promise<UserProfilesResponse> => {
       const params = new URLSearchParams();
       if (searchTerm.trim()) {
@@ -72,15 +77,10 @@ const AdminDashboard: React.FC = () => {
 
 
 
-  // Filter users based on search and status (for accounts tab)
+  // Filter users by status only (search is done server-side)
   const filteredUsers = activeUsersData?.users.filter(user => {
-    const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.pin?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.csrRep?.companyName.toLowerCase().includes(searchTerm.toLowerCase());
-    
     const matchesStatus = statusFilter === 'ALL' || user.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+    return matchesStatus;
   }) || [];
 
   // Profiles are already filtered server-side, use them directly
@@ -182,7 +182,6 @@ const AdminDashboard: React.FC = () => {
             <button
               onClick={() => {
                 setActiveTab('accounts');
-                setCurrentPage(1);
               }}
               className={`py-4 px-6 border-b-2 font-medium text-sm ${
                 activeTab === 'accounts'
@@ -195,7 +194,6 @@ const AdminDashboard: React.FC = () => {
             <button
               onClick={() => {
                 setActiveTab('profiles');
-                setCurrentPage(1);
               }}
               className={`py-4 px-6 border-b-2 font-medium text-sm ${
                 activeTab === 'profiles'
@@ -436,56 +434,6 @@ const AdminDashboard: React.FC = () => {
             )}
           </ul>
 
-          {/* Pagination - Only show for accounts */}
-          {activeTab === 'accounts' && activeUsersData && activeUsersData.total > 10 && (
-            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-              <div className="flex-1 flex justify-between sm:hidden">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                    <button
-                      onClick={() => setCurrentPage(Math.min(Math.ceil(activeUsersData.total / 10), currentPage + 1))}
-                      disabled={currentPage >= Math.ceil(activeUsersData.total / 10)}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> to{' '}
-                    <span className="font-medium">
-                      {Math.min(currentPage * 10, activeUsersData.total)}
-                    </span>{' '}
-                    of <span className="font-medium">{activeUsersData.total}</span> results
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                    <button
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => setCurrentPage(Math.min(Math.ceil(activeUsersData.total / 10), currentPage + 1))}
-                      disabled={currentPage >= Math.ceil(activeUsersData.total / 10)}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </nav>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </main>
 

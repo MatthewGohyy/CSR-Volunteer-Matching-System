@@ -6,7 +6,7 @@ import { GetNotificationsController } from '../controllers/pin/getNotifications.
 import { MarkNotificationReadController } from '../controllers/pin/markNotificationRead.controller';
 import { MarkAllNotificationsReadController } from '../controllers/pin/markAllNotificationsRead.controller';
 import { SearchCompletedRequestsController } from '../controllers/pin/searchCompletedRequests.controller';
-import { ViewCompletedRequestsController } from '../controllers/pin/viewCompletedRequests.controller';
+import { ViewCompletedRequestController } from '../controllers/pin/viewCompletedRequest.controller';
 import { ViewOffersController } from '../controllers/pin/viewOffers.controller';
 import { AcceptOfferController } from '../controllers/pin/acceptOffer.controller';
 import { DeclineOfferController } from '../controllers/pin/declineOffer.controller';
@@ -44,6 +44,6 @@ router.get('/requests/history/search', SearchCompletedRequestsController.handle)
 router.get('/requests/history', SearchCompletedRequestsController.handle);
 
 // Story #23: View single completed request details (by ID)
-router.get('/requests/history/:id', validate(requestIdValidation), ViewCompletedRequestsController.handle);
+router.get('/requests/history/:id', validate(requestIdValidation), ViewCompletedRequestController.handle);
 
 export default router;
