@@ -1,0 +1,56 @@
+
+> csr-volunteer-matching-server@1.0.0 test:sprint1
+> jest tests/sprint1.test.ts --verbose
+
+ts-jest[ts-jest-transformer] (WARN) Define `ts-jest` config under `globals` is deprecated. Please do
+transform: {
+    <transform_regex>: ['ts-jest', { /* ts-jest config goes here in Jest */ }],
+},
+See more at https://kulshekhar.github.io/ts-jest/docs/getting-started/presets#advanced
+PASS tests/sprint1.test.ts
+  Sprint 1: Complete Test Suite
+    Authentication (8 User Stories)
+      Story #1: User Admin Login
+        ✓ should allow User Admin to login with valid credentials (77 ms)
+        ✓ should reject invalid credentials (74 ms)
+      Story #2: User Admin Logout
+        ✓ should allow User Admin to logout (9 ms)
+        ✓ should reject logout without token (4 ms)
+      Story #13: PIN Login
+        ✓ should allow PIN to login with valid credentials (73 ms)
+      Story #14: PIN Logout
+        ✓ should allow PIN to logout (88 ms)
+      Story #24: CSR Rep Login
+        ✓ should allow CSR Rep to login with valid credentials (74 ms)
+      Story #25: CSR Rep Logout
+        ✓ should allow CSR Rep to logout (87 ms)
+      Story #33: Platform Manager Login
+        ✓ should allow Platform Manager to login with valid credentials (70 ms)
+      Story #34: Platform Manager Logout
+        ✓ should allow Platform Manager to logout (76 ms)
+    User Account Management (2 User Stories)
+      Story #3: Create User Accounts
+        ✓ should allow User Admin to create a PIN account (84 ms)
+        ✓ should allow User Admin to create a CSR Rep account (78 ms)
+        ✓ should reject duplicate email (72 ms)
+        ✓ should reject creation without authentication (3 ms)
+      Story #6: Suspend User Account
+        ✓ should allow User Admin to suspend a user account (11 ms)
+        ✓ should prevent suspended user from logging in (3 ms)
+        ✓ should allow reactivation of suspended user (74 ms)
+    User Profile Management (2 User Stories)
+      Story #8: Create User Profiles
+        ✓ should allow User Admin to create a new user profile (13 ms)
+        ✓ should reject duplicate profile name (5 ms)
+        ✓ should reject creation without authentication (1 ms)
+      Story #11: Suspend User Profile
+        ✓ should allow User Admin to suspend a user profile (6 ms)
+        ✓ should allow reactivation of suspended profile (9 ms)
+        ✓ should reject suspension without authentication (2 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       23 passed, 23 total
+Snapshots:   0 total
+Time:        2.824 s
+Ran all test suites matching /tests\/sprint1.test.ts/i.
+
