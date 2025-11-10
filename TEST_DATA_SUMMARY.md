@@ -7,12 +7,12 @@ This document provides a comprehensive summary of the test data generated using 
 
 | Entity Type | Count | Distribution |
 |-------------|-------|--------------|
-| **User Accounts** | **104** | 5 Admins, 40 PINs, 50 CSR Reps, 5 Platform Managers |
+| **User Accounts** | **104** | 6 Admins, 41 PINs, 51 CSR Reps, 6 Platform Managers |
 | **Request Categories** | **126** | Various service types including Medical, Transportation, Companionship, Home Maintenance, Technology Support, and 100+ more |
-| **Requests** | **190** | 110 Active, 40 Matched, 30 Completed, 10 Cancelled |
+| **Requests** | **190** | 10 Active, 80 Matched, 80 Completed, 20 Cancelled |
 | **Shortlists** | **189** | CSR Reps' saved requests for future action |
 | **Volunteer Offers** | **300** | 25 Pending, 250 Accepted, 25 Declined |
-| **Matches** | **100** | 40 Active, 50 Completed, 15 Cancelled |
+| **Matches** | **100** | 40 Active, 50 Completed, 10 Cancelled |
 | **Notifications** | **845** | Activity-based system notifications |
 
 ## Key Features
@@ -37,24 +37,24 @@ This document provides a comprehensive summary of the test data generated using 
 
 ## User Account Breakdown
 
-### User Administrators (5 accounts)
+### User Administrators (6 accounts)
 - Manage user accounts and profiles
 - Full system access
 - Example: admin@test.com
 
-### Persons in Need - PIN (40 accounts)
+### Persons in Need - PIN (41 accounts)
 - Request help and services
 - Track request status
 - Include age, location, accessibility needs
 - Example: PIN users aged 60-85
 
-### CSR Representatives (50 accounts)
+### CSR Representatives (51 accounts)
 - Offer volunteer services
 - Browse and shortlist requests
 - Company details with ABN/ACN
 - Example: Companies from various industries
 
-### Platform Managers (5 accounts)
+### Platform Managers (6 accounts)
 - Manage system categories
 - View analytics and reports
 - System configuration access
@@ -84,20 +84,20 @@ This document provides a comprehensive summary of the test data generated using 
 
 ## Request Status Distribution
 
-### Active Requests (110)
+### Active Requests (10)
 - Currently seeking volunteer assistance
 - Available for CSR Reps to view and offer help
 - Various urgency levels (Low, Medium, High, Urgent)
 
-### Matched Requests (40)
+### Matched Requests (80)
 - Successfully matched with CSR Representatives
 - In progress or being coordinated
 
-### Completed Requests (30)
+### Completed Requests (80)
 - Successfully fulfilled
 - Marked as completed with completion dates
 
-### Cancelled Requests (10)
+### Cancelled Requests (20)
 - Cancelled by PIN or system
 - Include cancellation reasons
 
@@ -126,7 +126,7 @@ This document provides a comprehensive summary of the test data generated using 
 - Successfully completed
 - Include completion dates and feedback
 
-### Cancelled Matches (15)
+### Cancelled Matches (10)
 - Match didn't work out
 - Include cancellation reasons
 
