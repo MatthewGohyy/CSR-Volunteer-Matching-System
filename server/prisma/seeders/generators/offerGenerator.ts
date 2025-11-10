@@ -11,7 +11,8 @@ function randomChoice<T>(array: T[]): T {
 /**
  * Generate Volunteer Offers
  * CSR Reps submit offers for ACTIVE requests
- * Distribution: PENDING (30%), ACCEPTED (40%), DECLINED (30%)
+ * Distribution: 25 PENDING (8.3%), 250 ACCEPTED (83.3%), 25 DECLINED (8.3%)
+ * Total: 300 offers
  */
 export async function generateVolunteerOffers(
   csrRepUsers: any[],
