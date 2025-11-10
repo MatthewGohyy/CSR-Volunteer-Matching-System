@@ -7,53 +7,53 @@ This comprehensive test data generator creates **100+ realistic records** for th
 ## 🎯 Data Generated
 
 ### Summary
-- **105 User Accounts** (distributed across 4 roles)
-- **25 Request Categories**
-- **127+ Requests** (various statuses)
-- **200+ Shortlists**
-- **100+ Volunteer Offers** (PENDING, ACCEPTED, DECLINED)
-- **60+ Matches** (ACTIVE, COMPLETED, CANCELLED)
-- **300+ Notifications** (various types)
+- **104 User Accounts** (distributed across 4 roles)
+- **126 Request Categories**
+- **190 Requests** (various statuses)
+- **189 Shortlists**
+- **300 Volunteer Offers** (PENDING, ACCEPTED, DECLINED)
+- **100 Matches** (ACTIVE, COMPLETED, CANCELLED)
+- **845 Notifications** (various types)
 
 ### Detailed Breakdown
 
-#### User Accounts (105 total)
-- **5 User Administrators** - Account and profile management
-- **40 Person in Need (PIN)** - Service recipients
-- **50 CSR Representatives** - Corporate volunteers
-- **5 Platform Managers** - System management
+#### User Accounts (104 total)
+- **6 User Administrators** - Account and profile management
+- **41 Person in Need (PIN)** - Service recipients
+- **51 CSR Representatives** - Corporate volunteers
+- **6 Platform Managers** - System management
 
 All accounts use password: `password123`
 
-#### Request Categories (25)
-Realistic service categories including:
-- Medical Appointments
-- Transportation
-- Companionship
-- Home Maintenance
-- Grocery Shopping
-- Technology Support
-- Pet Care
-- Meal Preparation
-- And 17 more...
+#### Request Categories (126)
+Comprehensive service categories including:
+- Medical Appointments, Transportation, Companionship
+- Home Maintenance, Grocery Shopping, Technology Support
+- Pet Care, Meal Preparation, Document Assistance
+- Financial Guidance, House Cleaning, Gardening
+- Healthcare Services (Pharmacy, Dental, Physical Therapy)
+- Technology Services (Computer Training, Smartphone Help, Email Setup)
+- Recreation (Museum Visits, Beach Outings, Swimming, Yoga)
+- Social Activities (Book Club, Coffee Meetups, Community Events)
+- And 100+ more specialized categories...
 
-#### Requests (127)
-- **ACTIVE**: 50 - Available for matching
-- **MATCHED**: 40 - Currently matched with volunteers
-- **COMPLETED**: 25 - Successfully completed
-- **CANCELLED**: 5 - Cancelled requests
+#### Requests (190)
+- **ACTIVE**: 10 - Available for matching
+- **MATCHED**: 80 - Currently matched with volunteers
+- **COMPLETED**: 80 - Successfully completed
+- **CANCELLED**: 20 - Cancelled requests
 
-#### Volunteer Offers (106)
-- **PENDING**: 30 - Awaiting PIN response
-- **ACCEPTED**: 40 - Accepted by PIN
-- **DECLINED**: 30 - Declined offers
+#### Volunteer Offers (300)
+- **PENDING**: 25 - Awaiting PIN response
+- **ACCEPTED**: 250 - Accepted by PIN
+- **DECLINED**: 25 - Declined offers
 
-#### Matches (36+)
-- **ACTIVE**: 30 - Ongoing matches
-- **COMPLETED**: 25 - Successfully completed
-- **CANCELLED**: 5 - Cancelled matches
+#### Matches (100)
+- **ACTIVE**: 40 - Ongoing matches
+- **COMPLETED**: 50 - Successfully completed
+- **CANCELLED**: 10 - Cancelled matches
 
-#### Notifications (320+)
+#### Notifications (845)
 - Volunteer offer notifications
 - Offer acceptance/decline notifications
 - Match confirmation notifications
@@ -71,13 +71,13 @@ npm run seed:large
 
 This will:
 1. Create 4 user profile types (roles)
-2. Generate 105 user accounts with realistic data
-3. Create 25 service categories
-4. Generate 127 requests with various statuses
-5. Create 200+ shortlists
-6. Generate 100+ volunteer offers
-7. Create 60+ matches
-8. Generate 300+ notifications
+2. Generate 104 user accounts with realistic data
+3. Create 126 service categories
+4. Generate 190 requests with various statuses
+5. Create 189 shortlists
+6. Generate 300 volunteer offers
+7. Create 100 matches
+8. Generate 845 notifications
 
 **Execution time**: ~2-3 seconds
 

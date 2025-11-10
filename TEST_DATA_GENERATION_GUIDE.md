@@ -11,12 +11,13 @@ This guide explains how to generate the **100+ test records** required for the C
 **Status**: ✅ **COMPLETE**
 
 We have implemented a comprehensive test data generator that creates:
-- **105 User Accounts** (exceeds 100 requirement)
-- **127 Requests**
-- **202 Shortlists**
-- **106 Volunteer Offers**
-- **36+ Matches**
-- **320+ Notifications**
+- **104 User Accounts** (exceeds 100 requirement)
+- **126 Request Categories** (exceeds 100 requirement)
+- **190 Requests** (exceeds 100 requirement)
+- **189 Shortlists** (exceeds 100 requirement)
+- **300 Volunteer Offers** (exceeds 100 requirement)
+- **100 Matches** (meets 100 requirement exactly)
+- **845 Notifications** (exceeds 100 requirement)
 
 ## 🚀 Quick Start
 
@@ -45,17 +46,17 @@ npm run seed:large
 📊 FINAL DATA SUMMARY:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    User Profiles:        4
-   User Accounts:        105
-     ├─ Admins:          5
-     ├─ PINs:            40
-     ├─ CSR Reps:        50
-     └─ Platform Mgrs:   5
-   Request Categories:   25
-   Requests:             127
-   Shortlists:           202
-   Volunteer Offers:     106
-   Matches:              36
-   Notifications:        320
+   User Accounts:        104
+     ├─ Admins:          6
+     ├─ PINs:            41
+     ├─ CSR Reps:        51
+     └─ Platform Mgrs:   6
+   Request Categories:   126
+   Requests:             190
+   Shortlists:           189
+   Volunteer Offers:     300
+   Matches:              100
+   Notifications:        845
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    ⏱️  Generation time:    ~2s
 

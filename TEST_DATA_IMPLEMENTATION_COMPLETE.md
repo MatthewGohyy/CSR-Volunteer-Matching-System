@@ -14,17 +14,20 @@
 A comprehensive, production-ready test data generation system using **Faker.js** that creates:
 
 #### 📊 Data Generated
-- ✅ **105 User Accounts** (exceeds 100 requirement)
-  - 5 User Administrators
-  - 40 Person in Need (PINs)
-  - 50 CSR Representatives
-  - 5 Platform Managers
-- ✅ **25 Request Categories**
-- ✅ **127 Requests** (ACTIVE, MATCHED, COMPLETED, CANCELLED)
-- ✅ **202 Shortlists**
-- ✅ **106 Volunteer Offers** (PENDING, ACCEPTED, DECLINED)
-- ✅ **36+ Matches** (ACTIVE, COMPLETED, CANCELLED)
-- ✅ **320+ Notifications**
+- ✅ **104 User Accounts** (exceeds 100 requirement)
+  - 6 User Administrators
+  - 41 Person in Need (PINs)
+  - 51 CSR Representatives
+  - 6 Platform Managers
+- ✅ **126 Request Categories** (exceeds 100 requirement)
+- ✅ **190 Requests** (exceeds 100 requirement)
+  - 10 Active, 80 Matched, 80 Completed, 20 Cancelled
+- ✅ **189 Shortlists** (exceeds 100 requirement)
+- ✅ **300 Volunteer Offers** (exceeds 100 requirement)
+  - 25 Pending, 250 Accepted, 25 Declined
+- ✅ **100 Matches** (meets 100 requirement exactly)
+  - 40 Active, 50 Completed, 10 Cancelled
+- ✅ **845 Notifications** (exceeds 100 requirement)
 
 ### 🏗️ Architecture
 
@@ -32,14 +35,14 @@ A comprehensive, production-ready test data generation system using **Faker.js**
 server/prisma/seeders/
 ├── generate-large-dataset.ts          # Main orchestrator
 ├── generators/
-│   ├── userGenerator.ts               # 105 realistic users
-│   ├── requestGenerator.ts            # 127 requests with variety
-│   ├── shortlistGenerator.ts          # 202 shortlist entries
-│   ├── offerGenerator.ts              # 106 volunteer offers
-│   ├── matchGenerator.ts              # 36+ matches
-│   └── notificationGenerator.ts       # 320+ notifications
+│   ├── userGenerator.ts               # 104 realistic users
+│   ├── requestGenerator.ts            # 190 requests with variety
+│   ├── shortlistGenerator.ts          # 189 shortlist entries
+│   ├── offerGenerator.ts              # 300 volunteer offers
+│   ├── matchGenerator.ts              # 100 unique matches
+│   └── notificationGenerator.ts       # 845 notifications
 └── data/
-    ├── categories.ts                   # 25 service categories
+    ├── categories.ts                   # 126 service categories
     ├── industries.ts                   # 20 industry types
     └── locations.ts                    # Australian locations
 ```
