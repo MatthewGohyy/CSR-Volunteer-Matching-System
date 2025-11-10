@@ -348,24 +348,43 @@ Features are the characteristics we use to make predictions. Think of them as th
 We will train **multiple models** and combine them:
 
 **Model A: Collaborative Filtering**
-- Learns: "Users similar to you liked these requests"
-- Input: User-item interaction matrix
-- Output: Recommendation scores
+- **Learning Type**: Unsupervised Learning (pattern discovery from interactions)
+- **Task Type**: Ranking/Regression (predicts preference scores 0-100)
+- **Input**: User-item interaction matrix (shortlists, offers, matches)
+- **Labels**: Implicit feedback (engagement signals: views, shortlists, offers, match outcomes)
+- **Output**: Recommendation scores (continuous values)
+- **Method**: User-based or item-based similarity, or neural collaborative filtering
 
 **Model B: Content-Based Filtering**
-- Learns: "Requests similar to ones you've helped with"
-- Input: Request features, user preferences
-- Output: Similarity scores
+- **Learning Type**: Supervised Learning (when using labels) or Unsupervised (similarity-based)
+- **Task Type**: Regression (predicts relevance score) or Classification (relevant/not relevant)
+- **Input**: Request features (category, urgency, location, description), user preferences
+- **Labels**: Match success (completed=1, cancelled=0), ratings (1-5 stars), engagement signals
+- **Output**: Similarity scores (continuous values)
+- **Method**: Cosine similarity, TF-IDF, or supervised classifiers (XGBoost, Neural Networks)
 
 **Model C: Matrix Factorization**
-- Learns: Hidden patterns in user-item interactions
-- Input: User-item interaction matrix
-- Output: Latent factors for users and items
+- **Learning Type**: Unsupervised Learning (latent factor discovery)
+- **Task Type**: Regression (predicts interaction strength)
+- **Input**: User-item interaction matrix (implicit or explicit ratings)
+- **Labels**: Implicit feedback (match outcomes, engagement levels) or explicit ratings (1-5 stars)
+- **Output**: Latent factors for users and items (used to compute recommendation scores)
+- **Method**: Singular Value Decomposition (SVD), Non-negative Matrix Factorization (NMF), or Neural Matrix Factorization
 
 **Model D: Hybrid Ensemble**
-- Combines: Predictions from Models A, B, and C
-- Method: Weighted average or machine learning meta-model
-- Output: Final recommendation scores
+- **Learning Type**: Supervised Learning (meta-learner trained on labels)
+- **Task Type**: Regression (predicts final recommendation score)
+- **Input**: Predictions from Models A, B, and C
+- **Labels**: Match success rate, user engagement, recommendation acceptance rate
+- **Output**: Final recommendation scores (weighted combination)
+- **Method**: Weighted average, stacking (meta-learner), or neural network ensemble
+
+**Label Definition:**
+- **Primary Label**: Match success (binary: 1=completed successfully, 0=cancelled/failed)
+- **Secondary Labels**: 
+  - Ratings (1-5 stars) - regression target
+  - Engagement level (high/medium/low) - classification target
+  - Recommendation acceptance (1=user acted on recommendation, 0=ignored) - binary classification
 
 **3. Training Process**
 
