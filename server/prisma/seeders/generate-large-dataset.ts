@@ -20,13 +20,13 @@ const prisma = new PrismaClient();
  * COMPREHENSIVE TEST DATA GENERATOR
  * 
  * This script generates a complete dataset for demo and testing:
- * - 100 User Accounts (distributed across 4 user types)
- * - 20 Request Categories
- * - 120 Requests (various statuses)
- * - 150+ Shortlists
- * - 100+ Volunteer Offers (various statuses)
- * - 60+ Matches (various statuses)
- * - 200+ Notifications
+ * - 104 User Accounts (6 Admins, 41 PINs, 51 CSR Reps, 6 Platform Managers)
+ * - 126 Request Categories
+ * - 190 Requests (10 Active, 80 Matched, 80 Completed, 20 Cancelled)
+ * - 189 Shortlists
+ * - 300 Volunteer Offers (25 Pending, 250 Accepted, 25 Declined)
+ * - 100 Matches (40 Active, 50 Completed, 10 Cancelled)
+ * - 845 Notifications
  * 
  * Execution order is critical to maintain referential integrity!
  */
@@ -94,32 +94,32 @@ async function main() {
     console.log('✅ Created 4 user profiles (role types)\n');
     
     // ============================================================================
-    // PHASE 2: USER ACCOUNTS (100 users distributed across roles)
+    // PHASE 2: USER ACCOUNTS (104 users distributed across roles)
     // ============================================================================
-    console.log('👥 PHASE 2: Creating User Accounts (100 users)');
+    console.log('👥 PHASE 2: Creating User Accounts (104 users)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     const [adminProfile, pinProfile, csrRepProfile, pmProfile] = userProfiles;
     
-    // Create 5 Admin users
-    await generateAdminUsers(5, adminProfile.id);
+    // Create 6 Admin users
+    await generateAdminUsers(6, adminProfile.id);
     
-    // Create 40 PIN users
-    await generatePINUsers(40, pinProfile.id);
+    // Create 41 PIN users
+    await generatePINUsers(41, pinProfile.id);
     
-    // Create 50 CSR Rep users
-    await generateCSRRepUsers(50, csrRepProfile.id);
+    // Create 51 CSR Rep users
+    await generateCSRRepUsers(51, csrRepProfile.id);
     
-    // Create 5 Platform Manager users
-    await generatePlatformManagerUsers(5, pmProfile.id);
+    // Create 6 Platform Manager users
+    await generatePlatformManagerUsers(6, pmProfile.id);
     
     const totalUsers = await prisma.userAccount.count();
     console.log(`✅ Total users created: ${totalUsers}\n`);
     
     // ============================================================================
-    // PHASE 3: REQUEST CATEGORIES (20 categories)
+    // PHASE 3: REQUEST CATEGORIES (126 categories)
     // ============================================================================
-    console.log('📂 PHASE 3: Creating Request Categories (20 categories)');
+    console.log('📂 PHASE 3: Creating Request Categories (126 categories)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     for (const category of requestCategories) {
@@ -134,9 +134,9 @@ async function main() {
     console.log(`✅ Created ${categories.length} categories\n`);
     
     // ============================================================================
-    // PHASE 4: REQUESTS (120 requests with various statuses)
+    // PHASE 4: REQUESTS (190 requests with various statuses)
     // ============================================================================
-    console.log('📝 PHASE 4: Creating Requests (190+ requests)');
+    console.log('📝 PHASE 4: Creating Requests (190 requests)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     const pinUsers = await getUsersByProfile('Person in Need');
@@ -156,9 +156,9 @@ async function main() {
     console.log(`✅ Total requests created: ${totalRequests}\n`);
     
     // ============================================================================
-    // PHASE 5: SHORTLISTS (150+ entries)
+    // PHASE 5: SHORTLISTS (189 entries)
     // ============================================================================
-    console.log('⭐ PHASE 5: Creating Shortlists (150+ entries)');
+    console.log('⭐ PHASE 5: Creating Shortlists (189 entries)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     const csrRepUsers = await getUsersByProfile('CSR Representative');
@@ -170,9 +170,9 @@ async function main() {
     console.log(`✅ Total shortlists created: ${totalShortlists}\n`);
     
     // ============================================================================
-    // PHASE 6: VOLUNTEER OFFERS (100+ offers)
+    // PHASE 6: VOLUNTEER OFFERS (300 offers)
     // ============================================================================
-    console.log('🤝 PHASE 6: Creating Volunteer Offers (300+ offers)');
+    console.log('🤝 PHASE 6: Creating Volunteer Offers (300 offers)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     const allOffers = await generateVolunteerOffers(
@@ -189,9 +189,9 @@ async function main() {
     console.log(`✅ Total offers created: ${totalOffers}\n`);
     
     // ============================================================================
-    // PHASE 7: MATCHES (60+ matches)
+    // PHASE 7: MATCHES (100 matches)
     // ============================================================================
-    console.log('🔗 PHASE 7: Creating Matches (100+ matches)');
+    console.log('🔗 PHASE 7: Creating Matches (100 matches)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     const acceptedOffers = await getOffersByStatus(OfferStatus.ACCEPTED);
@@ -201,7 +201,7 @@ async function main() {
       [
         { status: MatchStatus.ACTIVE, count: 40 },
         { status: MatchStatus.COMPLETED, count: 50 },
-        { status: MatchStatus.CANCELLED, count: 15 }
+        { status: MatchStatus.CANCELLED, count: 10 }
       ]
     );
     
@@ -209,9 +209,9 @@ async function main() {
     console.log(`✅ Total matches created: ${totalMatches}\n`);
     
     // ============================================================================
-    // PHASE 8: NOTIFICATIONS (200+ notifications)
+    // PHASE 8: NOTIFICATIONS (845 notifications)
     // ============================================================================
-    console.log('🔔 PHASE 8: Creating Notifications (200+ notifications)');
+    console.log('🔔 PHASE 8: Creating Notifications (845 notifications)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     const allMatches = await getAllMatches();
@@ -240,10 +240,10 @@ async function main() {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`   User Profiles:        4`);
     console.log(`   User Accounts:        ${totalUsers}`);
-    console.log(`     ├─ Admins:          5`);
-    console.log(`     ├─ PINs:            40`);
-    console.log(`     ├─ CSR Reps:        50`);
-    console.log(`     └─ Platform Mgrs:   5`);
+    console.log(`     ├─ Admins:          6`);
+    console.log(`     ├─ PINs:            41`);
+    console.log(`     ├─ CSR Reps:        51`);
+    console.log(`     └─ Platform Mgrs:   6`);
     console.log(`   Request Categories:   ${categories.length}`);
     console.log(`   Requests:             ${totalRequests}`);
     console.log(`   Shortlists:           ${totalShortlists}`);
