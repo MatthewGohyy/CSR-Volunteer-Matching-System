@@ -136,7 +136,7 @@ async function main() {
     // ============================================================================
     // PHASE 4: REQUESTS (120 requests with various statuses)
     // ============================================================================
-    console.log('📝 PHASE 4: Creating Requests (120 requests)');
+    console.log('📝 PHASE 4: Creating Requests (190+ requests)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     const pinUsers = await getUsersByProfile('Person in Need');
@@ -145,10 +145,10 @@ async function main() {
       pinUsers,
       categories,
       [
-        { status: RequestStatus.ACTIVE, count: 50 },
+        { status: RequestStatus.ACTIVE, count: 110 },
         { status: RequestStatus.MATCHED, count: 40 },
-        { status: RequestStatus.COMPLETED, count: 25 },
-        { status: RequestStatus.CANCELLED, count: 5 }
+        { status: RequestStatus.COMPLETED, count: 30 },
+        { status: RequestStatus.CANCELLED, count: 10 }
       ]
     );
     
@@ -172,16 +172,16 @@ async function main() {
     // ============================================================================
     // PHASE 6: VOLUNTEER OFFERS (100+ offers)
     // ============================================================================
-    console.log('🤝 PHASE 6: Creating Volunteer Offers (100+ offers)');
+    console.log('🤝 PHASE 6: Creating Volunteer Offers (300+ offers)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     const allOffers = await generateVolunteerOffers(
       csrRepUsers,
       activeRequests,
       [
-        { status: OfferStatus.PENDING, count: 30 },
-        { status: OfferStatus.ACCEPTED, count: 40 },
-        { status: OfferStatus.DECLINED, count: 30 }
+        { status: OfferStatus.PENDING, count: 25 },
+        { status: OfferStatus.ACCEPTED, count: 250 },
+        { status: OfferStatus.DECLINED, count: 25 }
       ]
     );
     
@@ -191,7 +191,7 @@ async function main() {
     // ============================================================================
     // PHASE 7: MATCHES (60+ matches)
     // ============================================================================
-    console.log('🔗 PHASE 7: Creating Matches (60+ matches)');
+    console.log('🔗 PHASE 7: Creating Matches (100+ matches)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     const acceptedOffers = await getOffersByStatus(OfferStatus.ACCEPTED);
@@ -199,9 +199,9 @@ async function main() {
     await generateMatches(
       acceptedOffers,
       [
-        { status: MatchStatus.ACTIVE, count: 30 },
-        { status: MatchStatus.COMPLETED, count: 25 },
-        { status: MatchStatus.CANCELLED, count: 5 }
+        { status: MatchStatus.ACTIVE, count: 40 },
+        { status: MatchStatus.COMPLETED, count: 50 },
+        { status: MatchStatus.CANCELLED, count: 15 }
       ]
     );
     

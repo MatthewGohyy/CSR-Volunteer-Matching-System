@@ -13,25 +13,32 @@ export async function generateMatches(
 ): Promise<void> {
   console.log(`📊 Generating matches...`);
   
+  // Get unique requests from accepted offers (one offer per request)
+  const uniqueRequestOffers = new Map();
+  for (const offer of acceptedOffers) {
+    if (!uniqueRequestOffers.has(offer.requestId)) {
+      uniqueRequestOffers.set(offer.requestId, offer);
+    }
+  }
+  
+  const uniqueOffers = Array.from(uniqueRequestOffers.values());
+  console.log(`  Found ${uniqueOffers.length} unique requests with accepted offers`);
+  
+  // Shuffle for randomness
+  for (let i = uniqueOffers.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [uniqueOffers[i], uniqueOffers[j]] = [uniqueOffers[j], uniqueOffers[i]];
+  }
+  
   let totalCreated = 0;
   let offerIndex = 0;
   
   for (const { status, count } of matchDistribution) {
     console.log(`  Creating ${count} matches with status: ${status}`);
     
-    for (let i = 0; i < count && offerIndex < acceptedOffers.length; i++) {
-      const offer = acceptedOffers[offerIndex];
+    for (let i = 0; i < count && offerIndex < uniqueOffers.length; i++) {
+      const offer = uniqueOffers[offerIndex];
       offerIndex++;
-      
-      // Check if match already exists for this request
-      const existingMatch = await prisma.match.findUnique({
-        where: { requestId: offer.requestId }
-      });
-      
-      if (existingMatch) {
-        console.log(`  Skipping - match already exists for request ${offer.requestId}`);
-        continue;
-      }
       
       // Generate timestamps
       const matchedAt = faker.date.between({ 
