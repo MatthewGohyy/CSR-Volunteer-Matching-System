@@ -16,7 +16,19 @@ export class ViewUserAccountController {
 
       const user = await UserAccount.findById(id);
 
-      res.json({ user: user?.toJSON() || null });
+      if (!user) {
+        res.json({ user: null });
+        return;
+      }
+
+      const userJson = user.toJSON();
+      // Add profile name from joined userProfile relation
+      res.json({ 
+        user: {
+          ...userJson,
+          profileName: user.userProfile?.name || null,
+        }
+      });
     } catch (error) {
       next(error);
     }

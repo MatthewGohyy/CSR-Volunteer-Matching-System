@@ -24,7 +24,14 @@ export class SearchUserAccountsController {
       const users = await UserAccount.search(searchQuery);
 
       res.json({
-        users: users.map(user => user.toJSON()),
+        users: users.map(user => {
+          const userJson = user.toJSON();
+          // Add profile name from joined userProfile relation
+          return {
+            ...userJson,
+            profileName: user.userProfile?.name || null,
+          };
+        }),
         total: users.length,
       });
     } catch (error) {

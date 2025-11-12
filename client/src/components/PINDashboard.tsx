@@ -8,6 +8,7 @@ import api from '../config/api';
 import type { User as UserType } from '../types';
 import OffersList from './OffersList';
 import MatchesList from './MatchesList';
+import { useDebounce } from '../hooks/useDebounce';
 
 // Types
 interface Request {
@@ -45,7 +46,8 @@ interface RequestsResponse {
 const PINDashboard: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'my-requests' | 'offers' | 'matches' | 'history'>('my-requests');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const debouncedSearchQuery = useDebounce(searchInput, 500);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingRequest, setEditingRequest] = useState<Request | null>(null);
 
@@ -60,10 +62,10 @@ const PINDashboard: React.FC = () => {
 
   // Fetch PIN's requests
   const { data: requestsData, isLoading: requestsLoading } = useQuery({
-    queryKey: ['pin-requests', searchQuery],
+    queryKey: ['pin-requests', debouncedSearchQuery],
     queryFn: async (): Promise<RequestsResponse> => {
       const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
+      if (debouncedSearchQuery) params.append('search', debouncedSearchQuery);
       const response = await api.get<RequestsResponse>(`/opportunities/my/requests?${params.toString()}`);
       return response.data;
     },
@@ -71,10 +73,10 @@ const PINDashboard: React.FC = () => {
 
   // Fetch completed requests history
   const { data: historyData } = useQuery({
-    queryKey: ['pin-history', searchQuery],
+    queryKey: ['pin-history', debouncedSearchQuery],
     queryFn: async (): Promise<RequestsResponse> => {
       const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
+      if (debouncedSearchQuery) params.append('search', debouncedSearchQuery);
       const response = await api.get<RequestsResponse>(`/volunteers/requests/history?${params.toString()}`);
       return response.data;
     },
@@ -240,8 +242,8 @@ const PINDashboard: React.FC = () => {
             <input
               type="text"
               placeholder="Search requests..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
@@ -258,9 +260,9 @@ const PINDashboard: React.FC = () => {
 
         {/* Tab Content */}
         {activeTab === 'offers' ? (
-          <OffersList searchQuery={searchQuery} />
+          <OffersList searchQuery={debouncedSearchQuery} />
         ) : activeTab === 'matches' ? (
-          <MatchesList userType="PIN" searchQuery={searchQuery} />
+          <MatchesList userType="PIN" searchQuery={debouncedSearchQuery} />
         ) : requestsLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>

@@ -10,6 +10,7 @@ import CSROffersList from './CSROffersList';
 import MatchesList from './MatchesList';
 import SubmitOfferModal from './SubmitOfferModal';
 import RequestModal from './RequestModal';
+import { useDebounce } from '../hooks/useDebounce';
 
 // Types
 interface Request {
@@ -51,7 +52,8 @@ const CSRRepDashboard: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'browse' | 'shortlist' | 'offers' | 'matches' | 'history'>('browse');
   const [offerModalRequest, setOfferModalRequest] = useState<Request | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const debouncedSearchQuery = useDebounce(searchInput, 500);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [urgencyFilter, setUrgencyFilter] = useState('');
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
@@ -67,10 +69,10 @@ const CSRRepDashboard: React.FC = () => {
 
   // Fetch available requests
   const { data: requestsData, isLoading: requestsLoading } = useQuery({
-    queryKey: ['available-requests', searchQuery, categoryFilter, urgencyFilter],
+    queryKey: ['available-requests', debouncedSearchQuery, categoryFilter, urgencyFilter],
     queryFn: async (): Promise<RequestsResponse> => {
       const params = new URLSearchParams();
-      if (searchQuery) params.append('query', searchQuery);
+      if (debouncedSearchQuery) params.append('query', debouncedSearchQuery);
       if (categoryFilter) params.append('categoryId', categoryFilter);
       if (urgencyFilter) params.append('urgency', urgencyFilter);
       const response = await api.get<RequestsResponse>(`/opportunities?${params.toString()}`);
@@ -81,10 +83,10 @@ const CSRRepDashboard: React.FC = () => {
 
   // Fetch shortlist
   const { data: shortlistData, isLoading: shortlistLoading } = useQuery({
-    queryKey: ['shortlist', searchQuery],
+    queryKey: ['shortlist', debouncedSearchQuery],
     queryFn: async (): Promise<{ shortlist: Shortlist[]; total: number }> => {
       const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
+      if (debouncedSearchQuery) params.append('search', debouncedSearchQuery);
       const response = await api.get(`/organizations/shortlists?${params.toString()}`);
       return response.data;
     },
@@ -93,10 +95,10 @@ const CSRRepDashboard: React.FC = () => {
 
   // Fetch completed requests history
   const { data: historyData } = useQuery({
-    queryKey: ['csr-history', searchQuery],
+    queryKey: ['csr-history', debouncedSearchQuery],
     queryFn: async (): Promise<{ matches: any[]; total: number }> => {
       const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
+      if (debouncedSearchQuery) params.append('search', debouncedSearchQuery);
       const response = await api.get(`/organizations/requests/history?${params.toString()}`);
       // Transform matches to requests for display
       const matches = response.data.matches || [];
@@ -257,7 +259,7 @@ const CSRRepDashboard: React.FC = () => {
               <button
                 onClick={() => {
                   setActiveTab('browse');
-                  setSearchQuery('');
+                  setSearchInput('');
                 }}
                 className={`${
                   activeTab === 'browse'
@@ -271,7 +273,7 @@ const CSRRepDashboard: React.FC = () => {
               <button
                 onClick={() => {
                   setActiveTab('shortlist');
-                  setSearchQuery('');
+                  setSearchInput('');
                 }}
                 className={`${
                   activeTab === 'shortlist'
@@ -285,7 +287,7 @@ const CSRRepDashboard: React.FC = () => {
               <button
                 onClick={() => {
                   setActiveTab('offers');
-                  setSearchQuery('');
+                  setSearchInput('');
                 }}
                 className={`${
                   activeTab === 'offers'
@@ -299,7 +301,7 @@ const CSRRepDashboard: React.FC = () => {
               <button
                 onClick={() => {
                   setActiveTab('matches');
-                  setSearchQuery('');
+                  setSearchInput('');
                 }}
                 className={`${
                   activeTab === 'matches'
@@ -313,7 +315,7 @@ const CSRRepDashboard: React.FC = () => {
               <button
                 onClick={() => {
                   setActiveTab('history');
-                  setSearchQuery('');
+                  setSearchInput('');
                 }}
                 className={`${
                   activeTab === 'history'
@@ -336,8 +338,8 @@ const CSRRepDashboard: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search requests..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
@@ -403,7 +405,7 @@ const CSRRepDashboard: React.FC = () => {
         {activeTab === 'offers' ? (
           <CSROffersList />
         ) : activeTab === 'matches' ? (
-          <MatchesList userType="CSR_REP" searchQuery={searchQuery} />
+          <MatchesList userType="CSR_REP" searchQuery={debouncedSearchQuery} />
         ) : isLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>

@@ -20,10 +20,12 @@ import CreateUserModal from './CreateUserModal';
 import CreateUserProfileModal from './CreateUserProfileModal';
 import UserDetailsModal from './UserDetailsModal';
 import UserProfileDetailsModal from './UserProfileDetailsModal';
+import { useDebounce } from '../hooks/useDebounce';
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'accounts' | 'profiles'>('accounts');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const debouncedSearchTerm = useDebounce(searchInput, 500);
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'ALL'>('ALL');
   const [profileStatusFilter, setProfileStatusFilter] = useState<boolean | 'ALL'>('ALL');
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
@@ -37,11 +39,11 @@ const AdminDashboard: React.FC = () => {
 
   // Fetch user accounts - Direct API call to controller (Boundary -> Controller)
   const { data: usersData, isLoading, error } = useQuery({
-    queryKey: ['admin-users', searchTerm],
+    queryKey: ['admin-users', debouncedSearchTerm],
     queryFn: async (): Promise<UsersResponse> => {
       const params = new URLSearchParams();
-      if (searchTerm.trim()) {
-        params.append('query', searchTerm.trim());
+      if (debouncedSearchTerm.trim()) {
+        params.append('query', debouncedSearchTerm.trim());
       }
       const queryString = params.toString();
       const url = `/admin/users${queryString ? `?${queryString}` : ''}`;
@@ -53,11 +55,11 @@ const AdminDashboard: React.FC = () => {
 
   // Fetch user profiles (role definitions) - Direct API call to controller
   const { data: profilesData, isLoading: isLoadingProfiles, error: profilesError } = useQuery({
-    queryKey: ['admin-profiles', profileStatusFilter, searchTerm],
+    queryKey: ['admin-profiles', profileStatusFilter, debouncedSearchTerm],
     queryFn: async (): Promise<UserProfilesResponse> => {
       const params = new URLSearchParams();
-      if (searchTerm.trim()) {
-        params.append('query', searchTerm.trim());
+      if (debouncedSearchTerm.trim()) {
+        params.append('query', debouncedSearchTerm.trim());
       }
       if (profileStatusFilter !== 'ALL') {
         params.append('isActive', profileStatusFilter.toString());
@@ -100,30 +102,49 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const getUserTypeColor = (role: UserRole | string) => {
-    switch (role) {
+  const getUserTypeColor = (profileName: string | null | undefined) => {
+    if (!profileName) return 'text-gray-700 bg-gray-100 border-gray-300';
+    
+    switch (profileName) {
       case 'Person in Need':
       case 'Pin':
       case 'pin':
       case 'PIN':
-        return 'text-blue-600 bg-blue-100';
+        return 'text-blue-700 bg-blue-100 border-blue-300';
       case 'CSR Representative':
       case 'CsrRep':
       case 'csr_rep':
       case 'CSR_REP':
-        return 'text-purple-600 bg-purple-100';
+        return 'text-purple-700 bg-purple-100 border-purple-300';
       case 'User Administrator':
       case 'UserAdmin':
       case 'user_admin':
       case 'USER_ADMIN':
-        return 'text-orange-600 bg-orange-100';
+        return 'text-orange-700 bg-orange-100 border-orange-300';
       case 'Platform Manager':
       case 'PlatformManager':
       case 'platform_manager':
       case 'PLATFORM_MANAGER':
-        return 'text-indigo-600 bg-indigo-100';
+        return 'text-indigo-700 bg-indigo-100 border-indigo-300';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-gray-700 bg-gray-100 border-gray-300';
+    }
+  };
+
+  const getProfileLabel = (profileName: string | null | undefined): string => {
+    if (!profileName) return 'Unknown';
+    
+    switch (profileName) {
+      case 'Person in Need':
+        return 'PIN';
+      case 'CSR Representative':
+        return 'CSR Rep';
+      case 'User Administrator':
+        return 'User Admin';
+      case 'Platform Manager':
+        return 'Platform Manager';
+      default:
+        return profileName;
     }
   };
 
@@ -300,8 +321,8 @@ const AdminDashboard: React.FC = () => {
                   <input
                     type="text"
                     placeholder="Search users..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
@@ -361,19 +382,23 @@ const AdminDashboard: React.FC = () => {
                           <Users className="h-5 w-5 text-gray-600" />
                         </div>
                       </div>
-                      <div className="ml-4">
-                        <div className="flex items-center">
-                        <p className="text-sm font-medium text-gray-900">
-                          {user.pin?.name || user.csrRep?.companyName || user.platformManager?.fullName || user.email}
-                        </p>
-                          <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(user.role)}`}>
-                            {user.role}
-                          </span>
-                          <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.status)}`}>
+                      <div className="ml-4 flex-1">
+                        <div className="flex items-center flex-wrap gap-2">
+                          <p className="text-sm font-medium text-gray-900">
+                            {user.pin?.name || user.csrRep?.companyName || user.platformManager?.fullName || user.email}
+                          </p>
+                          {/* Profile Tag - Shows profile name from user_profile table */}
+                          {user.profileName && (
+                            <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-md border ${getUserTypeColor(user.profileName)}`}>
+                              {getProfileLabel(user.profileName)}
+                            </span>
+                          )}
+                          {/* Status Tag */}
+                          <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-md ${getStatusColor(user.status)}`}>
                             {user.status}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-500">{user.email}</p>
+                        <p className="text-sm text-gray-500 mt-1">{user.email}</p>
                         {user.csrRep && (
                           <p className="text-sm text-gray-500">{user.csrRep.contactPerson}</p>
                         )}

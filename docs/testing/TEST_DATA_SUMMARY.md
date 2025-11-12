@@ -192,7 +192,7 @@ npx prisma studio
 ### Verify Data Counts
 ```bash
 cd server
-bash verify-test-data.sh
+bash scripts/testing/verify-test-data.sh
 ```
 
 ## Data Quality Assurance

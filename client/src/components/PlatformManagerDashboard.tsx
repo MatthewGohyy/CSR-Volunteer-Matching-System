@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../config/api';
 import type { User as UserType } from '../types';
+import { useDebounce } from '../hooks/useDebounce';
 
 // Types
 interface RequestCategory {
@@ -36,7 +37,8 @@ interface PlatformStats {
 const PlatformManagerDashboard: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'categories' | 'stats'>('categories');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const debouncedSearchQuery = useDebounce(searchInput, 500);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<RequestCategory | null>(null);
 
@@ -51,10 +53,10 @@ const PlatformManagerDashboard: React.FC = () => {
 
   // Fetch categories
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['platform-categories', searchQuery],
+    queryKey: ['platform-categories', debouncedSearchQuery],
     queryFn: async (): Promise<CategoriesResponse> => {
       const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
+      if (debouncedSearchQuery) params.append('search', debouncedSearchQuery);
       const response = await api.get<CategoriesResponse>(`/platform-manager/categories?${params.toString()}`);
       return response.data;
     },
@@ -165,8 +167,8 @@ const PlatformManagerDashboard: React.FC = () => {
                 <input
                   type="text"
                   placeholder="Search categories..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>

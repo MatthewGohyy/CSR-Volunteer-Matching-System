@@ -176,7 +176,7 @@ export class UserAccount implements PrismaUserAccount {
 
     // Check if user is active
     if (user.status !== UserStatus.ACTIVE) {
-      throw new Error('Account is not active');
+      throw new Error('Account has been suspended. Please contact the user admin.');
     }
 
     // Verify password

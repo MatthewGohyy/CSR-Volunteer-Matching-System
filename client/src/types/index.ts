@@ -206,6 +206,7 @@ export interface AdminUser extends Omit<User, 'updatedAt' | 'name'> {
   address?: string;
   dateOfBirth?: string;
   updatedAt?: string;
+  profileName?: string | null; // Profile name from user_profile table
   
   pin?: {
     id: string;

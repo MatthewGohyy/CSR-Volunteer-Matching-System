@@ -4,29 +4,77 @@ A comprehensive platform for connecting volunteers with Corporate Social Respons
 
 ---
 
+## 📋 **Lecturer's TLDR**
+
+This application has been designed and implemented following the **Boundary-Controller-Entity (BCE)** design principle. The architecture is clearly separated into three distinct layers:
+
+### 🏗️ **BCE Architecture Implementation**
+
+**Boundary Layer** - User Interface Components
+- **Location:** [`client/src/components/`](./client/src/components/)
+- **Purpose:** React components that handle user interactions and display data
+- **Examples:** `LoginPage.tsx`, `AdminDashboard.tsx`, `PINDashboard.tsx`, `CSRRepDashboard.tsx`
+
+**Controller Layer** - Business Logic & Request Handling
+- **Location:** [`server/src/controllers/`](./server/src/controllers/)
+- **Purpose:** HTTP request handlers that process business logic and coordinate between Boundary and Entity layers
+- **Examples:** `auth/`, `userAdmin/`, `pin/`, `csrRep/`, `platformManager/`, `matches/`
+
+**Entity Layer** - Data Models & Database Access
+- **Location:** [`server/src/entities/`](./server/src/entities/)
+- **Purpose:** Domain models with static methods for database operations (Repository Pattern)
+- **Examples:** `UserAccount.entity.ts`, `Request.entity.ts`, `Match.entity.ts`, `VolunteerOffer.entity.ts`
+
+### 📊 **Architecture Overview**
+
+```
+Boundary (Frontend)     →  React Components (client/src/components/)
+         ↓
+Controller (Backend)    →  Express Controllers (server/src/controllers/)
+         ↓
+Entity (Data Layer)     →  Prisma Entities (server/src/entities/)
+```
+
+**Key Design Patterns:**
+- ✅ **BCE Framework** - Clear separation of concerns across three layers
+- ✅ **Repository Pattern** - Static methods on entities for data access
+- ✅ **Single Table Inheritance** - UserAccount with role-based profiles
+- ✅ **Clean Architecture** - Dependencies flow inward (Boundary → Controller → Entity)
+
+**For detailed architecture documentation, see:** [`docs/architecture/`](./docs/architecture/)
+
+---
+
 ## 🎓 **New to the Codebase?**
 
-### 📚 **[Documentation Index](./DOCUMENTATION_INDEX.md)** - Start Here!
+### 📚 **[Documentation Index](./docs/README.md)** - Start Here!
 
-We've created comprehensive guides to help you understand the codebase:
+All documentation has been organized into clear categories for easy navigation:
 
-**Essential Documentation:**
-- 📊 **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** - Complete project overview & status
-- 🚀 **[START_STOP_GUIDE.md](./START_STOP_GUIDE.md)** - How to run the project
-- 🔌 **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)** - All 47 API endpoints
-- 🗄️ **[DATABASE.md](./DATABASE.md)** - Database schema & design
-- 🧪 **[TESTING_REPORT.md](./TESTING_REPORT.md)** - Complete test results (100%)
+**🚀 [Setup & Operations](./docs/setup/)** - Getting started guides
+- [START_STOP_GUIDE.md](./docs/setup/START_STOP_GUIDE.md) - How to run the project
+- [DOCKER_GUIDE.md](./docs/setup/DOCKER_GUIDE.md) - Docker setup
 
-**Architecture & Design:**
-- 🏗️ **[diagrams/DESIGN_PATTERN.md](./diagrams/DESIGN_PATTERN.md)** - Single Table Inheritance explained
-- 📊 **[diagrams/](./diagrams/)** - ERD & Class diagrams
-- 📖 **[SUMMARY.md](./SUMMARY.md)** - Project achievements
+**🔌 [API Documentation](./docs/api/)** - Complete API reference
+- [API_DOCUMENTATION.md](./docs/api/API_DOCUMENTATION.md) - All 47 API endpoints
 
-**Quick Reference:**
-- 📋 **[USER_STORIES.md](./USER_STORIES.md)** - All 39 user stories
-- 🐳 **[DOCKER_GUIDE.md](./DOCKER_GUIDE.md)** - Docker setup
+**🧪 [Testing](./docs/testing/)** - Testing guides and reports
+- [TEST_DATA_GENERATION_GUIDE.md](./docs/testing/TEST_DATA_GENERATION_GUIDE.md) - Generate test data
+- [BROWSER_TEST_GUIDE.md](./docs/testing/BROWSER_TEST_GUIDE.md) - Manual testing guide
+- [TDD_REPORT_SECTION.md](./docs/testing/TDD_REPORT_SECTION.md) - TDD report
 
-👉 **[Browse all documentation](./DOCUMENTATION_INDEX.md)** - Complete guide to all docs
+**🏗️ [Architecture & Design](./docs/architecture/)** - System design
+- [CLASS_DIAGRAM_COMPLETE_DOCUMENTATION.md](./docs/architecture/CLASS_DIAGRAM_COMPLETE_DOCUMENTATION.md) - Class diagram docs
+- [DESIGN_PATTERN.md](./docs/architecture/DESIGN_PATTERN.md) - Single Table Inheritance explained
+- [diagrams/](./diagrams/) - ERD & Class diagrams
+
+**📋 [Requirements](./docs/requirements/)** - User stories
+- [USER_STORIES.md](./docs/requirements/USER_STORIES.md) - All 39 user stories
+
+**💻 [Development](./docs/development/)** - Development guides
+- Implementation summaries and development process documentation
+
+👉 **[Browse all documentation](./docs/README.md)** - Complete guide to all docs
 
 ---
 
@@ -104,10 +152,10 @@ We've created comprehensive guides to help you understand the codebase:
 
 ```bash
 # Make setup script executable (first time only)
-chmod +x setup-db.sh
+chmod +x scripts/setup/setup-db.sh
 
 # Run the automated setup
-./setup-db.sh
+./scripts/setup/setup-db.sh
 
 # Start development server
 cd server && npm run dev
@@ -169,7 +217,7 @@ CSR-Volunteer-Matching-System/
 ├── client/                 # React frontend application
 │   ├── public/            # Static assets
 │   ├── src/               # Source code
-│   │   ├── components/    # Reusable components
+│   │   ├── components/    # Reusable components (Boundary)
 │   │   ├── pages/         # Page components
 │   │   ├── hooks/         # Custom React hooks
 │   │   ├── services/      # API services
@@ -179,7 +227,7 @@ CSR-Volunteer-Matching-System/
 ├── server/                # Node.js + TypeScript backend
 │   ├── src/              # TypeScript source code
 │   │   ├── config/       # Configuration (database, etc.) ✅
-│   │   ├── controllers/  # Boundary - HTTP handlers
+│   │   ├── controllers/  # Controllers
 │   │   ├── services/     # Control - Business logic ✅
 │   │   ├── entities/     # Entity - Data models ✅
 │   │   ├── repositories/ # Data access layer
@@ -196,10 +244,9 @@ CSR-Volunteer-Matching-System/
 │   ├── tsconfig.json     # TypeScript configuration ✅
 │   └── package.json
 ├── docker-compose.yml    # Docker services (PostgreSQL, pgAdmin) ✅
-├── setup-db.sh          # Automated setup script ✅
-├── DATABASE.md          # Database documentation ✅
-├── SETUP.md             # Setup guide ✅
-└── package.json         # Root package.json
+├── scripts/              # Shell scripts (setup, testing, utilities) ✅
+├── docs/                 # Documentation (organized by category) ✅
+└── package.json          # Root package.json
 ```
 
 ## 🔧 Available Scripts
@@ -267,7 +314,7 @@ CSR-Volunteer-Matching-System/
 - `PUT /api/matches/:id/complete` - Complete match
 - `PUT /api/matches/:id/cancel` - Cancel match
 
-**📖 See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for complete API reference**
+**📖 See [API_DOCUMENTATION.md](./docs/api/API_DOCUMENTATION.md) for complete API reference**
 
 ## 🤝 Contributing
 
@@ -292,22 +339,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📚 Documentation
 
-### Complete Documentation Available:
-- **[DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md)** - 📚 Complete documentation guide
-- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - 📊 Project overview & status (100% complete)
-- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - 🔌 All 47 API endpoints
-- **[TESTING_REPORT.md](TESTING_REPORT.md)** - 🧪 Test results (100% pass rate)
-- **[DATABASE.md](DATABASE.md)** - 🗄️ Database schema & design
-- **[START_STOP_GUIDE.md](START_STOP_GUIDE.md)** - 🚀 How to run the project
-- **[USER_STORIES.md](USER_STORIES.md)** - 📋 All 39 user stories
-- **[diagrams/](diagrams/)** - 📊 ERD & Class diagrams
+All documentation is organized in the [`docs/`](./docs/) directory:
 
-**Status: October 28, 2025**
-- ✅ Backend: 100% Complete
-- ✅ All User Stories: 39/39 Implemented
-- ✅ API Endpoints: 47/47 Working
-- ✅ Test Coverage: 100%
-- 🔜 Frontend: Ready for development
+- **[📚 Documentation Index](./docs/README.md)** - Complete documentation guide
+- **[🚀 Setup & Operations](./docs/setup/)** - Setup and operational guides
+- **[🔌 API Documentation](./docs/api/)** - Complete API reference (47 endpoints)
+- **[🧪 Testing](./docs/testing/)** - Testing guides, reports, and test data generation
+- **[🏗️ Architecture & Design](./docs/architecture/)** - System design and patterns
+- **[📋 Requirements](./docs/requirements/)** - User stories (39 total)
+- **[💻 Development](./docs/development/)** - Development guides and summaries
+- **[📊 Diagrams](./diagrams/)** - ERD & Class diagrams
+
 
 ## 🐛 Troubleshooting
 
@@ -342,14 +384,5 @@ If ports 3000, 4000, 5432, or 5050 are already in use:
 
 For questions or support, please:
 - Open an issue on [GitHub](https://github.com/MatthewGohyy/CSR-Volunteer-Matching-System/issues)
-- Refer to [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) for comprehensive guides
+- Refer to [Documentation Index](./docs/README.md) for comprehensive guides
 
----
-
-**Last Updated:** October 28, 2025  
-**Backend Status:** ✅ 100% Complete - Production Ready  
-**Next Steps:** Frontend development or production deployment
-
----
-
-**Happy Coding! 🎉**
